@@ -1,0 +1,81 @@
+.v3grid-table {
+    color: #465c98;
+    cursor: default;
+}
+.v3grid-header-row {
+    background-color: #adc3e7;
+    font-weight: bold;
+    text-align: center;
+    cursor: default;
+}
+.v3grid-row.even {
+    background-color: #ffffff;
+}
+.v3grid-row.odd {
+    background-color: #f0f0f0;
+}
+.v3grid-row.hover {
+    background-color: #c0d0f0;
+}
+.v3grid-column-move {
+    opacity: 0.6;
+    background-color: #ccd5ff;
+    z-index: 1
+}
+.v3grid-header-move {
+    opacity: 0.6;
+    background-color: #ffffff;
+    z-index: 1
+}
+.v3grid-header-resize {
+    background-color: #ffffff;
+}
+.v3grid-column-resize {
+    background-color: #e3eef9;
+}
+
+/*
+    Column Selector
+*/
+
+.v3grid-column-selector {
+    padding: 10px;
+    /*color: #fff;*/
+    background-color: #adc3e7;
+}
+.v3grid-column-selector > div{
+    max-width: 250px;
+    max-height: 250px;
+}
+.v3grid-column-selector-item {
+    padding: 2px 10px 2px 2px;
+    vertical-align: middle;
+}
+
+.v3grid-column-selector-item > input {
+    margin: 5px;
+}
+
+.v3grid-column-selector > h2 {
+    padding: 2px;
+    text-align: center;
+}
+
+.v3grid-column-selector > .closebutton {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    color: #505050;
+    text-decoration: none;
+    text-align: center;
+    width: 20px;
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.v3grid-column-selector > .closebutton:hover {
+    background-color: #5c6698;
+    color: #ffffff;
+}

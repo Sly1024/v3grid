@@ -1,0 +1,15 @@
+ + column resizable
+ + column resize => fixed width
+ + column resize -> recalc widths
+ + column resize cursor <-||->
+ + column visibility
+ - column autosize - to content
+ - column drag - scroll when reached the first/last visible pos.
+ - colspan/rowspan
+ - column groups
+ - getRowStyle(row)
+ + formatter feature
+ + TreeDP/expandToLevel()
+
+Bug:
+ - expandToLevel() makes scrollbar disappear, visibleWidth not updated
