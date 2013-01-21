@@ -3,6 +3,8 @@ v3grid
 
 A virtual datagrid in JavaScript.
 
+Please see [the wiki](/Sly1024/v3grid/wiki)
+
 What is v3grid?
 ---
 It is a datagrid/table implementation written in JavaScript. Why is it special? Keep reading!
@@ -23,22 +25,4 @@ These are the goals (properties) I had in mind when I started working on v3grid:
 * Framework Independent - 
 * I won't say 'lightweight', because each and every JS lib out there claims it's lightweight
 
-Features
----
-Sorry for the repetition here.
-
-- Virtual columns, rows - it only shows the cells that are visible (almost)
-- Virtual Data - you give it a getData(row, col) function and it renders your data
-- Custom ItemRenderers - 
-
-The Structure
----
-
-
-How does it work?
----
-
-
-Dependencies
----
 
