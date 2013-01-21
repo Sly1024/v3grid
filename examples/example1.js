@@ -1,6 +1,7 @@
 require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector'],
     function (V3Grid, SortDataProvider, ColumnSelector) {
-        this.V3Grid = V3Grid;
+        Ext.namespace('v3grid');
+        v3grid.V3Grid = V3Grid;
 
         Ext.application({
             requires: [

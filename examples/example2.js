@@ -1,6 +1,7 @@
 require(['v3grid/Grid', 'v3grid/SortDataProvider'],
     function (V3Grid, SortDataProvider) {
-        this.V3Grid = V3Grid;
+        Ext.namespace('v3grid');
+        v3grid.V3Grid = V3Grid;
 
         Ext.application({
             requires:[
@@ -35,7 +36,7 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider'],
                         columnBatchSize: 5,
                         rowBatchSize: 4,
                         verticalSeparatorThickness: 0,
-                        lockedColumnCount: 5,
+                        lockedColumnCount: 0,
                         columns: columns,
                         getData: function (row, col) { return col+', '+row; },
                         totalRowCount: rowCount,

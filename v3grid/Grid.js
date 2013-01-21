@@ -154,6 +154,10 @@ define('v3grid/Grid',
 
             },
 
+            destroy: function () {
+
+            },
+
             // not real GUID, but I just need a big random number
             generateUID: function () {
                 //this gives 4x32 = 128 random bits
@@ -211,15 +215,22 @@ define('v3grid/Grid',
             },
 
             genViewCols: function () {
-                var columns = this.columns, lcols = this.lockedColumns, li = 0;
-                for (var len = this.lockedColumnCount, i = 0; i < len; ++i) {
-                    lcols[li++] = columns[i];
+                var columns = this.columns,
+                    lcols = this.lockedColumns,
+                    len = this.lockedColumnCount,
+                    i = 0;
+
+                lcols.length = len;
+                for (i = 0; i < len; ++i) {
+                    lcols[i] = columns[i];
                 }
-                lcols.length = li;
-                this.lockedTableView.generateDataIdx2ColIdx();
+
+                if (len > 0) {
+                    this.lockedTableView.generateDataIdx2ColIdx();
+                }
 
                 var ncols = this.normalColumns, ni = 0;
-                for (var len = this.totalColumnCount; i < len; ++i) {
+                for (len = this.totalColumnCount; i < len; ++i) {
                     ncols[ni++] = columns[i];
                 }
                 ncols.length = ni;

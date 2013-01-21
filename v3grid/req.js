@@ -7,11 +7,13 @@ function define(name, dependencies, moduleFunc) {
 
         modules.push(map[name] = { name: name });
 
+        if (name.indexOf('.') < 0) name += '.js';
+
         var head = document.getElementsByTagName('head')[0];
         var script = document.createElement('script');
         script.type = 'text/javascript';
         script.async = 'async';
-        script.src = name + '.js';
+        script.src = require.baseUrl + name;
         head.appendChild(script);
     }
 
@@ -73,3 +75,12 @@ function require(dependencies, execute) {
 }
 
 require.defined = function (module) { return !!define.modulemap[module]; }
+require.config = function (cfg) {
+    require.baseUrl = cfg.baseUrl;
+}
+
+require.baseUrl = (function () {
+    var scripts = document.getElementsByTagName('script'),
+        src = scripts[scripts.length-1].src;
+    return src.substr(0, src.lastIndexOf('/v3grid/')+1);
+})();

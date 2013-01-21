@@ -2,6 +2,11 @@ define('v3grid/TreeRenderer',
     ['v3grid/Adapter', 'v3grid/Utils'],
     function (Adapter, Utils) {
 
+        var minus_img = (require.baseUrl || requirejs.s.contexts._.config.baseUrl) + 'v3grid/images/minus.png';
+        var plus_img = (require.baseUrl || requirejs.s.contexts._.config.baseUrl) + 'v3grid/images/plus.png';
+
+        Utils.preloadImages([minus_img, plus_img]);
+
         var TreeRenderer = function (config) {
             this.config = config;
 
@@ -38,7 +43,7 @@ define('v3grid/TreeRenderer',
                     indicator.style.display = 'none';
                 } else {
                     indicator.style.display = 'block';
-                    indicator.src = info[1] /*isOpen*/ ? 'images/minus.png' : 'images/plus.png';
+                    indicator.src = info[1] /*isOpen*/ ? minus_img : plus_img;
                 }
                 indicator.parentNode.style.width = (16 + info[2] /*level*/ *this.config.treeDataProvider.indentation) + 'px';
             },

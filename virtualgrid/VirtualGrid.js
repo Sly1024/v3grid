@@ -18,12 +18,17 @@ Ext.define('virtualgrid.VirtualGrid', {
         var el = this.gridContainer = (this.isTouch ? this.element : this.el);
 
         this.gridConfig.renderTo = el.dom;
-        this.grid = new V3Grid(this.gridConfig);
+        this.grid = new v3grid.V3Grid(this.gridConfig);
     },
 
     resizeHandler: function () {
         var el = this.gridContainer;
 
         this.grid.setSize(el.getWidth(), el.getHeight());
+    },
+
+    destroy: function () {
+        if (this.grid) this.grid.destroy();
+        this.callParent(arguments);
     }
 });

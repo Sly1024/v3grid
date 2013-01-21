@@ -1,6 +1,7 @@
 require(['v3grid/Grid', 'v3grid/Adapter', 'v3grid/SortDataProvider', 'v3grid/TreeDataProvider', 'v3grid/ColumnSelector', 'v3grid/FormatterItemRenderer'],
     function (V3Grid, V3GridAdapter, SortDataProvider, TreeDataProvider, ColumnSelector, FormatterRenderer) {
-        this.V3Grid = V3Grid;
+        Ext.namespace('v3grid');
+        v3grid.V3Grid = V3Grid;
 
         Ext.application({
             requires:[
@@ -73,41 +74,6 @@ require(['v3grid/Grid', 'v3grid/Adapter', 'v3grid/SortDataProvider', 'v3grid/Tre
                                     {Territory_Rep:"Jane Grove", Actual:44913, Estimate:45000}]}
                             ]}
                         ]
-//                        columns: [
-//                            { dataIndex: 'Course' },
-//                            { dataIndex: 'CourseName' },
-//                            { dataIndex: 'Branch' },
-//                            { dataIndex: 'Girls' },
-//                            { dataIndex: 'Boys' },
-//                            { dataIndex: 'TotalStudent' },
-//                            { dataIndex: 'PASSinper' },
-//                            { dataIndex: 'FAILinper' }
-//                        ],
-//                        data: [
-//                            {Course:"Course", children: [
-//                                {CourseName:"B.Sc.", children:[
-//                                    {Branch:"Physics", Girls:60, Boys:120, TotalStudent:180, PASSinper:98.0, FAILinper:2.0},
-//                                    {Branch:"Chemistry", Girls:100, Boys:50, TotalStudent:150, PASSinper:97.0, FAILinper:3.0},
-//                                    {Branch:"Mathematics", Girls:50, Boys:150, TotalStudent:200, PASSinper:98.5, FAILinper:1.5}]},
-//                                {CourseName:"B.tech.", children:[
-//                                    {Branch:"CS", Girls: 45, Boys:75, TotalStudent:120, PASSinper:99.0, FAILinper:1.0},
-//                                    {Branch:"IT", Girls: 55, Boys:65, TotalStudent:120, PASSinper:99.5, FAILinper:0.5},
-//                                    {Branch:"EC", Girls: 25, Boys:95, TotalStudent:120, PASSinper:96.7, FAILinper:3.3},
-//                                    {Branch:"EI", Girls: 40, Boys:80, TotalStudent:120, PASSinper:95, FAILinper:5},
-//                                    {Branch:"Mechanical", Girls:10, Boys: 80, TotalStudent:90, PASSinper:97.5, FAILinper:2.5},
-//                                    {Branch:"Civil", Girls: 15, Boys:45, TotalStudent:60, PASSinper:92, FAILinper:8}]},
-//                                {CourseName:"B.Pharma.", children:[
-//                                    {Branch:"Pharmacy", Girls:70, Boys:130, TotalStudent:200, PASSinper:99.8, FAILinper:0.2}]},
-//                                {CourseName:"M.B.A.", children:[
-//                                    {Branch:'HR', Girls:48, Boys:72, TotalStudent:120, PASSinper:100, FAILinper:0},
-//                                    {Branch:'Finance', Girls:40, Boys:80, TotalStudent:120, PASSinper:85, FAILinper:15},
-//                                    {Branch:'Marketing', Girls:20, Boys:100, TotalStudent:120, PASSinper:99, FAILinper:1},
-//                                    {Branch:'IT & HR', Girls:30, Boys:90, TotalStudent:120, PASSinper:100, FAILinper:0}]},
-//                                {CourseName:"M.C.A.", children:[
-//                                    {Branch:"Computer Science", Girls:30, Boys:90, TotalStudent: 120, PASSinper:99.1,
-//                                        FAILinper:0.9}]}
-//                            ]}
-//                        ]
                     }
                 });
 
@@ -149,6 +115,11 @@ require(['v3grid/Grid', 'v3grid/Adapter', 'v3grid/SortDataProvider', 'v3grid/Tre
                                                     flatter.expandToLevel(numfield.getValue());
                                                 }
                                             }
+                                        },
+                                        {
+                                            xtype: 'label',
+                                            padding: 5,
+                                            text: 'Focus the grid and press Ctrl-Q for ColumnSelector'
                                         },
                                         {
                                             xtype:'textarea',
