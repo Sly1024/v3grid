@@ -12,7 +12,7 @@ What is 'v3' in the name?
 
 VirtualGrid seemed a bit too simple, I had to come up with a good name. It is **V**irtual in **3** different ways: horizontally, vertically and the data too, hence the name.
 
-The Design Goals
+Design Goals
 ---
 These are the goals (properties) I had in mind when I started working on v3grid:
 
@@ -22,6 +22,14 @@ These are the goals (properties) I had in mind when I started working on v3grid:
 * Modular - each module/class is kept small, you can pick what features you want
 * Framework Independent - 
 * I won't say 'lightweight', because each and every JS lib out there claims it's lightweight
+
+Features
+---
+Sorry for the repetition here.
+
+- Virtual columns, rows - it only shows the cells that are visible (almost)
+- Virtual Data - you give it a getData(row, col) function and it renders your data
+- Custom ItemRenderers - 
 
 The Structure
 ---
