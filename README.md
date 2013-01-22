@@ -7,7 +7,7 @@ Please see [the wiki](/Sly1024/v3grid/wiki)
 
 What is v3grid?
 ---
-It is a datagrid/table implementation written in JavaScript. Why is it special? Keep reading!
+It is a datagrid/table implementation written in JavaScript. Why is it special? Read the wiki!
 
 What is 'v3' in the name?
 ---
