@@ -327,7 +327,7 @@ define('v3grid/Grid',
             },
 
             createComponents: function () {
-//                var grid = this;
+                var grid = this;
 
                 var headerColumnProps = { renderer: 'headerRenderer', rendererConfig: 'headerRendererConfig', finalCls: 'finalHeaderCls' };
 
@@ -359,6 +359,7 @@ define('v3grid/Grid',
                         totalRowCount: this.totalRowCount,
                         data: this.data,
                         getData: this.getData,
+                        cellClicked: this.cellClicked,
                         availableRenderers: this.availableRenderers,
                         rowBatchSize: this.rowBatchSize,
                         columnBatchSize: this.columnBatchSize,
@@ -429,6 +430,7 @@ define('v3grid/Grid',
                     totalRowCount: this.totalRowCount,
                     data: this.data,
                     getData: this.getData,
+                    cellClicked: this.cellClicked,
                     availableRenderers: this.availableRenderers,
                     rowBatchSize: this.rowBatchSize,
                     columnBatchSize: this.columnBatchSize,
