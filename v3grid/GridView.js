@@ -5,6 +5,7 @@ define('v3grid/GridView', ['v3grid/Adapter', 'v3grid/Utils'], function (Adapter,
 
         this.initProperties();
         this.validateConfig();
+        this.attachHandlers();
         this.throttledUpdateDirtyCells = Utils.createThrottled(this.updateDirtyCells, 200, this);
 
         this.columnPosX = this.columnPosX || new Array(this.columns.length+1);
@@ -48,6 +49,9 @@ define('v3grid/GridView', ['v3grid/Adapter', 'v3grid/Utils'], function (Adapter,
             this.visibleRowsHeight = 0;
             this.visibleColumnsWidth = 0;
 
+            this.lastHScrollPos = 0;
+            this.lastVScrollPos = 0;
+
             // DOM elements
             this.visibleCells = [];           // [vrow][vcol] = cell <div>; [vrow].row = row <div>
 
@@ -64,6 +68,27 @@ define('v3grid/GridView', ['v3grid/Adapter', 'v3grid/Utils'], function (Adapter,
         validateConfig: function () {
             this.columns = this.columns || [];
             this.totalRowCount = this.totalRowCount || (this.data ? this.data.length : 0);
+        },
+
+        attachHandlers: function () {
+            if (Adapter.isFunction(this.cellClicked)) {
+                Adapter.addListener(this.table, 'click', this.tableClicked, this);
+            }
+        },
+
+        tableClicked: function (evt) {
+            Adapter.fixPageCoords(evt);
+
+            var x = evt.pageX - Adapter.getPageX(this.table) - this.scrollXOffset,
+                y = evt.pageY - Adapter.getPageY(this.table),
+                first = this.firstVisibleColumn,
+                colIdx = this.searchColumn(x, first, first + this.visibleColumnCount),
+                rowIdx = (y / this.rowHeight) >> 0;
+
+            if (rowIdx >= 0 && rowIdx < this.totalRowCount &&
+                colIdx >= 0 && colIdx < this.columns.length) {
+                this.cellClicked(rowIdx, this.columns[colIdx].dataIndex, evt);
+            }
         },
 
         generateDataIdx2ColIdx: function () {
@@ -96,7 +121,7 @@ define('v3grid/GridView', ['v3grid/Adapter', 'v3grid/Utils'], function (Adapter,
 
         updateViewPortH: function (scrollPos) {
             // store current scrollPos so we can use it later if it's not provided
-            if (scrollPos === undefined) scrollPos = this.lastHScrollPos || 0;
+            if (scrollPos === undefined) scrollPos = this.lastHScrollPos;
             else this.lastHScrollPos = scrollPos;
 
             var columnsX = this.columnPosX,
@@ -150,7 +175,7 @@ define('v3grid/GridView', ['v3grid/Adapter', 'v3grid/Utils'], function (Adapter,
         },
 
         updateViewPortV: function (scrollPos) {
-            if (scrollPos === undefined) scrollPos = this.lastVScrollPos || 0;
+            if (scrollPos === undefined) scrollPos = this.lastVScrollPos;
             else this.lastVScrollPos = scrollPos;
 
             var first = this.firstVisibleRow,
