@@ -13,34 +13,15 @@ define('v3grid/SortDataProvider',
                 this.grid = grid;
                 this.processColumnRenderers(config.columns);
 
-                var origGetData = this.origGetData = config.getData || grid.getData;
-                var origInvData = this.origInvData = grid.invalidateData;
-                var origUpdateView = this.origUpdateView = grid.updateView;
-                var origSetTotalRowCount = this.origSetTotalRowCount = grid.setTotalRowCount;
+                var origGetData = this.origGetData = config.getData;
 
-                var index = this.index = new Array(grid.totalRowCount);
-                var invIndex = this.invIndex = new Array(grid.totalRowCount);
+                var index = this.index = new Array(config.totalRowCount);
+                this.invIndex = new Array(config.totalRowCount);
+
+                this.totalRowCount = config.totalRowCount;
 
                 config.getData = function (row, col) {
                     return origGetData.call(grid, index[row], col);
-                };
-
-                config.invalidateData = function (row, col) {
-                    origInvData.call(grid, invIndex[row], col);
-                };
-
-                var me = this;
-                config.updateView = function () {
-                    me.sort(me.sortedBy, true);
-                    origUpdateView.call(grid);
-                };
-
-                config.setTotalRowCount = function (rowCount) {
-                    grid.totalRowCount = rowCount;
-                    var sortFields = me.sortedBy;
-                    me.unSort(true);
-                    me.sort(sortFields, true);
-                    origSetTotalRowCount.call(grid, rowCount);
                 };
 
                 // check if a TreeDP is present
@@ -69,6 +50,28 @@ define('v3grid/SortDataProvider',
 
                 this.sortedBy = [];
                 this.unSort(true);
+            },
+
+            initRev: function (grid, config) {
+                var origSetTotalRowCount = config.setTotalRowCount || grid.setTotalRowCount;
+                var origInvData = config.invalidateData || grid.invalidateData;
+                var origUpdateView = this.origUpdateView = config.updateView || grid.updateView;
+                var me = this;
+
+                config.setTotalRowCount = function (rowCount) {
+                    me.totalRowCount = rowCount;
+                    var sortFields = me.sortedBy;
+                    me.unSort(true);
+                    me.sort(sortFields, true);
+                    origSetTotalRowCount.call(grid, rowCount);
+                };
+                config.invalidateData = function (row, col) {
+                    origInvData.call(grid, me.invIndex[row], col);
+                };
+                config.updateView = function () {
+                    me.sort(me.sortedBy, true);
+                    origUpdateView.call(grid);
+                };
             },
 
             processColumnRenderers: function (columns) {
@@ -137,9 +140,10 @@ define('v3grid/SortDataProvider',
                 var grid = this.grid;
                 var getData = this.origGetData;
 
-                var len = this.grid.totalRowCount;
+                var i;
+                var len = this.totalRowCount;
                 var cache = new Array(len);
-                for (var i = 0; i < len; ++i) cache[i] = [];
+                for (i = 0; i < len; ++i) cache[i] = [];
 
                 var index = this.index;
                 var tdp = this.treeDataProvider;
@@ -191,7 +195,7 @@ define('v3grid/SortDataProvider',
 
                 // update inv. index
                 var invIndex = this.invIndex;
-                for (var i = 0; i < len; ++i) invIndex[index[i]] = i;
+                for (i = 0; i < len; ++i) invIndex[index[i]] = i;
 
                 if (!noUpdate) this.origUpdateView.call(grid);
             },
@@ -199,7 +203,7 @@ define('v3grid/SortDataProvider',
             unSort: function (noUpdate) {
                 if (!noUpdate) this.updateIndicators([]);
 
-                var rowCount = this.grid.totalRowCount;
+                var rowCount = this.totalRowCount;
                 var index = this.index;
                 var invIndex = this.invIndex;
                 index.length = invIndex.length = rowCount;

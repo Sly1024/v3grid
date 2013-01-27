@@ -59,6 +59,7 @@ define('v3grid/Grid',
 
                 this.width = config.width || container.clientWidth;
                 this.height = config.height || container.clientHeight;
+                this.data = config.data;
 
                 this.columnsChanged = true;
             },
@@ -66,15 +67,20 @@ define('v3grid/Grid',
             validateConfig: function (config) {
                 config.columns = config.columns || [];
                 config.totalColumnCount = config.columns.length;
-                this.totalRowCount = config.totalRowCount || (config.totalRowCount = (config.data ? config.data.length : 0));
+                config.getData = config.getData || this.getData;
+                config.totalRowCount = config.totalRowCount  || (config.data ? config.data.length : 0);
             },
 
             initFeatures: function (config) {
                 var features = config.features;
                 if (!Adapter.isArray(features)) return;
 
-                for (var len = features.length, i = 0; i < len; ++i) {
+                for (var len = features.length, i = 0; i < len; ++i) if (Adapter.isFunction(features[i].init)) {
                     features[i].init(this, config);
+                }
+
+                for (i = len-1; i >= 0; --i) if (Adapter.isFunction(features[i].initRev)) {
+                    features[i].initRev(this, config);
                 }
             },
 
@@ -618,7 +624,7 @@ define('v3grid/Grid',
                     this.headerView.removeClassFromColumn(this.CLS_HEADER_RES, colIdx);
                     this.tableView.removeClassFromColumn(this.CLS_COLUMN_RES, colIdx);
 //                    if (this.iScroll) this.iScroll.refresh();
-                    this.setSize(this.width+2, this.height+2);
+                    this.setSize();
                 } else {
                     Adapter.setXCSS('.'+this.normalColumns[colIdx].layoutCls, this.tableView.columnPosX[colIdx]);
                     this.headerView.removeClassFromColumn(this.CLS_HEADER_MOVE, colIdx);
@@ -796,8 +802,8 @@ define('v3grid/Grid',
 
             setSize: function (width, height) {
 
-                width -= 2; // border
-                height -= 2; //
+                width = width === undefined ? this.width : width-2; // border
+                height = height === undefined ? this.height : height-2; //
 
                 var headerHeight = this.headerHeight;
                 var availWidth = width;
@@ -807,12 +813,12 @@ define('v3grid/Grid',
 
                 var lockedWidth = this.lockedWidth;
 
-                if (width < lockedWidth || height < headerHeight) return;
+                if (width < 0 /*lockedWidth*/ || height < headerHeight) return;
 
                 this.width = width;
                 this.height = height;
 
-                this.tableWidth = width - lockedWidth;
+                this.tableWidth = Math.max(width - lockedWidth, 0);
                 this.tableHeight = height - headerHeight;
 
                 // containers
@@ -825,7 +831,7 @@ define('v3grid/Grid',
 //                tcStyle.left = /*lockedWidth +*/ '0px';
                 tcStyle.top = headerHeight + 'px';
 
-                var visibleWidth = this.tableContainer.clientWidth - lockedWidth;
+                var visibleWidth = Math.max(this.tableContainer.clientWidth - lockedWidth, 0);
                 var visibleHeight = this.tableContainer.clientHeight;
 
                 var hcStyle = this.headerContainer.style;
@@ -881,7 +887,7 @@ define('v3grid/Grid',
 
                 this.columns[idx].visible = visible;
                 this.columnsChanged = true;
-                this.setSize(this.width+2, this.height+2);
+                this.setSize();
 
                 var lColCnt = this.lockedColumnCount;
                 if (idx < lColCnt) {
@@ -921,7 +927,9 @@ define('v3grid/Grid',
                 if (this.lockedColumnCount > 0) {
                     this.lockedTableView.setTotalRowCount(rowCount);
                 }
-                if (this.iScroll) this.iScroll.refresh();
+                // TODO: figure out what is needed here from setSize (not all I think)
+                this.setSize();
+//                if (this.iScroll) this.iScroll.refresh();
             },
 
             getData: function (row, col) {

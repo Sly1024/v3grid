@@ -1,5 +1,5 @@
-require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector'],
-    function (V3Grid, SortDataProvider, ColumnSelector) {
+require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3grid/FilterDataProvider'],
+    function (V3Grid, SortDataProvider, ColumnSelector, FilterDataProvider) {
         Ext.namespace('v3grid');
         v3grid.V3Grid = V3Grid;
 
@@ -58,6 +58,8 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector'],
 
                 var sorter = new SortDataProvider();
 
+                var filter = new FilterDataProvider();
+
                 var grid = Ext.create('virtualgrid.VirtualGrid', {
                     gridConfig: {
                         lockedColumnCount: 3,
@@ -67,7 +69,7 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector'],
                         rowBatchSize: 2,
                         data: cellData,
                         columns: columns,
-                        features: [sorter, new ColumnSelector()]
+                        features: [filter, sorter, new ColumnSelector()]
                     }
                 });
 
@@ -95,6 +97,11 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector'],
                                             xtype: 'button',
                                             text:'Unsort',
                                             handler: function () { sorter.unSort();}
+                                        },
+                                        {
+                                            xtype: 'button',
+                                            text:'Unfilter',
+                                            handler: function () { filter.filters.length = 0; filter.update();}
                                         },
                                         {
                                             xtype:'label',

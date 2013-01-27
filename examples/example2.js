@@ -1,5 +1,5 @@
-require(['v3grid/Grid', 'v3grid/SortDataProvider'],
-    function (V3Grid, SortDataProvider) {
+require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/FilterDataProvider'],
+    function (V3Grid, SortDataProvider, FilterDataProvider) {
         Ext.namespace('v3grid');
         v3grid.V3Grid = V3Grid;
 
@@ -40,7 +40,7 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider'],
                         columns: columns,
                         getData: function (row, col) { return col+', '+row; },
                         totalRowCount: rowCount,
-                        features: [new SortDataProvider()]
+                        features: [new FilterDataProvider(), new SortDataProvider()]
 //        itemRenderer: 'virtualgrid.TextItemRenderer'
                     }
                 });
