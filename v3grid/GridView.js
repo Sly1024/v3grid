@@ -129,7 +129,7 @@ define('v3grid/GridView', ['v3grid/Adapter', 'v3grid/Utils'], function (Adapter,
                 offset = scrollPos - columnsX[first];
 
             if (offset > 0 && offset + this.visibleWidth < this.visibleColumnsWidth) {
-                console.log('ViewPortH not changed');
+//                console.log('ViewPortH not changed');
                 return false;
             }
 
@@ -172,7 +172,7 @@ define('v3grid/GridView', ['v3grid/Adapter', 'v3grid/Utils'], function (Adapter,
             this.visibleColumnsWidth = columnsX[first+count] - columnsX[first];
             this.visibleColumnCount = count;
 
-            console.log('ViewPortH [', this.firstVisibleColumn, this.visibleColumnCount, ']');
+//            console.log('ViewPortH [', this.firstVisibleColumn, this.visibleColumnCount, ']');
 
             return first != this.prevFirstVisibleColumn || prevCount != count;
         },
@@ -186,7 +186,7 @@ define('v3grid/GridView', ['v3grid/Adapter', 'v3grid/Utils'], function (Adapter,
                 offset = scrollPos - first * rowHeight;
 
             if (offset > 0 && offset + this.visibleHeight < this.visibleRowsHeight) {
-                console.log('ViewPortV not changed');
+//                console.log('ViewPortV not changed');
                 return false;
             }
 
@@ -230,7 +230,7 @@ define('v3grid/GridView', ['v3grid/Adapter', 'v3grid/Utils'], function (Adapter,
             this.visibleRowsHeight = count*rowHeight;
             this.visibleRowCount = count;
 
-            console.log('ViewPortV [', this.firstVisibleRow, this.visibleRowCount, ']');
+//            console.log('ViewPortV [', this.firstVisibleRow, this.visibleRowCount, ']');
 
             return first != this.prevFirstVisibleRow || prevCount != count;
         },
