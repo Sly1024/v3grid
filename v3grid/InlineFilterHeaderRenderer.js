@@ -27,6 +27,7 @@ define('v3grid/InlineFilterHeaderRenderer',
                     this.updateRenderer(config);
                 }
                 this.config = config;
+                this.textInput.value = config.filterString || '';
             },
 
             updateData: function (grid, row, col) {
@@ -37,13 +38,13 @@ define('v3grid/InlineFilterHeaderRenderer',
             filter: function (grid, getData, row) {
                 var value = getData.call(grid, row, this.dataIndex);
                 value = value ? value.toString() : '';
-                return value.indexOf(this.filterString) >= 0;
+                return value.indexOf(this.config.filterString) >= 0;
             },
 
             textInputChanged: function (evt) {
                 var str = evt.target.value;
                 if (str) {
-                    this.filterString = str;
+                    this.config.filterString = str;
                     this.filterDP.addFilter(this);
                 } else {
                     this.filterDP.removeFilter(this);
