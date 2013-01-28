@@ -58,7 +58,7 @@ define('v3grid/GridView', ['v3grid/Adapter', 'v3grid/Utils'], function (Adapter,
             // cache: reuse rows, cells & renderers
             this.availEvenRows = [];
             this.availOddRows = [];
-            this.invalidRows = [];
+            this.invalidRows = [];      // rows that have cells with no column-styles set
 
             // dirtyCells[linearIdx] = true;
             this.dirtyCells = {};
@@ -367,20 +367,17 @@ define('v3grid/GridView', ['v3grid/Adapter', 'v3grid/Utils'], function (Adapter,
         },
 
         removeRowsFromDom: function (rows) {
-            var table = this.table,
-                columns = this.columns, colCount = this.visibleColumnCount,
-                firstCol = this.firstVisibleColumn,
-                colProps = this.columnProperties;
+            var table = this.table;
 
             for (var len = rows.length, a = 0; a < len; ++a) {
-                rows[a].isUsed = false;
+                var row = rows[a];
+                row.isUsed = false;
                 // remove column styles
-                for (var vc = 0; vc < colCount; ++vc) {
-                    Adapter.removeClass(rows[a][vc], columns[vc + firstCol][colProps.finalCls]);
+                for (var colCount = row.count, vc = 0; vc < colCount; ++vc) {
+                    Adapter.removeClass(row[vc], row[vc].finalCls);
                 }
-                var row = rows[a].row;
-                if (row.parentNode == table) {
-                    table.removeChild(row);
+                if (row.row.parentNode == table) {
+                    table.removeChild(row.row);
                 }
             }
         },
@@ -439,11 +436,11 @@ define('v3grid/GridView', ['v3grid/Adapter', 'v3grid/Utils'], function (Adapter,
 
         getRow: function (parentNode, cls, odd) {
             var row, domRow,
-                avail = odd ? this.availOddRows : this.availEvenRows,
-                colProps = this.columnProperties;
+                avail = odd ? this.availOddRows : this.availEvenRows;
+
             // check in the cache
             if (avail.length > 0) {
-                row = avail.shift();
+                row = avail.shift();    // TODO: pop() ??
                 domRow = row.row;
                 if (!row.isUsed) this.invalidRows.push(row);
             } else {
@@ -460,17 +457,14 @@ define('v3grid/GridView', ['v3grid/Adapter', 'v3grid/Utils'], function (Adapter,
             row.isUsed = true;
 
             var count = row.count,
-                visibleCount = this.visibleColumnCount,
-                columns = this.columns,
-                firstCol = this.firstVisibleColumn;
+                visibleCount = this.visibleColumnCount;
 
             while (count > visibleCount) {
                 --count;
-//            Ext.fly(row[count]).removeCls(columns[count + prevFirstCol].cls);
                 domRow.availableCells.push(row[count]);
             }
             while (count < visibleCount) {
-                row[count] = this.getCell(domRow, columns[count + firstCol][colProps.finalCls]);
+                row[count] = this.getCell(domRow);
                 ++count;
             }
 
@@ -524,13 +518,13 @@ define('v3grid/GridView', ['v3grid/Adapter', 'v3grid/Utils'], function (Adapter,
 
         validateColumnStyles: function () {
             var firstCol = this.firstVisibleColumn,
-                columns = this.columns, colCount = this.visibleColumnCount;
+                columns = this.columns, colCount = this.visibleColumnCount,
+                finalCls = this.columnProperties.finalCls;
 
             // need to reapply column styles
             var irows = this.invalidRows, len = irows.length;
-
             for (var vc = 0; vc < colCount; ++vc) {
-                var colCls = columns[vc + firstCol].finalCls;
+                var colCls = columns[vc + firstCol][finalCls];
                 for (var r = 0; r < len; ++r) {
                     Adapter.addClass(irows[r][vc], colCls);
                 }
