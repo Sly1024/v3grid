@@ -60,7 +60,7 @@ define('v3grid/FilterDataProvider',
                         renderer: grid.getRenderer(col.headerRenderer || grid.headerRenderer),
                         rendererConfig: col.headerRendererConfig,
                         filterDataProvider: this,
-                        filter: new TextFilter(col.dataIndex)
+                        filter: new TextFilter(col.dataIndex || i)
                     };
                     col.headerRenderer = this.headerRenderer;
                     col.headerRendererConfig = rendererConfig;
