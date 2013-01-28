@@ -3,7 +3,6 @@ define('v3grid/InlineFilterHeaderRenderer',
     function (Adapter) {
         var Renderer = function (config) {
             this.config = config;
-            this.filterDP = config.filterDataProvider;
 
             var temp = document.createElement('div');
             temp.innerHTML = '<table width="100%" height="100%"><tr><td></td></tr><tr><td valign="bottom"><input type="text" style="width: 100%"></td></tr></table>';
@@ -27,29 +26,24 @@ define('v3grid/InlineFilterHeaderRenderer',
                     this.updateRenderer(config);
                 }
                 this.config = config;
-                this.textInput.value = config.filterString || '';
+                this.textInput.value = config.filter.filterString;
             },
 
             updateData: function (grid, row, col) {
-                this.dataIndex = col.dataIndex;
                 this.renderer.updateData(grid, row, col);
-            },
-
-            filter: function (grid, getData, row) {
-                var value = getData.call(grid, row, this.dataIndex);
-                value = value ? value.toString() : '';
-                return value.indexOf(this.config.filterString) >= 0;
             },
 
             textInputChanged: function (evt) {
                 var str = evt.target.value;
+                var filterDP = this.config.filterDataProvider;
+                var filter = this.config.filter;
                 if (str) {
-                    this.config.filterString = str;
-                    this.filterDP.addFilter(this);
+                    filter.filterString = str;
+                    filterDP.addFilter(filter);
                 } else {
-                    this.filterDP.removeFilter(this);
+                    filterDP.removeFilter(filter);
                 }
-                this.filterDP.update();
+                filterDP.update();
             }
         }
 
