@@ -1,6 +1,6 @@
 define('v3grid/FilterDataProvider',
-    ['v3grid/Adapter', 'v3grid/InlineFilterHeaderRenderer'],
-    function (Adapter, HeaderRenderer) {
+    ['v3grid/Adapter', 'v3grid/InlineFilterHeaderRenderer', 'v3grid/TextFilter'],
+    function (Adapter, HeaderRenderer, TextFilter) {
 
         var FilterDataProvider = function (config) {
             config = config || {};
@@ -52,7 +52,7 @@ define('v3grid/FilterDataProvider',
 
             processColumnRenderers: function (columns) {
                 var grid = this.grid;
-                var colMap = this.columnMap = {};
+                //var colMap = this.columnMap = {};
 
                 for (var len = columns.length, i = 0; i < len; ++i) {
                     var col = columns[i];
@@ -60,11 +60,11 @@ define('v3grid/FilterDataProvider',
                         renderer: grid.getRenderer(col.headerRenderer || grid.headerRenderer),
                         rendererConfig: col.headerRendererConfig,
                         filterDataProvider: this,
-                        dataIdx: col.dataIndex || i
+                        filter: new TextFilter(col.dataIndex)
                     };
                     col.headerRenderer = this.headerRenderer;
                     col.headerRendererConfig = rendererConfig;
-                    colMap[rendererConfig.dataIdx] = rendererConfig;
+                    //colMap[rendererConfig.dataIdx] = rendererConfig;
                 }
             },
 
