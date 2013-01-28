@@ -41,6 +41,7 @@ define('v3grid/InlineFilterHeaderRenderer',
                     filter.filterString = str;
                     filterDP.addFilter(filter);
                 } else {
+                    filter.filterString = '';
                     filterDP.removeFilter(filter);
                 }
                 filterDP.update();
