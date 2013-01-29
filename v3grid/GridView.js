@@ -27,7 +27,7 @@ define('v3grid/GridView', ['v3grid/Adapter', 'v3grid/Utils'], function (Adapter,
         },
 
         setTableSize: function () {
-            this.tableHeight = this.totalRowCount * this.rowHeight;
+            this.tableHeight = (this.totalRowCount * this.rowHeight) || 1;
             this.table.style.height = this.tableHeight + 'px';
 
             this.tableWidth = this.columnPosX[this.columns.length] + this.scrollXOffset;

@@ -1,3 +1,4 @@
+Features:
  + column resizable
  + column resize => fixed width
  + column resize -> recalc widths
@@ -10,6 +11,9 @@
  - getRowStyle(row)
  + formatter feature
  + TreeDP/expandToLevel()
+ - context menu on columns!
+ - try separate scrollbar divs
 
-Bug:
- - expandToLevel() makes scrollbar disappear, visibleWidth not updated
+Bugs:
+ +/ expandToLevel() makes scrollbar disappear, visibleWidth not updated - works now, but need to refine (calling setSize())
+ + show scrollbar even if totalRowCount = 0
