@@ -371,13 +371,15 @@ define('v3grid/GridView', ['v3grid/Adapter', 'v3grid/Utils'], function (Adapter,
 
             for (var len = rows.length, a = 0; a < len; ++a) {
                 var row = rows[a];
-                row.isUsed = false;
-                // remove column styles
-                for (var colCount = row.count, vc = 0; vc < colCount; ++vc) {
-                    Adapter.removeClass(row[vc], row[vc].finalCls);
-                }
-                if (row.row.parentNode == table) {
-                    table.removeChild(row.row);
+                if (row.isUsed) {
+                    row.isUsed = false;
+                    // remove column styles
+                    for (var colCount = row.count, vc = 0; vc < colCount; ++vc) {
+                        Adapter.removeClass(row[vc], row[vc].finalCls);
+                    }
+                    if (row.row.parentNode == table) {
+                        table.removeChild(row.row);
+                    }
                 }
             }
         },
@@ -527,6 +529,7 @@ define('v3grid/GridView', ['v3grid/Adapter', 'v3grid/Utils'], function (Adapter,
                 var colCls = columns[vc + firstCol][finalCls];
                 for (var r = 0; r < len; ++r) {
                     Adapter.addClass(irows[r][vc], colCls);
+                    irows[r][vc].finalCls = colCls;
                 }
             }
             irows.length = 0;

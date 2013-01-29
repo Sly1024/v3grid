@@ -23,10 +23,13 @@ define('v3grid/Adapter', [], function () {
 
         addClass: function (element, cls) { Ext.fly(element).addCls(cls); },
         removeClass: function (element, cls) {
-            if (!cls) return;
-            if (!Ext.fly(element).hasCls(cls)) {
-                console.log('Oops, no cls', element, cls);
-            }
+//            if (!cls) {
+//                console.log('Oops, no cls', cls);
+//                return;
+//            }
+//            if (!Ext.fly(element).hasCls(cls)) {
+//                console.log('Oops, no cls', element, cls);
+//            }
             Ext.fly(element).removeCls(cls);
         },
 
