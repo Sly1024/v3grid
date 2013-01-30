@@ -1,4 +1,6 @@
-define('v3grid/GridView', ['v3grid/Adapter', 'v3grid/Utils'], function (Adapter, Utils) {
+define('v3grid/GridView',
+    ['v3grid/Adapter', 'v3grid/Utils', 'v3grid/DOMCache'],
+    function (Adapter, Utils, DOMCache) {
 
     var GridView = function (config) {
         Adapter.merge(this, config);
@@ -55,10 +57,35 @@ define('v3grid/GridView', ['v3grid/Adapter', 'v3grid/Utils'], function (Adapter,
             // DOM elements
             this.visibleCells = [];           // [vrow][vcol] = cell <div>; [vrow].row = row <div>
 
-            // cache: reuse rows, cells & renderers
-            this.availEvenRows = [];
-            this.availOddRows = [];
-            this.invalidRows = [];      // rows that have cells with no column-styles set
+            var gridView = this;
+            var rowCacheConfig = {
+                parentDom: this.table,
+                rowCls: this.CLS_ROW + ' ' + this.CLS_ROW_SIZE + ' even',
+                create: function () {
+                    var row = [];
+                    Adapter.addClass(row.dom = document.createElement('div'), this.rowCls);
+                    row.cells = new DOMCache(/*???*/);
+                    return row;
+                },
+                initializeItem: function (row) {
+                    while (row.length > gridView.visibleColumnCount) {
+                        row.cells.remove(row[--row.length]);
+                    }
+                    while (row.length < gridView.visibleColumnCount) {
+                        row[row.length] = row.cells.add();
+                    }
+                }
+            };
+
+            // even & odd rows
+            this.rows = [new DOMCache(rowCacheConfig)];
+            rowCacheConfig.rowCls = this.CLS_ROW + ' ' + this.CLS_ROW_SIZE + ' odd';
+            this.rows[1] = new DOMCache(rowCacheConfig);
+
+//            // cache: reuse rows, cells & renderers
+//            this.availEvenRows = [];
+//            this.availOddRows = [];
+//            this.invalidRows = [];      // rows that have cells with no column-styles set
 
             // dirtyCells[linearIdx] = true;
             this.dirtyCells = {};

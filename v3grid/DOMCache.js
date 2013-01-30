@@ -54,7 +54,7 @@ define('v3grid/DOMCache',
                 var addToDom = this.addToDom;
 
                 for (len = addToDom.length, i = 0; i < len; ++i) {
-                    item = addToDom[i]
+                    item = addToDom[i];
                     parentDom.appendChild(item.dom);
                     item.inDom = true;
                 }
