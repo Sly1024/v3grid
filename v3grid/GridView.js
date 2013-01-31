@@ -55,7 +55,7 @@ define('v3grid/GridView',
             this.lastVScrollPos = 0;
 
             // DOM elements
-            this.visibleCells = [];           // [vrow][vcol] = cell <div>; [vrow].row = row <div>
+//            this.visibleCells = [];           // [vrow][vcol] = cell <div>; [vrow].row = row <div>
 
             var gridView = this;
             var rowCacheConfig = {
@@ -64,28 +64,54 @@ define('v3grid/GridView',
                 create: function () {
                     var row = [];
                     Adapter.addClass(row.dom = document.createElement('div'), this.rowCls);
-                    row.cells = new DOMCache(/*???*/);
+                    row.cache = new DOMCache({
+                        parentDom: row.dom,
+                        create: function () {
+                            var cell = { dom: document.createElement('div') };
+                            Adapter.addClass(cell.dom, gridView.CLS_CELL);
+                            gridView.makeUnSelectable(cell.dom);
+                            return cell;
+                        },
+                        initializeItem: function(cell, cls) {
+                            Adapter.addClass(cell.dom, cls);
+                            cell.cls = cls;
+                        },
+                        itemReleased: function (cell) {
+                            Adapter.removeClass(cell.dom, cell.cls);
+                        }
+                    });
                     return row;
                 },
                 initializeItem: function (row) {
+                    var cache = row.cache;
+
                     while (row.length > gridView.visibleColumnCount) {
-                        row.cells.remove(row[--row.length]);
+                        cache.release(row[--row.length]);
                     }
+
+                    var columns = gridView.columns,
+                        firstCol = gridView.firstVisibleColumn,
+                        finalCls = gridView.columnProperties.finalCls;
+
                     while (row.length < gridView.visibleColumnCount) {
-                        row[row.length] = row.cells.add();
+                        row[row.length] = cache.get(columns[row.length + firstCol][finalCls]);
+                    }
+
+                    cache.validate();
+                },
+                itemRemoved: function(row) {
+                    var cache = row.cache;
+                    for (var len = row.length, i = 0; i < len; ++i) {
+                        cache.release(row[i]);
                     }
                 }
             };
 
             // even & odd rows
-            this.rows = [new DOMCache(rowCacheConfig)];
+            this.visibleCells = [];
+            this.visibleCells.cache = [new DOMCache(rowCacheConfig)];
             rowCacheConfig.rowCls = this.CLS_ROW + ' ' + this.CLS_ROW_SIZE + ' odd';
-            this.rows[1] = new DOMCache(rowCacheConfig);
-
-//            // cache: reuse rows, cells & renderers
-            this.availEvenRows = [];
-            this.availOddRows = [];
-            this.invalidRows = [];      // rows that have cells with no column-styles set
+            this.visibleCells.cache[1] = new DOMCache(rowCacheConfig);
 
             // dirtyCells[linearIdx] = true;
             this.dirtyCells = {};
@@ -280,7 +306,6 @@ define('v3grid/GridView',
                 cells = this.visibleCells,
                 recycleColumn = this.recycleColumn,
                 addColumn = this.addColumn,
-                removeRowCellsFromDom = this.removeRowCellsFromDom,
                 copyVisibleColumn = this.copyVisibleColumn,
                 shiftOffset = this.prevFirstVisibleColumn - this.firstVisibleColumn,
                 overlapFrom = -shiftOffset,
@@ -314,7 +339,7 @@ define('v3grid/GridView',
 
             // remove cells from dom
             for (var rowCnt = this.visibleRowCount, vr = 0; vr < rowCnt; ++vr) {
-                removeRowCellsFromDom(cells[vr].row);
+                cells[vr].cache.validate();
             }
 
 //        function range(from, to) {
@@ -371,9 +396,8 @@ define('v3grid/GridView',
             this.overlapTo = overlapTo;
 
             // remove rows from dom if needed
-            this.removeRowsFromDom(this.availEvenRows);
-            this.removeRowsFromDom(this.availOddRows);
-            this.validateColumnStyles();
+            cells.cache[0].validate();
+            cells.cache[1].validate();
 
 //        function range(from, to) {
 //            return (from == to ? '-' : (to-from)+'('+from+'-'+(to-1)+')');
@@ -386,43 +410,17 @@ define('v3grid/GridView',
 //            ' added:['+range(0,overlapFrom)+', '+range(overlapTo,this.visibleRowCount)+']');
         },
 
-        removeRowCellsFromDom: function (domRow) {
-            for(var cells = domRow.availableCells, len = cells.length, i = 0; i < len; ++i) {
-                var cell = cells[i];
-                if (cell.parentNode == domRow) domRow.removeChild(cell);
-            }
-        },
-
-        removeRowsFromDom: function (rows) {
-            var table = this.table;
-
-            for (var len = rows.length, a = 0; a < len; ++a) {
-                var row = rows[a];
-                if (row.isUsed) {
-                    row.isUsed = false;
-                    // remove column styles
-                    for (var colCount = row.count, vc = 0; vc < colCount; ++vc) {
-                        Adapter.removeClass(row[vc], row[vc].finalCls);
-                    }
-                    if (row.row.parentNode == table) {
-                        table.removeChild(row.row);
-                    }
-                }
-            }
-        },
-
         columnProperties: { renderer: 'renderer', rendererConfig: 'rendererConfig', finalCls: 'finalCls'},
 
         addColumn: function (vc) {
             var cells = this.visibleCells,
-                getCell = this.getCell,
                 column = this.columns[this.firstVisibleColumn + vc],
                 colCls = column[this.columnProperties.finalCls],
                 count = this.visibleRowCount,
                 vr, dr;
 
             for (vr = 0, dr = this.firstVisibleRow; vr < count; ++vr, ++dr) {
-                cells[vr][vc] = getCell.call(this, cells[vr].row, colCls);
+                cells[vr][vc] = cells[vr].cache.get(colCls); //getCell.call(this, cells[vr].row, colCls);
             }
             this.updateVisibleColumn(vc);
         },
@@ -455,70 +453,13 @@ define('v3grid/GridView',
                 colProps = this.columnProperties,
                 updateCell = this.updateCell;
 
-            cells[vr] = this.getRow(this.table, this.CLS_ROW + ' ' + this.CLS_ROW_SIZE, dr & 1);
+//            cells[vr] = this.getRow(this.table, this.CLS_ROW + ' ' + this.CLS_ROW_SIZE, dr & 1);
+            cells[vr] = cells.cache[dr & 1].get();
 
             for (var count = this.visibleColumnCount, vc = 0, dc = this.firstVisibleColumn; vc < count; ++vc, ++dc) {
                 updateCell.call(this, dr, columns[dc], cells[vr][vc],
                     columns[dc][colProps.renderer], columns[dc][colProps.rendererConfig]);
             }
-        },
-
-        getRow: function (parentNode, cls, odd) {
-            var row, domRow,
-                avail = odd ? this.availOddRows : this.availEvenRows;
-
-            // check in the cache
-            if (avail.length > 0) {
-                row = avail.shift();    // TODO: pop() ??
-                domRow = row.row;
-                if (!row.isUsed) this.invalidRows.push(row);
-            } else {
-                // create new
-                row = [];
-                row.row = domRow = document.createElement('div');
-                domRow.availableCells = [];
-                row.count = 0;
-                this.invalidRows.push(row);
-                if (cls) Adapter.addClass(domRow, cls);
-                if (odd !== undefined) Adapter.addClass(domRow, odd ? 'odd' : 'even');
-            }
-
-            row.isUsed = true;
-
-            var count = row.count,
-                visibleCount = this.visibleColumnCount;
-
-            while (count > visibleCount) {
-                --count;
-                domRow.availableCells.push(row[count]);
-            }
-            while (count < visibleCount) {
-                row[count] = this.getCell(domRow);
-                ++count;
-            }
-
-            if (domRow.parentNode != parentNode) parentNode.appendChild(domRow);
-
-            return row;
-        },
-
-        getCell: function (domRow, cls) {
-            var cell;
-
-            // first check in the cache
-            if (domRow.availableCells.length > 0) cell =  domRow.availableCells.pop();
-            else {
-                // create new
-                cell = document.createElement('div');
-                this.makeUnSelectable(cell);
-                Adapter.addClass(cell, this.CLS_CELL);
-            }
-            if (cls) {
-                Adapter.addClass(cell, cls);
-                cell.finalCls = cls;
-            }
-            if (cell.parentNode != domRow) domRow.appendChild(cell);
-            return cell;
         },
 
         makeUnSelectable:function (dom) {
@@ -538,28 +479,11 @@ define('v3grid/GridView',
                 vr;
 
             for (vr = 0; vr < oFrom; ++vr) {
-                Adapter.setY(vcells[vr].row, (vr + firstRow) * rowHeight);
+                Adapter.setY(vcells[vr].dom, (vr + firstRow) * rowHeight);
             }
             for (vr = this.overlapTo; vr < count; ++vr) {
-                Adapter.setY(vcells[vr].row, (vr + firstRow) * rowHeight);
+                Adapter.setY(vcells[vr].dom, (vr + firstRow) * rowHeight);
             }
-        },
-
-        validateColumnStyles: function () {
-            var firstCol = this.firstVisibleColumn,
-                columns = this.columns, colCount = this.visibleColumnCount,
-                finalCls = this.columnProperties.finalCls;
-
-            // need to reapply column styles
-            var irows = this.invalidRows, len = irows.length;
-            for (var vc = 0; vc < colCount; ++vc) {
-                var colCls = columns[vc + firstCol][finalCls];
-                for (var r = 0; r < len; ++r) {
-                    Adapter.addClass(irows[r][vc], colCls);
-                    irows[r][vc].finalCls = colCls;
-                }
-            }
-            irows.length = 0;
         },
 
         addClassToColumn: function (cls, colIdx) {
@@ -586,18 +510,14 @@ define('v3grid/GridView',
         // recycle column cells
         recycleColumn: function(vc) {
             var cells = this.visibleCells;
-//            var dc = vc + this.prevFirstVisibleColumn;
 
             for (var count = this.visibleRowCount, vr = 0; vr < count; ++vr) {
-                cells[vr].row.availableCells.push(cells[vr][vc]);
-                Adapter.removeClass(cells[vr][vc], cells[vr][vc].finalCls);
+                cells[vr].cache.release(cells[vr][vc]);
             }
         },
 
         recycleRow: function (vr, dr) {
-            var row = this.visibleCells[vr];
-            ((dr & 1) ? this.availOddRows : this.availEvenRows).push(row);
-            row.count = this.visibleColumnCount;
+            this.visibleCells.cache[dr & 1].release(this.visibleCells[vr]);
         },
 
         updateCell: function (row, col, cell, rendererType, rendererConfig) {
@@ -622,7 +542,7 @@ define('v3grid/GridView',
 
             if (cell.renderer !== renderer) {
                 if (renderer && renderer.view.parentNode) renderer.view.parentNode.removeChild(renderer.view);
-                if (cell.firstChild) cell.removeChild(cell.firstChild);
+                if (cell.dom.firstChild) cell.dom.removeChild(cell.firstChild);
             }
 
             if (col.visible) {
@@ -632,7 +552,7 @@ define('v3grid/GridView',
 
             if (cell.renderer !== renderer) {
                 cell.renderer = renderer;
-                if (renderer) cell.appendChild(renderer.view);
+                if (renderer) cell.dom.appendChild(renderer.view);
             }
         },
 
@@ -732,7 +652,7 @@ define('v3grid/GridView',
 
         highlightRow: function (row) {
             var vrow = row - this.firstVisibleRow,
-                hlRow = (vrow >= 0 && vrow < this.visibleRowCount) ? this.visibleCells[vrow].row : null,
+                hlRow = (vrow >= 0 && vrow < this.visibleRowCount) ? this.visibleCells[vrow].dom : null,
                 oldHlRow = this.highlightedRow;
 
             if (oldHlRow === hlRow) return;
