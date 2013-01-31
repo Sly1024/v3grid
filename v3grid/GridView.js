@@ -83,11 +83,13 @@ define('v3grid/GridView',
                     return row;
                 },
                 initializeItem: function (row) {
-                    var cache = row.cache;
+                    var cache = row.cache,
+                        len = row.length;
 
-                    while (row.length > gridView.visibleColumnCount) {
-                        cache.release(row[--row.length]);
+                    while (len > gridView.visibleColumnCount) {
+                        cache.release(row[--len]);
                     }
+                    row.length = len;
 
                     var columns = gridView.columns,
                         firstCol = gridView.firstVisibleColumn,
