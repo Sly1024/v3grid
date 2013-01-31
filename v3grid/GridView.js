@@ -83,9 +83,9 @@ define('v3grid/GridView',
             this.rows[1] = new DOMCache(rowCacheConfig);
 
 //            // cache: reuse rows, cells & renderers
-//            this.availEvenRows = [];
-//            this.availOddRows = [];
-//            this.invalidRows = [];      // rows that have cells with no column-styles set
+            this.availEvenRows = [];
+            this.availOddRows = [];
+            this.invalidRows = [];      // rows that have cells with no column-styles set
 
             // dirtyCells[linearIdx] = true;
             this.dirtyCells = {};
