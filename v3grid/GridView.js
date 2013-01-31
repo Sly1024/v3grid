@@ -542,7 +542,7 @@ define('v3grid/GridView',
 
             if (cell.renderer !== renderer) {
                 if (renderer && renderer.view.parentNode) renderer.view.parentNode.removeChild(renderer.view);
-                if (cell.dom.firstChild) cell.dom.removeChild(cell.firstChild);
+                if (cell.dom.firstChild) cell.dom.removeChild(cell.dom.firstChild);
             }
 
             if (col.visible) {
