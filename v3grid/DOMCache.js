@@ -17,25 +17,31 @@ define('v3grid/DOMCache',
         Cache.prototype = {
 
             // returns instance
-            add: function () {
+            get: function () {
                 var item;
                 if (this.available.length) {
                     item = this.available.pop();
                 } else {
-                    item = this.create();
+                    item = this.create.apply(this, arguments);
                     item.inDom = false;
                 }
 
                 if (!item.inDom) this.addToDom.push(item);
 
-                this.initializeItem(item);
+                if (this.initializeItem) {
+                    Array.prototype.unshift.call(arguments, item);
+                    this.initializeItem.apply(this, arguments);
+                }
 
                 return item;
             },
 
-            remove: function(item) {
+            release: function(item) {
                 if (item.inDom) {
                     this.available.push(item);
+                    if (this.itemReleased) {
+                        this.itemReleased(item);
+                    }
                 }
             },
 
@@ -48,6 +54,7 @@ define('v3grid/DOMCache',
                     if (item.inDom) {
                         parentDom.removeChild(item.dom);
                         item.inDom = false;
+                        this.itemRemoved(item);
                     }
                 }
 
@@ -61,7 +68,7 @@ define('v3grid/DOMCache',
                 addToDom.length = 0;
             },
 
-            initializeItem: Adapter.emptyFn
+            itemRemoved: Adapter.emptyFn
         }
 
         return Cache;
