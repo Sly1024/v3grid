@@ -20,6 +20,9 @@ define('v3grid/Grid',
         };
 
         Grid.prototype = {
+            // static instance counter:
+            instanceCnt: 0,
+
             rowHeight: 22,
             headerHeight: 22,
             defaultColumnWidth: 100,
@@ -37,19 +40,23 @@ define('v3grid/Grid',
             verticalSeparatorColor: 'lightgrey',
             horizontalSeparatorColor: 'lightgrey',
 
-            // CSS class constants:
+            // user CSS classes:
             CLS_TABLE      : 'v3grid-table',
             CLS_HEADER_ROW : 'v3grid-header-row',
-            CLS_HEADER_SIZE: 'v3grid-header-size',
-            CLS_CELL       : 'v3grid-cell',
             CLS_ROW        : 'v3grid-row',
-            CLS_ROW_SIZE   : 'v3grid-row-size',
             CLS_COLUMN_MOVE: 'v3grid-column-move',
             CLS_HEADER_MOVE: 'v3grid-header-move',
             CLS_COLUMN_RES : 'v3grid-column-resize',
             CLS_HEADER_RES : 'v3grid-header-resize',
 
             initProperties: function (config) {
+                var num = this.instanceNum = ++Grid.prototype.instanceCnt;
+
+                // generated CSS classes
+                this.CLS_CELL        = 'v3grid-' + num + '-cell';
+                this.CLS_ROW_SIZE    = 'v3grid-' + num + '-row-size';
+                this.CLS_HEADER_SIZE = 'v3grid-' + num + '-header-size';
+
                 var container = Adapter.isString(config.renderTo) ?
                     document.getElementById(config.renderTo) : config.renderTo;
 
@@ -85,6 +92,7 @@ define('v3grid/Grid',
             },
 
             createStyles: function () {
+                var num = this.instanceNum;
 
                 function cssEncode(cssClass, obj) {
                     return '.' + cssClass + '{' + Utils.styleEncode(obj) + '}';
@@ -117,19 +125,19 @@ define('v3grid/Grid',
 
                     // user specified style/headerStyle
                     if (col.style) {
-                        clsName = 'v3grid-column'+c+'-user';
+                        clsName = 'v3grid-'+num+'-column'+c+'-user';
                         rules.push(cssEncode(clsName, col.style));
                         finalCls.push(clsName);
                     }
 
                     if (col.headerStyle) {
-                        clsName = 'v3grid-header-'+c+'-user';
+                        clsName = 'v3grid-'+num+'-header-'+c+'-user';
                         rules.push(cssEncode(clsName, col.headerStyle));
                         finalHeaderCls.push(clsName);
                     }
 
                     // generated layout classes
-                    clsName = 'v3grid-column'+c+'-layout';
+                    clsName = 'v3grid-'+num+'-column'+c+'-layout';
                     finalCls.push(col.layoutCls = clsName);
                     finalHeaderCls.push(clsName);
                     rules.push('.'+clsName+'{}');
@@ -154,14 +162,11 @@ define('v3grid/Grid',
                     height  : this.headerHeight + 'px'
                 }));
 
-                // TODO: remove when grid is destroyed!
-                this.styleID = this.generateUID();
-                Adapter.createStyleSheet(rules.join(''), 'v3grid-style-' + this.styleID);
-
+                Adapter.createStyleSheet(rules.join(''), 'v3grid-' + num + '-style');
             },
 
             destroy: function () {
-
+                Adapter.removeStyleSheet('v3grid-' + this.instanceNum + '-style');
             },
 
             // not real GUID, but I just need a big random number

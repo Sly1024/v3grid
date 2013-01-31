@@ -55,7 +55,6 @@ define('v3grid/GridView',
             this.lastVScrollPos = 0;
 
             // DOM elements
-//            this.visibleCells = [];           // [vrow][vcol] = cell <div>; [vrow].row = row <div>
 
             var gridView = this;
             var rowCacheConfig = {
@@ -78,26 +77,28 @@ define('v3grid/GridView',
                         },
                         itemReleased: function (cell) {
                             Adapter.removeClass(cell.dom, cell.cls);
+                            cell.cls = undefined;
                         }
                     });
                     return row;
                 },
                 initializeItem: function (row) {
-                    var cache = row.cache,
-                        len = row.length;
-
-                    while (len > gridView.visibleColumnCount) {
-                        cache.release(row[--len]);
-                    }
-                    row.length = len;
-
                     var columns = gridView.columns,
                         firstCol = gridView.firstVisibleColumn,
-                        finalCls = gridView.columnProperties.finalCls;
+                        finalCls = gridView.columnProperties.finalCls,
+                        cache = row.cache,
+                        columnCount = gridView.visibleColumnCount,
+                        len = row.length;
 
-                    while (row.length < gridView.visibleColumnCount) {
-                        row[row.length] = cache.get(columns[row.length + firstCol][finalCls]);
+                    while (len > columnCount) {
+                        cache.release(row[--len]);
                     }
+
+                    while (len < columnCount) {
+                        row[len] = cache.get(columns[len + firstCol][finalCls]);
+                        ++len;
+                    }
+                    row.length = len;
 
                     cache.validate();
                 },
@@ -106,11 +107,14 @@ define('v3grid/GridView',
                     for (var len = row.length, i = 0; i < len; ++i) {
                         cache.release(row[i]);
                     }
+                    row.length = 0;
                 }
             };
 
-            // even & odd rows
+            // [vrow] = { dom: <div>, cache: DOMCache }
+            // [vrow][vcol] = cell = { dom: <div> }
             this.visibleCells = [];
+            // even & odd rows
             this.visibleCells.cache = [new DOMCache(rowCacheConfig)];
             rowCacheConfig.rowCls = this.CLS_ROW + ' ' + this.CLS_ROW_SIZE + ' odd';
             this.visibleCells.cache[1] = new DOMCache(rowCacheConfig);
