@@ -15,7 +15,7 @@ define('v3grid/Adapter', [], function () {
         indexOf: Ext.Array.indexOf,
         merge: Ext.apply,
         bindScope: Ext.bind,
-        error: function (msg) { throw new Error(msg); },
+        error: Ext.Error.raise,
 
         getClass: function (cls) { return Ext.isString(cls) ? Ext.ClassManager.get(cls) : cls; },
 
@@ -83,17 +83,17 @@ define('v3grid/Adapter', [], function () {
             if (Adapter.isWebKit) {
                 this.setY = function (el, val) { el.style['-webkit-transform'] = 'translate3d(0,'+ val + 'px,0)'; };
                 this.transXProp = '-webkit-transform';
-            } else if (Adapter.isFireFox) {
+
+                // In FireFox I use top/left, because it seems to be faster
+
+//            } else if (Adapter.isFireFox) {
 //                this.setY = function (el, val) { el.style['MozTransform'] = 'translate3d(0,'+ val + 'px,0)'; };
-                this.setY = function (el, val) { el.style['top'] = val + 'px'; };
 //                this.transXProp = 'MozTransform';
-                this.transXProp = 'left';
-                this.transXPre = '';
-                this.transXPost = '';
+//                this.transXPre = 'translate3d(';
+//                this.transXPost = ',0,0)';
             } else if (Adapter.ieVersion >= 9) {
                 this.setY = function (el, val) { el.style['msTransform'] = 'translateY('+ val + 'px)'; };
                 this.transXProp = 'msTransform';
-
             } else {
                 this.setY = function (el, val) { el.style['top'] = val + 'px'; };
                 this.transXPre = '';

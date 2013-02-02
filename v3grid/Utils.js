@@ -101,10 +101,12 @@ define('v3grid/Utils', ['v3grid/Adapter'], function (Adapter) {
     }
 
     if(Adapter.isIE) {
-        Adapter.addListener(document, 'load', getScrollBarWidth);
+//        Adapter.addListener(document, 'load', getScrollBarWidth);
+        Utils.scrollbarSize = 17;
     } else {
         getScrollBarWidth();
     }
+
 
 
     return Utils;

@@ -812,32 +812,43 @@ define('v3grid/Grid',
 
                 var headerHeight = this.headerHeight;
                 var availWidth = width;
-                if (this.totalRowCount * this.rowHeight + headerHeight > height) availWidth -= 18; // TODO: scrollbar width
+                if (this.totalRowCount * this.rowHeight + headerHeight > height) availWidth -= Utils.scrollbarSize;
 
                 this.applyColumnWidths(availWidth);
 
                 var lockedWidth = this.lockedWidth;
 
-                if (width < 0 /*lockedWidth*/ || height < headerHeight) return;
+                if (width < 0 || height < 0) return;
 
                 this.width = width;
                 this.height = height;
 
                 this.tableWidth = Math.max(width - lockedWidth, 0);
-                this.tableHeight = height - headerHeight;
+                this.tableHeight = Math.max(height - headerHeight, 0);
 
                 // containers
                 this.panel.style.width = width + 'px';
                 this.panel.style.height = height + 'px';
 
-                var tcStyle = this.tableContainer.style;
-                tcStyle.width = /*this.tableWidth*/ width + 'px';
+                var tContainer = this.tableContainer;
+                var tcStyle = tContainer.style;
+                tcStyle.width = /*this.tableWidth*/ (width) + 'px';
+
+//                if (Adapter.isIE && tContainer.clientWidth < tContainer.scrollWidth) {
+//                    tcStyle.width = /*this.tableWidth*/ (width + Utils.scrollbarSize) + 'px';
+//                }
+
                 tcStyle.height = this.tableHeight + 'px';
+
+//                if (Adapter.isIE && tContainer.clientHeight < tContainer.scrollHeight) {
+//                    tcStyle.height = (this.tableHeight + Utils.scrollbarSize) + 'px';
+//                }
+
 //                tcStyle.left = /*lockedWidth +*/ '0px';
                 tcStyle.top = headerHeight + 'px';
 
-                var visibleWidth = Math.max(this.tableContainer.clientWidth - lockedWidth, 0);
-                var visibleHeight = this.tableContainer.clientHeight;
+                var visibleWidth = Math.max(tContainer.clientWidth - lockedWidth, 0);
+                var visibleHeight = tContainer.clientHeight;
 
                 var hcStyle = this.headerContainer.style;
                 hcStyle.width = visibleWidth + 'px';
@@ -858,8 +869,8 @@ define('v3grid/Grid',
                     this.lockedTableView.setVisibleSize(lockedWidth, visibleHeight);
                 }
 
-                this.maxScrollX = this.tableContainer.scrollWidth - visibleWidth;
-                this.maxScrollY = this.tableContainer.scrollHeight - visibleHeight;
+                this.maxScrollX = tContainer.scrollWidth - visibleWidth;
+                this.maxScrollY = tContainer.scrollHeight - visibleHeight;
 
                 this.headerView.setVisibleSize(visibleWidth, headerHeight);
                 this.tableView.setVisibleSize(visibleWidth, visibleHeight);

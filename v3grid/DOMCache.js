@@ -16,6 +16,10 @@ define('v3grid/DOMCache',
 
         Cache.prototype = {
 
+            itemRemoved: Adapter.emptyFn,
+            itemReleased: Adapter.emptyFn,
+            initializeItem: Adapter.emptyFn,
+
             // returns instance
             get: function () {
                 var item;
@@ -28,10 +32,8 @@ define('v3grid/DOMCache',
 
                 if (!item.inDom) this.addToDom.push(item);
 
-                if (this.initializeItem) {
-                    Array.prototype.unshift.call(arguments, item);
-                    this.initializeItem.apply(this, arguments);
-                }
+                Array.prototype.unshift.call(arguments, item);
+                this.initializeItem.apply(this, arguments);
 
                 return item;
             },
@@ -39,9 +41,7 @@ define('v3grid/DOMCache',
             release: function(item) {
                 if (item.inDom) {
                     this.available.push(item);
-                    if (this.itemReleased) {
-                        this.itemReleased(item);
-                    }
+                    this.itemReleased(item);
                 }
             },
 
@@ -66,9 +66,7 @@ define('v3grid/DOMCache',
                     item.inDom = true;
                 }
                 addToDom.length = 0;
-            },
-
-            itemRemoved: Adapter.emptyFn
+            }
         }
 
         return Cache;

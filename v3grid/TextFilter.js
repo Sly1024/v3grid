@@ -10,7 +10,7 @@ define('v3grid/TextFilter',
 
       filter: function (grid, getData, row) {
         var value = getData.call(grid, row, this.columnName);
-        value = value ? value.toString() : '';
+        if (typeof value !== 'string') value = value ? value.toString() : '';
         return value.indexOf(this.filterString) >= 0;
       }
     }
