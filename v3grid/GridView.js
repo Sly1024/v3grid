@@ -8,7 +8,7 @@ define('v3grid/GridView',
         this.initProperties();
         this.validateConfig();
         this.attachHandlers();
-        this.throttledUpdateDirtyCells = Utils.createThrottled(this.updateDirtyCells, 200, this);
+        this.throttledUpdateDirtyCells = Adapter.createThrottled(this.updateDirtyCells, 200, this);
 
         this.columnPosX = this.columnPosX || new Array(this.columns.length+1);
         this.dataIdx2ColIdx = this.dataIdx2ColIdx || {};

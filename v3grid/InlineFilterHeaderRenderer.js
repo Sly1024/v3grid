@@ -8,7 +8,13 @@ define('v3grid/InlineFilterHeaderRenderer',
             temp.innerHTML = '<table width="100%" height="100%"><tr><td></td></tr><tr><td valign="bottom"><input type="text" style="width: 100%"></td></tr></table>';
             this.view = temp.firstChild;
             this.textInput = this.view.getElementsByTagName('input')[0];
-            Adapter.addListener(this.textInput, 'input', this.textInputChanged, this);
+
+            this.bufferedInputChanged = Adapter.createBuffered(this.textInputChanged, 200, this);
+
+            Adapter.addListener(this.textInput, 'change', this.bufferedInputChanged, this);
+            Adapter.addListener(this.textInput, 'keydown', this.bufferedInputChanged, this);
+            Adapter.addListener(this.textInput, 'paste', this.bufferedInputChanged, this);
+            Adapter.addListener(this.textInput, 'input', this.bufferedInputChanged, this);
 
             this.rendererContainer = this.view.getElementsByTagName('td')[0];
             this.updateRenderer(config);
@@ -33,8 +39,8 @@ define('v3grid/InlineFilterHeaderRenderer',
                 this.renderer.updateData(grid, row, col);
             },
 
-            textInputChanged: function (evt) {
-                var str = evt.target.value;
+            textInputChanged: function () {
+                var str = this.textInput.value;
                 var filterDP = this.config.filterDataProvider;
                 var filter = this.config.filter;
                 if (str) {

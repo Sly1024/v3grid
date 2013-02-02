@@ -14,26 +14,6 @@ define('v3grid/Utils', ['v3grid/Adapter'], function (Adapter) {
             img.src = null;
         },
 
-        // There's a Ext.Function.createThrottled, but it does clearTimeout()/setTimeout() unnecessarily
-        createThrottled: function (fn, interval, scope) {
-            var lastCallTime = 0, lastArgs, timer = -1, execute = function() {
-                fn.apply(scope || this, lastArgs);
-                lastCallTime = +new Date();
-                timer = -1;
-            };
-
-            return function() {
-                var elapsed = +new Date() - lastCallTime;
-                lastArgs = arguments;
-
-                if (elapsed >= interval) {
-                    execute();
-                } else if (timer == -1) {
-                    timer = setTimeout(execute, interval - elapsed);
-                }
-            };
-        },
-
         minMax: function (num, min, max) {
             if (num < min) return min;
             if (num > max) return max;
@@ -94,7 +74,7 @@ define('v3grid/Utils', ['v3grid/Adapter'], function (Adapter) {
         }
     }
 
-    Utils.scrollbarSize = (function getScrollBarWidth () {
+    function getScrollBarWidth () {
         var inner = document.createElement('p');
         inner.style.width = "100%";
         inner.style.height = "2000px";
@@ -117,8 +97,15 @@ define('v3grid/Utils', ['v3grid/Adapter'], function (Adapter) {
 
         document.body.removeChild (outer);
 
-        return (w1 - w2);
-    })();
+        Utils.scrollbarSize = (w1 - w2);
+    }
+
+    if(Adapter.isIE) {
+        Adapter.addListener(document, 'load', getScrollBarWidth);
+    } else {
+        getScrollBarWidth();
+    }
+
 
     return Utils;
 });

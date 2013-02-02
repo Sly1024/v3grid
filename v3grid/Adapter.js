@@ -5,6 +5,7 @@ define('v3grid/Adapter', [], function () {
         isWebKit: Ext.isWebKit,
         isFireFox: Ext.firefoxVersion > 0,
         isIE: Ext.isIE,
+        ieVersion: Ext.ieVersion,
         emptyFn: Ext.emptyFn,
 
         // functions
@@ -24,6 +25,9 @@ define('v3grid/Adapter', [], function () {
 
         addClass: function (element, cls) { Ext.fly(element).addCls(cls); },
         removeClass: function (element, cls) { Ext.fly(element).removeCls(cls); },
+
+        createThrottled: Ext.Function.createThrottled,
+        createBuffered: Ext.Function.createBuffered,
 
         listeners: [],
 
@@ -78,7 +82,6 @@ define('v3grid/Adapter', [], function () {
 
             if (Adapter.isWebKit) {
                 this.setY = function (el, val) { el.style['-webkit-transform'] = 'translate3d(0,'+ val + 'px,0)'; };
-//                this.setY = function (el, val) { el.style['-webkit-transform'] = 'translateY('+ val + 'px)'; };
                 this.transXProp = '-webkit-transform';
             } else if (Adapter.isFireFox) {
 //                this.setY = function (el, val) { el.style['MozTransform'] = 'translate3d(0,'+ val + 'px,0)'; };
@@ -87,9 +90,10 @@ define('v3grid/Adapter', [], function () {
                 this.transXProp = 'left';
                 this.transXPre = '';
                 this.transXPost = '';
-            } else if (Adapter.isIE) {
+            } else if (Adapter.ieVersion >= 9) {
                 this.setY = function (el, val) { el.style['msTransform'] = 'translateY('+ val + 'px)'; };
                 this.transXProp = 'msTransform';
+
             } else {
                 this.setY = function (el, val) { el.style['top'] = val + 'px'; };
                 this.transXPre = '';
