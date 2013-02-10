@@ -14,9 +14,11 @@ define('v3grid/FilterDataProvider',
                 this.grid = grid;
 
                 var origGetData = this.origGetData = config.getData;
+                var origGetVisibleRowIdx = config.getVisibleRowIdx || grid.getVisibleRowIdx;
 
                 var index = this.index = new Array();
-                this.invIndex = new Array(config.totalRowCount);
+                var invIndex = this.invIndex = new Array(config.totalRowCount);
+                invIndex[-1] = -1;
 
                 this.totalRowCount = config.totalRowCount;
 
@@ -24,6 +26,9 @@ define('v3grid/FilterDataProvider',
                     return origGetData.call(grid, index[row], col);
                 };
 
+                config.getVisibleRowIdx = function (row) {
+                    return invIndex[origGetVisibleRowIdx.call(grid, row)];
+                };
 
                 this.update(true);
                 config.totalRowCount = index.length;
@@ -35,7 +40,12 @@ define('v3grid/FilterDataProvider',
                 config.headerHeight = (config.headerHeight || grid.headerHeight) + 20;
                 this.origSetTotalRowCount = config.setTotalRowCount || grid.setTotalRowCount;
                 var origInvData = config.invalidateData || grid.invalidateData;
-                var me = this;
+                var origGetDataRowIdx = config.getDataRowIdx || grid.getDataRowIdx;
+                var me = this, index = this.index;
+
+                config.getDataRowIdx = function (row) {
+                    return index[origGetDataRowIdx.call(grid, row)];
+                };
 
                 config.setTotalRowCount = function (rowCount) {
                     me.totalRowCount = rowCount;

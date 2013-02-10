@@ -14,15 +14,22 @@ define('v3grid/SortDataProvider',
                 this.processColumnRenderers(config.columns);
 
                 var origGetData = this.origGetData = config.getData;
+                var origGetVisibleRowIdx = config.getVisibleRowIdx || grid.getVisibleRowIdx;
 
                 var index = this.index = new Array(config.totalRowCount);
-                this.invIndex = new Array(config.totalRowCount);
+                var invIndex = this.invIndex = new Array(config.totalRowCount);
+                invIndex[-1] = -1;
 
                 this.totalRowCount = config.totalRowCount;
 
                 config.getData = function (row, col) {
                     return origGetData.call(grid, index[row], col);
                 };
+
+                config.getVisibleRowIdx = function (row) {
+                    return invIndex[origGetVisibleRowIdx.call(grid, row)];
+                };
+
 
                 // check if a TreeDP is present
                 if (require.defined('v3grid/TreeDataProvider')) {
@@ -33,17 +40,17 @@ define('v3grid/SortDataProvider',
                         if (feat instanceof treeDP) {
                             this.treeDataProvider = feat;
 
-                            feat.getInfo = (function (feat, getInfo) {
-                                return function (row) {
-                                    return getInfo.call(feat, index[row]);
-                                };
-                            })(feat, feat.getInfo);
-
-                            feat.rowClicked = (function (feat, rowClicked) {
-                                return function (row, evt) {
-                                    rowClicked.call(feat, index[row], evt);
-                                };
-                            })(feat, feat.rowClicked);
+//                            feat.getInfo = (function (feat, getInfo) {
+//                                return function (row) {
+//                                    return getInfo.call(feat, index[row]);
+//                                };
+//                            })(feat, feat.getInfo);
+//
+//                            feat.rowClicked = (function (feat, rowClicked) {
+//                                return function (row, evt) {
+//                                    rowClicked.call(feat, index[row], evt);
+//                                };
+//                            })(feat, feat.rowClicked);
                         }
                     }
                 }
@@ -56,7 +63,12 @@ define('v3grid/SortDataProvider',
                 var origSetTotalRowCount = config.setTotalRowCount || grid.setTotalRowCount;
                 var origInvData = config.invalidateData || grid.invalidateData;
                 var origUpdateView = this.origUpdateView = config.updateView || grid.updateView;
-                var me = this;
+                var origGetDataRowIdx = config.getDataRowIdx || grid.getDataRowIdx;
+                var me = this, index = this.index, invIndex = this.invIndex;
+
+                config.getDataRowIdx = function (row) {
+                    return index[origGetDataRowIdx.call(grid, row)];
+                };
 
                 config.setTotalRowCount = function (rowCount) {
                     me.totalRowCount = rowCount;
@@ -66,7 +78,7 @@ define('v3grid/SortDataProvider',
                     origSetTotalRowCount.call(grid, rowCount);
                 };
                 config.invalidateData = function (row, col) {
-                    origInvData.call(grid, me.invIndex[row], col);
+                    origInvData.call(grid, invIndex[row], col);
                 };
                 config.updateView = function () {
                     me.sort(me.sortedBy, true);

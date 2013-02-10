@@ -30,12 +30,14 @@ define('v3grid/TreeDataProvider',
                     return me.getCellData(mapper.getTreeIdx(row), col);
                 };
 
-//        config.invalidateData = function (row, col) {
-//            origInvData.call(grid, invIndex[row], col);
-//        };
+                config.invalidateData = function (row, col) {
+                    origInvData.call(grid, invIndex[row], col);
+                };
 
             },
-
+            initRev: function (grid, config) {
+                this.getDataRowIdx = config.getDataRowIdx || grid.getDataRowIdx;
+            },
             processColumnRenderer: function (column) {
                 this.treeColumnDataIdx = column.dataIndex;
                 var rendererConfig = {
@@ -81,6 +83,7 @@ define('v3grid/TreeDataProvider',
              */
 
             rowClicked: function (row, evt) {
+                row = this.getDataRowIdx(row);
                 var mapper = this.mapper;
                 if (mapper.isOpen(row)) {
                     mapper.removeChildren(row);
@@ -92,6 +95,7 @@ define('v3grid/TreeDataProvider',
 
             // returns [childCount, isOpen(1:0), level] - array of ints
             getInfo: function (row) {
+                row = this.getDataRowIdx(row);
                 var treeIdx = this.mapper.getTreeIdx(row);
                 return [
                     this.getChildCount(treeIdx),

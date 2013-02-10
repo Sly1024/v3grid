@@ -370,6 +370,8 @@ define('v3grid/Grid',
                         totalRowCount: this.totalRowCount,
                         data: this.data,
                         getData: this.getData,
+                        getDataRowIdx: this.getDataRowIdx,
+                        getVisibleRowIdx: this.getVisibleRowIdx,
                         cellClicked: this.cellClicked,
                         availableRenderers: this.availableRenderers,
                         rowBatchSize: this.rowBatchSize,
@@ -386,6 +388,8 @@ define('v3grid/Grid',
                         columns: this.lockedColumns,
                         totalRowCount: 1,
                         getData: function (row, col) { return this.columns[this.dataIdx2ColIdx[col]].header; },
+                        getDataRowIdx: this.getDataRowIdx,
+                        getVisibleRowIdx: this.getVisibleRowIdx,
                         availableRenderers: this.availableRenderers,
                         rowBatchSize: 1,
                         columnBatchSize: 1,
@@ -441,6 +445,8 @@ define('v3grid/Grid',
                     totalRowCount: this.totalRowCount,
                     data: this.data,
                     getData: this.getData,
+                    getDataRowIdx: this.getDataRowIdx,
+                    getVisibleRowIdx: this.getVisibleRowIdx,
                     cellClicked: this.cellClicked,
                     availableRenderers: this.availableRenderers,
                     rowBatchSize: this.rowBatchSize,
@@ -458,6 +464,8 @@ define('v3grid/Grid',
                     columns: this.normalColumns,
                     totalRowCount: 1,
                     getData: function (row, col) { return this.columns[this.dataIdx2ColIdx[col]].header; },
+                    getDataRowIdx: this.getDataRowIdx,
+                    getVisibleRowIdx: this.getVisibleRowIdx,
                     availableRenderers: this.availableRenderers,
                     rowBatchSize: 1,
                     columnBatchSize: this.columnBatchSize,
@@ -951,6 +959,13 @@ define('v3grid/Grid',
             getData: function (row, col) {
                 return this.data[row][col];
             },
+
+            // visibleRowIdx -> dataRowIdx
+            getDataRowIdx: Utils.identity,
+
+            // dataRowIdx -> visibleRowIdx
+            // may return -1 if the row is not visible (filtered out for example)
+            getVisibleRowIdx: Utils.identity,
 
             setData:function (row, col, data) {
                 var old = this.data[row][col];

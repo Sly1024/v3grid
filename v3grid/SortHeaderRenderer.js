@@ -2,8 +2,8 @@ define('v3grid/SortHeaderRenderer',
     ['v3grid/Adapter', 'v3grid/Utils'],
     function (Adapter, Utils) {
 
-        var asc_img = (require.baseUrl || requirejs.s.contexts._.config.baseUrl) + 'v3grid/images/up_arrow.png';
-        var desc_img = (require.baseUrl || requirejs.s.contexts._.config.baseUrl) + 'v3grid/images/down_arrow.png';
+        var asc_img = (require.baseUrl !== undefined ? require.baseUrl : requirejs.s.contexts._.config.baseUrl) + 'v3grid/images/up_arrow.png';
+        var desc_img = (require.baseUrl !== undefined ? require.baseUrl : requirejs.s.contexts._.config.baseUrl) + 'v3grid/images/down_arrow.png';
 
         Utils.preloadImages([asc_img, desc_img]);
 

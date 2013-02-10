@@ -39,6 +39,8 @@ define('v3grid/Utils', ['v3grid/Adapter'], function (Adapter) {
             return result;
         },
 
+        identity: function (x) { return x; },
+
         TapHandler: function (element, handler, scope, tolerance) {
             this.t = tolerance || 10;
             this.element = element;

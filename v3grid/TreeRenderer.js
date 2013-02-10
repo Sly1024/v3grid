@@ -2,8 +2,8 @@ define('v3grid/TreeRenderer',
     ['v3grid/Adapter', 'v3grid/Utils'],
     function (Adapter, Utils) {
 
-        var minus_img = (require.baseUrl || requirejs.s.contexts._.config.baseUrl) + 'v3grid/images/minus.png';
-        var plus_img = (require.baseUrl || requirejs.s.contexts._.config.baseUrl) + 'v3grid/images/plus.png';
+        var minus_img = (require.baseUrl !== undefined ? require.baseUrl : requirejs.s.contexts._.config.baseUrl) + 'v3grid/images/minus.png';
+        var plus_img = (require.baseUrl !== undefined ? require.baseUrl : requirejs.s.contexts._.config.baseUrl) + 'v3grid/images/plus.png';
 
         Utils.preloadImages([minus_img, plus_img]);
 
@@ -25,6 +25,7 @@ define('v3grid/TreeRenderer',
             }
 
             this.updateRenderer(config);
+            this.tdp = config.treeDataProvider;
         };
 
         TreeRenderer.prototype = {
@@ -37,7 +38,7 @@ define('v3grid/TreeRenderer',
             updateData: function (grid, row, col) {
                 this.renderer.setData(grid.getData(row, col.dataIndex));
                 this.lastRow = row;
-                var info = this.config.treeDataProvider.getInfo(row);
+                var info = this.tdp.getInfo(row);
                 var indicator = this.openIndicator;
                 if (info[0] /*childCount*/ == 0) {
                     indicator.style.display = 'none';
@@ -45,7 +46,7 @@ define('v3grid/TreeRenderer',
                     indicator.style.display = 'block';
                     indicator.src = info[1] /*isOpen*/ ? minus_img : plus_img;
                 }
-                indicator.parentNode.style.width = (16 + info[2] /*level*/ *this.config.treeDataProvider.indentation) + 'px';
+                indicator.parentNode.style.width = (16 + info[2] /*level*/ * this.tdp.indentation) + 'px';
             },
 
             setConfig: function (config) {
@@ -56,7 +57,7 @@ define('v3grid/TreeRenderer',
             },
 
             clickHandler: function (evt) {
-                this.config.treeDataProvider.rowClicked(this.lastRow, evt);
+                this.tdp.rowClicked(this.lastRow, evt);
             }
         };
 
