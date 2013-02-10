@@ -78,7 +78,7 @@ define('v3grid/TreeDataProvider',
 
             /*
              * Called by TreeRenderer:
-             *  rowClicked(linear_row_idx, event)
+             *  rowClicked(linear_visible_row_idx, event)
              *  getInfo(row)
              */
 
