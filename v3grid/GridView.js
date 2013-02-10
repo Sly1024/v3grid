@@ -508,6 +508,97 @@ define('v3grid/GridView',
             this.visibleCells.cache[dr & 1].release(this.visibleCells[vr]);
         },
 
+        dragColumn: function (colIdx, pos) {
+            var columns = this.columns,
+                columnsX = this.columnPosX,
+                first = this.firstVisibleColumn,
+                targetIdx;
+
+            if (pos < columnsX[colIdx]) {
+                targetIdx = this.searchColumn(pos, first, colIdx/*-1 ?*/);
+                if (targetIdx < this.columns.length-1 &&
+                    pos > columnsX[targetIdx] + (columns[targetIdx].actWidth >> 1)) ++targetIdx;
+            } else {
+                var rightPos = pos + columns[colIdx].actWidth;
+                targetIdx = this.searchColumn(rightPos, colIdx /*+1 ?*/, first + this.visibleColumnCount);
+                if (targetIdx > 0 &&
+                    rightPos < columnsX[targetIdx] + (columns[targetIdx].actWidth >> 1)) --targetIdx;
+            }
+
+//            console.log('draggin', pos, colIdx, targetIdx, columnsX[colIdx], columnsX[targetIdx]);
+
+            if (colIdx !== targetIdx) this.grid.moveColumn(colIdx, targetIdx);
+            Adapter.setXCSS('.'+columns[targetIdx].layoutCls, pos);
+
+            return targetIdx;
+        },
+
+        // public
+        moveColumn: function (fromIdx, toIdx) {
+            // TODO: validate indices
+
+            var dataIdx2ColIdx = this.dataIdx2ColIdx,
+                columns = this.columns,
+                grid = this.grid,
+                copyVisibleColumn = grid.copyVisibleColumn,
+                dir = fromIdx < toIdx ? 1 : -1;
+
+            // store 'fromIdx' in temp
+            var colObj = columns[fromIdx], i;
+            copyVisibleColumn.call(grid, fromIdx, -1);
+
+            for (i = fromIdx; i != toIdx; i += dir) {
+                dataIdx2ColIdx[(columns[i] = columns[i + dir]).dataIndex] = i;
+                copyVisibleColumn.call(grid, i + dir, i);
+            }
+
+            dataIdx2ColIdx[(columns[toIdx] = colObj).dataIndex] = toIdx;
+            copyVisibleColumn.call(grid, -1, toIdx);
+
+            // swap from/to if needed
+//            if (dir < 0) {
+//                fromIdx ^= toIdx ^= fromIdx ^= toIdx;
+//            }
+            // update stuff
+//            this.calcColumnPosX(fromIdx, toIdx);
+//            this.applyColumnStyles(fromIdx, toIdx);
+        },
+
+        // both inclusive (normal: 0, total)
+        calcColumnPosX: function (fromIdx, toIdx) {
+            var columns = this.columns,
+                columnsX = this.columnPosX;
+            //if (toIdx === undefined) toIdx = this.totalColumnCount;
+
+            var startX;
+            if (fromIdx == 0) {
+                columnsX[0] = startX = 0;
+            } else {
+                startX = columnsX[--fromIdx];
+            }
+
+            for (var i = fromIdx; i < toIdx;) {
+                startX += columns[i].visible ? columns[i].actWidth : 0;
+                ++i;
+                columnsX[i] = startX;
+            }
+        },
+
+        // both inclusive (normal: 0, total-1)
+        applyColumnStyles: function (from, to) {
+            var columns = this.columns,
+                columnsX = this.columnPosX;
+//                from = from || 0;
+//                if (to === undefined) to = this.totalColumnCount-1;
+
+            for (var dc = from; dc <= to; ++dc) {
+                var colConfig = columns[dc];
+                var ruleName = '.'+colConfig.layoutCls;
+                Adapter.setXCSS(ruleName, columnsX[dc]);
+                Adapter.updateCSSRule(ruleName, 'width', colConfig.actWidth + 'px');
+            }
+        },
+
         updateCell: function (row, col, cell, rendererType, rendererConfig) {
             var renderer = cell.renderer;
 

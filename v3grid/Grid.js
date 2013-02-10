@@ -588,7 +588,7 @@ define('v3grid/Grid',
             },
 
             onHeaderDragStart: function (evt) {
-                var columns = this.normalColumns,
+                var columns = this.headerView.columns,
                     headerX = evt.pageX - Adapter.getPageX(this.header),
                     colIdx = this.headerView.getColumnIdx(headerX),
                     posOffset = headerX - this.headerView.columnPosX[colIdx],
@@ -626,7 +626,7 @@ define('v3grid/Grid',
                     this.resizeColumn(this.dragColIdx, this.dragColWidth);
                 } else {
                     this.dragColOffset += deltaX;
-                    this.dragColIdx = this.moveColumn(this.dragColIdx, this.dragColOffset);
+                    this.dragColIdx = this.headerView.dragColumn(this.dragColIdx, this.dragColOffset);
                 }
             },
 
@@ -636,10 +636,10 @@ define('v3grid/Grid',
                 if (this.dragColResize) {
                     this.headerView.removeClassFromColumn(this.CLS_HEADER_RES, colIdx);
                     this.tableView.removeClassFromColumn(this.CLS_COLUMN_RES, colIdx);
-//                    if (this.iScroll) this.iScroll.refresh();
+
                     this.setSize();
                 } else {
-                    Adapter.setXCSS('.'+this.normalColumns[colIdx].layoutCls, this.tableView.columnPosX[colIdx]);
+                    Adapter.setXCSS('.'+this.headerView.columns[colIdx].layoutCls, this.headerView.columnPosX[colIdx]);
                     this.headerView.removeClassFromColumn(this.CLS_HEADER_MOVE, colIdx);
                     this.tableView.removeClassFromColumn(this.CLS_COLUMN_MOVE, colIdx);
                 }
@@ -673,67 +673,79 @@ define('v3grid/Grid',
                 this.headerView.copyVisibleColumn(fromIdx, toIdx);
             },
 
-            moveColumn: function (colIdx, offset) {
-                var firstCol = this.tableView.firstVisibleColumn,
-                    ccolumns = this.columns,
-                    lColCount = this.lockedColumnCount,
-                    columns = this.normalColumns,
-                    columnsX = this.tableView.columnPosX,
-                    copyVisCol = this.copyVisibleColumn,
+            moveColumn: function (fromIdx, toIdx) {
+                this.headerView.moveColumn(fromIdx, toIdx);
+//                this.tableView.moveColumn(fromIdx, toIdx);
 
-                    colIdxMap = this.tableView.dataIdx2ColIdx,
-                    vLeft = offset,
-                    i, tmpCol, tmp2Col;
-
-                if (vLeft < columnsX[colIdx]) {
-                    tmpCol = columns[colIdx];
-                    tmp2Col = ccolumns[colIdx+lColCount];
-
-                    copyVisCol.call(this, colIdx-firstCol, -1);
-
-                    for (i = colIdx-1; i >=0 && vLeft < columnsX[i] + (columns[i].actWidth >> 1); --i) {
-                        colIdxMap[(columns[i+1] = columns[i]).dataIndex] = i+1;
-                        ccolumns[lColCount+i+1] = ccolumns[lColCount+i];
-                        copyVisCol.call(this, i-firstCol, i+1-firstCol);
-                    }
-                    ++i;
-                    if (i < colIdx) {
-                        colIdxMap[(columns[i] = tmpCol).dataIndex] = i;
-                        ccolumns[lColCount+i] = tmp2Col;
-                        copyVisCol.call(this, -1, i-firstCol);
-
-                        this.calcColumnPosX(this.normalColumns, this.tableView.columnPosX, i, colIdx);
-                        this.applyColumnStyles(this.normalColumns, this.tableView.columnPosX, i, colIdx);
-                        colIdx = i;
-                    }
-
-                } else {
-                    var vRight = vLeft + columns[colIdx].actWidth;
-                    tmpCol = columns[colIdx];
-                    tmp2Col = ccolumns[colIdx+lColCount];
-
-                    copyVisCol.call(this, colIdx-firstCol, -1);
-
-                    var totalCount = this.normalColumns.length;
-                    for (i = colIdx+1; i < totalCount && vRight > columnsX[i] + (columns[i].actWidth >> 1); ++i) {
-                        colIdxMap[(columns[i-1] = columns[i]).dataIndex] = i-1;
-                        ccolumns[lColCount+i-1] = ccolumns[lColCount+i];
-                        copyVisCol.call(this, i-firstCol, i-1-firstCol);
-                    }
-                    --i;
-                    if (colIdx < i) {
-                        colIdxMap[(columns[i] = tmpCol).dataIndex] = i;
-                        ccolumns[lColCount+i] = tmp2Col;
-                        copyVisCol.call(this, -1, i-firstCol);
-                        this.calcColumnPosX(this.normalColumns, this.tableView.columnPosX, colIdx, i);
-                        this.applyColumnStyles(this.normalColumns, this.tableView.columnPosX, colIdx, i);
-                        colIdx = i;
-                    }
+                if (toIdx < fromIdx) {
+                    fromIdx ^= toIdx ^= fromIdx ^= toIdx;
                 }
 
-                Adapter.setXCSS('.'+columns[colIdx].layoutCls, offset);
-                return colIdx;
+                this.calcColumnPosX(this.headerView.columns, this.headerView.columnPosX, fromIdx, toIdx);
+                this.applyColumnStyles(this.headerView.columns, this.headerView.columnPosX, fromIdx, toIdx);
             },
+
+//            dragColumn: function (colIdx, offset) {
+//                var firstCol = this.tableView.firstVisibleColumn,
+//                    ccolumns = this.columns,
+//                    lColCount = this.lockedColumnCount,
+//                    columns = this.normalColumns,
+//                    columnsX = this.tableView.columnPosX,
+//                    copyVisCol = this.copyVisibleColumn,
+//
+//                    colIdxMap = this.tableView.dataIdx2ColIdx,
+//                    vLeft = offset,
+//                    i, tmpCol, tmp2Col;
+//
+//                if (vLeft < columnsX[colIdx]) {
+//                    tmpCol = columns[colIdx];
+//                    tmp2Col = ccolumns[colIdx+lColCount];
+//
+//                    copyVisCol.call(this, colIdx-firstCol, -1);
+//
+//                    for (i = colIdx-1; i >=0 && vLeft < columnsX[i] + (columns[i].actWidth >> 1); --i) {
+//                        colIdxMap[(columns[i+1] = columns[i]).dataIndex] = i+1;
+//                        ccolumns[lColCount+i+1] = ccolumns[lColCount+i];
+//                        copyVisCol.call(this, i-firstCol, i+1-firstCol);
+//                    }
+//                    ++i;
+//                    if (i < colIdx) {
+//                        colIdxMap[(columns[i] = tmpCol).dataIndex] = i;
+//                        ccolumns[lColCount+i] = tmp2Col;
+//                        copyVisCol.call(this, -1, i-firstCol);
+//
+//                        this.calcColumnPosX(this.normalColumns, this.tableView.columnPosX, i, colIdx);
+//                        this.applyColumnStyles(this.normalColumns, this.tableView.columnPosX, i, colIdx);
+//                        colIdx = i;
+//                    }
+//
+//                } else {
+//                    var vRight = vLeft + columns[colIdx].actWidth;
+//                    tmpCol = columns[colIdx];
+//                    tmp2Col = ccolumns[colIdx+lColCount];
+//
+//                    copyVisCol.call(this, colIdx-firstCol, -1);
+//
+//                    var totalCount = this.normalColumns.length;
+//                    for (i = colIdx+1; i < totalCount && vRight > columnsX[i] + (columns[i].actWidth >> 1); ++i) {
+//                        colIdxMap[(columns[i-1] = columns[i]).dataIndex] = i-1;
+//                        ccolumns[lColCount+i-1] = ccolumns[lColCount+i];
+//                        copyVisCol.call(this, i-firstCol, i-1-firstCol);
+//                    }
+//                    --i;
+//                    if (colIdx < i) {
+//                        colIdxMap[(columns[i] = tmpCol).dataIndex] = i;
+//                        ccolumns[lColCount+i] = tmp2Col;
+//                        copyVisCol.call(this, -1, i-firstCol);
+//                        this.calcColumnPosX(this.normalColumns, this.tableView.columnPosX, colIdx, i);
+//                        this.applyColumnStyles(this.normalColumns, this.tableView.columnPosX, colIdx, i);
+//                        colIdx = i;
+//                    }
+//                }
+//
+//                Adapter.setXCSS('.'+columns[colIdx].layoutCls, offset);
+//                return colIdx;
+//            },
 
             // both inclusive (normal: 0, total)
             calcColumnPosX: function (columns, columnsX, fromIdx, toIdx) {
