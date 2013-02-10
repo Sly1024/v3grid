@@ -90,9 +90,11 @@ define('v3grid/GridView',
                         columnCount = gridView.visibleColumnCount,
                         len = row.length;
 
-                    while (len > columnCount) {
-                        cache.release(row[--len]);
-                    }
+//                    console.log('initRow', len, columnCount);
+//
+//                    while (len > columnCount) {
+//                        cache.release(row[--len]);
+//                    }
 
                     while (len < columnCount) {
                         row[len] = cache.get(columns[len + firstCol][finalCls]);
@@ -164,21 +166,20 @@ define('v3grid/GridView',
 //            return this.columns[this.dataIdx2ColIdx[dataIdx]];
 //        },
 
-        onVerticalScroll:function (topPos) {
-            if (this.updateViewPortV(topPos)) {
+        onVerticalScroll:function (topPos, forceUpdate) {
+            if (this.updateViewPortV(topPos, forceUpdate)) {
                 this.updateRows();
-                this.applyRowStyles();
                 if (!Adapter.hasTouch) this.mouseIsOver();
             }
         },
 
-        onHorizontalScroll:function (leftPos) {
-            if (this.updateViewPortH(leftPos)) {
+        onHorizontalScroll:function (leftPos, forceUpdate) {
+            if (this.updateViewPortH(leftPos, forceUpdate)) {
                 this.updateColumns();
             }
         },
 
-        updateViewPortH: function (scrollPos) {
+        updateViewPortH: function (scrollPos, forceUpdate) {
             // store current scrollPos so we can use it later if it's not provided
             if (scrollPos === undefined) scrollPos = this.lastHScrollPos;
             else this.lastHScrollPos = scrollPos;
@@ -187,7 +188,7 @@ define('v3grid/GridView',
                 first = this.firstVisibleColumn,
                 offset = scrollPos - columnsX[first];
 
-            if (offset > 0 && offset + this.visibleWidth < this.visibleColumnsWidth) {
+            if (!forceUpdate && offset > 0 && offset + this.visibleWidth < this.visibleColumnsWidth) {
 //                console.log('ViewPortH not changed');
                 return false;
             }
@@ -236,7 +237,7 @@ define('v3grid/GridView',
             return first != this.prevFirstVisibleColumn || prevCount != count;
         },
 
-        updateViewPortV: function (scrollPos) {
+        updateViewPortV: function (scrollPos, forceUpdate) {
             if (scrollPos === undefined) scrollPos = this.lastVScrollPos;
             else this.lastVScrollPos = scrollPos;
 
@@ -244,7 +245,7 @@ define('v3grid/GridView',
                 rowHeight = this.rowHeight,
                 offset = scrollPos - first * rowHeight;
 
-            if (offset > 0 && offset + this.visibleHeight < this.visibleRowsHeight) {
+            if (!forceUpdate && offset > 0 && offset + this.visibleHeight < this.visibleRowsHeight) {
 //                console.log('ViewPortV not changed');
                 return false;
             }
@@ -398,9 +399,6 @@ define('v3grid/GridView',
             for (vr = 0, dr = first + vr; vr < overlapFrom; ++vr, ++dr) addRow.call(this, vr, dr);
             for (vr = overlapTo, dr = first + vr; vr < count; ++vr, ++dr) addRow.call(this, vr, dr);
 
-            this.overlapFrom = overlapFrom;
-            this.overlapTo = overlapTo;
-
             // remove rows from dom if needed
             cells.cache[0].validate();
             cells.cache[1].validate();
@@ -426,7 +424,7 @@ define('v3grid/GridView',
                 vr, dr;
 
             for (vr = 0, dr = this.firstVisibleRow; vr < count; ++vr, ++dr) {
-                cells[vr][vc] = cells[vr].cache.get(colCls); //getCell.call(this, cells[vr].row, colCls);
+                cells[vr][vc] = cells[vr].cache.get(colCls);
             }
             this.updateVisibleColumn(vc);
         },
@@ -459,8 +457,8 @@ define('v3grid/GridView',
                 colProps = this.columnProperties,
                 updateCell = this.updateCell;
 
-//            cells[vr] = this.getRow(this.table, this.CLS_ROW + ' ' + this.CLS_ROW_SIZE, dr & 1);
             cells[vr] = cells.cache[dr & 1].get();
+            Adapter.setY(cells[vr].dom, (vr + this.firstVisibleRow) * this.rowHeight);
 
             for (var count = this.visibleColumnCount, vc = 0, dc = this.firstVisibleColumn; vc < count; ++vc, ++dc) {
                 updateCell.call(this, dr, columns[dc], cells[vr][vc],
@@ -474,22 +472,6 @@ define('v3grid/GridView',
 
         falseFunction: function () {
             return false;
-        },
-
-        applyRowStyles: function () {
-            var rowHeight = this.rowHeight,
-                vcells = this.visibleCells,
-                count = this.visibleRowCount,
-                firstRow = this.firstVisibleRow,
-                oFrom = this.overlapFrom,
-                vr;
-
-            for (vr = 0; vr < oFrom; ++vr) {
-                Adapter.setY(vcells[vr].dom, (vr + firstRow) * rowHeight);
-            }
-            for (vr = this.overlapTo; vr < count; ++vr) {
-                Adapter.setY(vcells[vr].dom, (vr + firstRow) * rowHeight);
-            }
         },
 
         addClassToColumn: function (cls, colIdx) {
@@ -565,7 +547,7 @@ define('v3grid/GridView',
         setTotalRowCount: function (rowCount) {
             this.totalRowCount = rowCount;
             this.setTableSize();
-            this.onVerticalScroll();
+            this.onVerticalScroll(undefined, true);
             this.updateView();
         },
 

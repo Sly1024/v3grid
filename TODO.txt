@@ -8,11 +8,14 @@ Features:
  - column drag - scroll when reached the first/last visible pos.
  - colspan/rowspan
  - column groups
- - getRowStyle(row)
+ - getRowStyle(row) / getCellStyle() ??
  + formatter feature
  + TreeDP/expandToLevel()
  - context menu on columns!
- - try separate scrollbar divs
+ - try separate scrollbar divs -> can remove ScrollXOffset
+ - move column resize/reorder logic to GridView
+ - getDataRowIdx(visualRowIdx) in Grid
+ - is[H|V]ScrollbarVisible logic (need to calc twice)
 
 Bugs:
  +/ expandToLevel() makes scrollbar disappear, visibleWidth not updated - works now, but need to refine (calling setSize())
