@@ -13,7 +13,7 @@ Features:
  + TreeDP/expandToLevel()
  - context menu on columns!
  - try separate scrollbar divs -> can remove ScrollXOffset
- - move column resize/reorder logic to GridView
+ ? move column resize/reorder logic to GridView
  + getDataRowIdx(visualRowIdx) in Grid
  - is[H|V]ScrollbarVisible logic (need to calc twice)
 
