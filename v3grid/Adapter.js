@@ -16,12 +16,14 @@ define('v3grid/Adapter', [], function () {
         merge: Ext.apply,
         bindScope: Ext.bind,
         error: Ext.Error.raise,
+        arrayMap: Ext.Array.map,
+        ObservableClass: Ext.util.Observable,
 
         getClass: function (cls) { return Ext.isString(cls) ? Ext.ClassManager.get(cls) : cls; },
 
-        createStyleSheet: Ext.bind(Ext.util.CSS.createStyleSheet, Ext.util.CSS),
-        updateCSSRule: Ext.bind(Ext.util.CSS.updateRule, Ext.util.CSS),
-        removeStyleSheet: Ext.bind(Ext.util.CSS.removeStyleSheet, Ext.util.CSS),
+        createStyleSheet: Ext.Function.alias(Ext.util.CSS, 'createStyleSheet'),
+        updateCSSRule: Ext.Function.alias(Ext.util.CSS, 'updateRule'),
+        removeStyleSheet: Ext.Function.alias(Ext.util.CSS, 'removeStyleSheet'),
 
         addClass: function (element, cls) { Ext.fly(element).addCls(cls); },
         removeClass: function (element, cls) { Ext.fly(element).removeCls(cls); },
