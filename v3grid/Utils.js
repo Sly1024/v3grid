@@ -31,6 +31,10 @@ define('v3grid/Utils', ['v3grid/Adapter'], function (Adapter) {
             return str.join('');
         },
 
+        cssEncode: function (cssClass, obj) {
+            return '.' + cssClass + '{' + Utils.styleEncode(obj) + '}';
+        },
+
         getProperties: function (obj, props) {
             var result = {};
             for (var len = props.length, i = 0; i < len; ++i) {

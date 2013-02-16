@@ -9,10 +9,6 @@ define('v3grid/GridView',
         this.validateConfig();
         this.attachHandlers();
         this.throttledUpdateDirtyCells = Adapter.createThrottled(this.updateDirtyCells, 200, this);
-
-        this.columnPosX = this.columnPosX || new Array(this.columns.length+1);
-        this.dataIdx2ColIdx = this.dataIdx2ColIdx || {};
-//        this.generateDataIdx2ColIdx();
     }
 
     GridView.prototype = {
@@ -32,13 +28,13 @@ define('v3grid/GridView',
             this.tableHeight = (this.totalRowCount * this.rowHeight) || 1;
             this.table.style.height = this.tableHeight + 'px';
 
-            this.tableWidth = this.columnPosX[this.columns.length] + this.scrollXOffset;
+            this.tableWidth = this.posX[this.columns.length] + this.scrollXOffset;
             this.table.style.width = this.tableWidth + 'px';
 
-            if (this.lastScrollXOffset != this.scrollXOffset) {
-                this.lastScrollXOffset = this.scrollXOffset;
-                Adapter.updateCSSRule('.' +this.CLS_ROW_SIZE.replace(' ', '.'), 'left', this.scrollXOffset + 'px');
-            }
+//            if (this.lastScrollXOffset != this.scrollXOffset) {
+//                this.lastScrollXOffset = this.scrollXOffset;
+//                Adapter.updateCSSRule('.' +this.CLS_ROW_SIZE.replace(' ', '.'), 'left', this.scrollXOffset + 'px');
+//            }
         },
 
         initProperties: function () {
@@ -127,7 +123,9 @@ define('v3grid/GridView',
         },
 
         validateConfig: function () {
-            this.columns = this.columns || [];
+            // the ColumnManager does not change the arrays, just their contents, we can cache them
+            this.columns = this.colMgr.columns || [];
+            this.posX = this.colMgr.posX;
             this.totalRowCount = this.totalRowCount || (this.data ? this.data.length : 0);
         },
 
@@ -152,20 +150,6 @@ define('v3grid/GridView',
             }
         },
 
-        generateDataIdx2ColIdx: function () {
-            var map = this.dataIdx2ColIdx,
-                columns = this.columns,
-                len = columns.length;
-
-            for (var i = 0; i < len; ++i) {
-                map[columns[i].dataIndex] = i;
-            }
-        },
-
-//        getColumn: function (dataIdx) {
-//            return this.columns[this.dataIdx2ColIdx[dataIdx]];
-//        },
-
         onVerticalScroll:function (topPos, forceUpdate) {
             if (this.updateViewPortV(topPos, forceUpdate)) {
                 this.updateRows();
@@ -184,7 +168,7 @@ define('v3grid/GridView',
             if (scrollPos === undefined) scrollPos = this.lastHScrollPos;
             else this.lastHScrollPos = scrollPos;
 
-            var columnsX = this.columnPosX,
+            var columnsX = this.posX,
                 first = this.firstVisibleColumn,
                 offset = scrollPos - columnsX[first];
 
@@ -297,7 +281,7 @@ define('v3grid/GridView',
 
         // binary search to find the column index under X position 'pos'
         searchColumn: function (pos, low, high) {
-            var mid, columnX = this.columnPosX;
+            var mid, columnX = this.posX;
             while (low+1 < high) if (columnX[mid = (low+high) >> 1] > pos) high = mid-1; else low = mid;
             return (low+1 == high && high < this.columns.length && columnX[high] < pos) ? high : low;
         },
@@ -479,14 +463,14 @@ define('v3grid/GridView',
                 count = this.visibleRowCount,
                 vc = colIdx - this.firstVisibleColumn;
 
-            for (var r = 0; r < count; ++r) Adapter.addClass(vcells[r][vc], cls)
+            for (var r = 0; r < count; ++r) Adapter.addClass(vcells[r][vc].dom, cls)
         },
 
         removeClassFromColumn: function (cls, colIdx) {
             var vcells = this.visibleCells,
                 count = this.visibleRowCount,
                 vc = colIdx - this.firstVisibleColumn;
-            for (var r = 0; r < count; ++r) Adapter.removeClass(vcells[r][vc], cls)
+            for (var r = 0; r < count; ++r) Adapter.removeClass(vcells[r][vc].dom, cls)
         },
 
         copyVisibleColumn: function (fromIdx, toIdx) {
@@ -510,13 +494,13 @@ define('v3grid/GridView',
 
         dragColumn: function (colIdx, pos) {
             var columns = this.columns,
-                columnsX = this.columnPosX,
+                columnsX = this.posX,
                 first = this.firstVisibleColumn,
                 targetIdx;
 
             if (pos < columnsX[colIdx]) {
                 targetIdx = this.searchColumn(pos, first, colIdx/*-1 ?*/);
-                if (targetIdx < this.columns.length-1 &&
+                if (targetIdx < columns.length-1 &&
                     pos > columnsX[targetIdx] + (columns[targetIdx].actWidth >> 1)) ++targetIdx;
             } else {
                 var rightPos = pos + columns[colIdx].actWidth;
@@ -528,7 +512,7 @@ define('v3grid/GridView',
 //            console.log('draggin', pos, colIdx, targetIdx, columnsX[colIdx], columnsX[targetIdx]);
 
             if (colIdx !== targetIdx) this.grid.moveColumn(colIdx, targetIdx);
-            Adapter.setXCSS('.'+columns[targetIdx].layoutCls, pos);
+            Adapter.setXCSS(columns[targetIdx].layoutRule, pos);
 
             return targetIdx;
         },
@@ -562,41 +546,6 @@ define('v3grid/GridView',
             // update stuff
 //            this.calcColumnPosX(fromIdx, toIdx);
 //            this.applyColumnStyles(fromIdx, toIdx);
-        },
-
-        // both inclusive (normal: 0, total)
-        calcColumnPosX: function (fromIdx, toIdx) {
-            var columns = this.columns,
-                columnsX = this.columnPosX;
-            //if (toIdx === undefined) toIdx = this.totalColumnCount;
-
-            var startX;
-            if (fromIdx == 0) {
-                columnsX[0] = startX = 0;
-            } else {
-                startX = columnsX[--fromIdx];
-            }
-
-            for (var i = fromIdx; i < toIdx;) {
-                startX += columns[i].visible ? columns[i].actWidth : 0;
-                ++i;
-                columnsX[i] = startX;
-            }
-        },
-
-        // both inclusive (normal: 0, total-1)
-        applyColumnStyles: function (from, to) {
-            var columns = this.columns,
-                columnsX = this.columnPosX;
-//                from = from || 0;
-//                if (to === undefined) to = this.totalColumnCount-1;
-
-            for (var dc = from; dc <= to; ++dc) {
-                var colConfig = columns[dc];
-                var ruleName = '.'+colConfig.layoutCls;
-                Adapter.setXCSS(ruleName, columnsX[dc]);
-                Adapter.updateCSSRule(ruleName, 'width', colConfig.actWidth + 'px');
-            }
         },
 
         updateCell: function (row, col, cell, rendererType, rendererConfig) {

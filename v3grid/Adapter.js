@@ -22,8 +22,34 @@ define('v3grid/Adapter', [], function () {
         getClass: function (cls) { return Ext.isString(cls) ? Ext.ClassManager.get(cls) : cls; },
 
         createStyleSheet: Ext.Function.alias(Ext.util.CSS, 'createStyleSheet'),
-        updateCSSRule: Ext.Function.alias(Ext.util.CSS, 'updateRule'),
         removeStyleSheet: Ext.Function.alias(Ext.util.CSS, 'removeStyleSheet'),
+        getCSSRule: function (sheet, indexOrSelector) {
+            var rules = sheet.rules || sheet.cssRules;
+            if (typeof indexOrSelector == 'number') return rules[indexOrSelector];
+            for (var len = rules.length, i = 0; i < len; ++i) {
+                if (rules[i].selectorText == indexOrSelector) return rules[i];
+            }
+            return null;
+        },
+
+        // returns index
+        insertCSSRule: function (sheet, selector, ruleText) {
+            var idx = sheet.rules ? sheet.rules.length : sheet.cssRules.length;
+            if (sheet.insertRule) {
+                sheet.insertRule(selector + '{' + ruleText + '}', idx);
+            } else {
+                sheet.addRule(selector, ruleText, idx);
+            }
+            return idx;
+        },
+
+        removeCSSRule: function (sheet, index) {
+            if (sheet.removeRule) {
+                sheet.removeRule(index);
+            } else {
+                sheet.deleteRule(index);
+            }
+        },
 
         addClass: function (element, cls) { Ext.fly(element).addCls(cls); },
         removeClass: function (element, cls) { Ext.fly(element).removeCls(cls); },
@@ -105,7 +131,7 @@ define('v3grid/Adapter', [], function () {
         },
 
         setXCSS: function (rule, x) {
-            Adapter.updateCSSRule(rule, Adapter.transXProp, Adapter.transXPre + (x + 'px') + Adapter.transXPost);
+            rule.style[Adapter.transXProp] = Adapter.transXPre + (x + 'px') + Adapter.transXPost;
         }
     };
 
