@@ -1,6 +1,6 @@
 define('v3grid/Grid',
-    ['v3grid/Adapter', 'v3grid/Utils', 'v3grid/GridView', 'v3grid/DragHelper', 'v3grid/DefaultItemRenderer'],
-    function (Adapter, Utils, GridView, DragHelper, DefaultItemRenderer) {
+    ['v3grid/Adapter', 'v3grid/Utils', 'v3grid/GridView', 'v3grid/DragHelper', 'v3grid/DefaultItemRenderer', 'v3grid/ColumnManager'],
+    function (Adapter, Utils, GridView, DragHelper, DefaultItemRenderer, ColumnManager) {
 
         var Grid = function (config) {
             this.initProperties(config);
@@ -10,10 +10,8 @@ define('v3grid/Grid',
             Adapter.merge(this, config);
 
             this.createStyles();
-            this.fixColumnConfigs();
-            this.validateColumnWidths();
+            this.createColumnManager();
             this.createComponents();
-            this.genViewCols();
 
             this.setSize(this.width, this.height);
             this.scrollTo();
@@ -68,7 +66,7 @@ define('v3grid/Grid',
                 this.height = config.height || container.clientHeight;
                 this.data = config.data;
 
-                this.columnsChanged = true;
+//                this.columnsChanged = true;
             },
 
             validateConfig: function (config) {
@@ -94,12 +92,8 @@ define('v3grid/Grid',
             createStyles: function () {
                 var num = this.instanceNum;
 
-                function cssEncode(cssClass, obj) {
-                    return '.' + cssClass + '{' + Utils.styleEncode(obj) + '}';
-                }
-
                 var rules = [
-                    cssEncode(this.CLS_CELL, {
+                    Utils.cssEncode(this.CLS_CELL, {
                         height     : '100%',
                         overflow   : 'hidden',
                         position   : 'absolute',
@@ -111,58 +105,24 @@ define('v3grid/Grid',
                         "-webkit-user-select": 'none',
                         "-user-select": 'none',
                         "-ms-user-select": 'none'
-                    })
+                    }),
+                    Utils.cssEncode(this.CLS_ROW_SIZE, {
+                        position: 'absolute',
+                        overflow: 'hidden',
+                        width   : '100%',
+                        height  : this.rowHeight + 'px'
+                    }),
+                    Utils.cssEncode(this.CLS_HEADER_SIZE, {
+                        position: 'absolute',
+                        overflow: 'hidden',
+                        width   : '100%',
+                        height  : this.headerHeight + 'px'
+                    }),
+                    '.' +this.CLS_ROW_SIZE+'.locked { left: 0px; }'
                 ];
 
-                var columns = this.columns;
-                for (var c = 0, len = columns.length; c < len; ++c) {
-                    var col = columns[c], clsName,
-                        finalCls = [], finalHeaderCls = [];
-
-                    // user specified cls/headerCls
-                    if (col.cls) finalCls.push(col.cls);
-                    if (col.headerCls) finalHeaderCls.push(col.headerCls);
-
-                    // user specified style/headerStyle
-                    if (col.style) {
-                        clsName = 'v3grid-'+num+'-column'+c+'-user';
-                        rules.push(cssEncode(clsName, col.style));
-                        finalCls.push(clsName);
-                    }
-
-                    if (col.headerStyle) {
-                        clsName = 'v3grid-'+num+'-header-'+c+'-user';
-                        rules.push(cssEncode(clsName, col.headerStyle));
-                        finalHeaderCls.push(clsName);
-                    }
-
-                    // generated layout classes
-                    clsName = 'v3grid-'+num+'-column'+c+'-layout';
-                    finalCls.push(col.layoutCls = clsName);
-                    finalHeaderCls.push(clsName);
-                    rules.push('.'+clsName+'{}');
-
-                    col.finalCls = finalCls.join(' ');
-                    col.finalHeaderCls = finalHeaderCls.join(' ');
-                }
-
-                rules.push(cssEncode(this.CLS_ROW_SIZE, {
-                    position: 'absolute',
-                    overflow: 'hidden',
-                    width   : '100%',
-                    height  : this.rowHeight + 'px'
-                }));
-
-                rules.push('.' +this.CLS_ROW_SIZE+'.locked { left: 0px; }');
-
-                rules.push(cssEncode(this.CLS_HEADER_SIZE, {
-                    position: 'absolute',
-                    overflow: 'hidden',
-                    width   : '100%',
-                    height  : this.headerHeight + 'px'
-                }));
-
-                Adapter.createStyleSheet(rules.join(''), 'v3grid-' + num + '-style');
+                this.styleSheet = Adapter.createStyleSheet(rules.join(''), 'v3grid-' + num + '-style');
+                this.headerCSSRule = Adapter.getCSSRule(this.styleSheet, '.' + this.CLS_HEADER_SIZE);
             },
 
             destroy: function () {
@@ -186,148 +146,58 @@ define('v3grid/Grid',
                 availRenderers[type] = availRenderers[type] || [];
             },
 
-            fixColumnConfigs: function () {
-                var availRenderers = this.availableRenderers = {}; //[name]= []
+            addColumn: function (idx, config) {
+                this.fixColumnConfig(idx, config);
+                this.colMgr.addColumn(idx, config);
+            },
 
-                for (var colcount = this.columns.length, idx = 0; idx < colcount; ++idx) {
-                    var col = this.columns[idx];
+            fixColumnConfig: function (idx, col) {
+                var availRenderers = this.availableRenderers; //[name]= []
 
-                    col.dataIndex = col.dataIndex || idx;
-                    col.header = col.header || col.dataIndex;
+                col.dataIndex = col.dataIndex || idx;
+                col.header = col.header || col.dataIndex;
 
-                    // renderer
-                    var rend = col.renderer || this.itemRenderer;
-                    col.renderer = Adapter.getClass(rend);
-                    if (!col.renderer) Adapter.error("Could not load renderer '"+rend+"' for column '"+col.dataIndex+"'");
+                // renderer
+                var rend = col.renderer || this.itemRenderer;
+                col.renderer = Adapter.getClass(rend);
+                if (!col.renderer) Adapter.error("Could not load renderer '"+rend+"' for column '"+col.dataIndex+"'");
 
-                    this.registerRendererType(col.renderer, availRenderers);
+                this.registerRendererType(col.renderer, availRenderers);
 
-                    // header renderer
-                    rend = col.headerRenderer || this.headerRenderer;
-                    col.headerRenderer = Adapter.getClass(rend);
-                    if (!col.headerRenderer) Adapter.error("Could not load header renderer '"+rend+"' for column '"+col.dataIndex+"'");
+                // header renderer
+                rend = col.headerRenderer || this.headerRenderer;
+                col.headerRenderer = Adapter.getClass(rend);
+                if (!col.headerRenderer) Adapter.error("Could not load header renderer '"+rend+"' for column '"+col.dataIndex+"'");
 
-                    this.registerRendererType(col.headerRenderer, availRenderers);
+                this.registerRendererType(col.headerRenderer, availRenderers);
 
-                    col.width = col.width || this.defaultColumnWidth;
-                    col.minWidth = col.minWidth || this.defaultColumnMinWidth;
+                col.width = col.width || this.defaultColumnWidth;
+                col.minWidth = col.minWidth || this.defaultColumnMinWidth;
 
-                    col.resizable = col.resizable !== false;
-                    col.visible = col.visible !== false;
+                col.resizable = col.resizable !== false;
+                col.visible = col.visible !== false;
+            },
+
+            createColumnManager: function () {
+                var columns = this.columns,
+                    len = columns.length;
+
+                this.availableRenderers = {};
+
+                for (var i = 0; i < len; ++i) {
+                    this.fixColumnConfig(i, columns[i]);
                 }
 
-                this.totalColumnCount = this.columns.length;
+                this.colMgr = new ColumnManager(this, columns);
+
+                this.totalColumnCount = len;
 
                 // check for lockedColumns
-                this.lockedColumnCount = Utils.minMax(this.lockedColumnCount >> 0, 0, this.totalColumnCount);
+//                this.lockedColumnCount = Utils.minMax(this.lockedColumnCount >> 0, 0, len);
 
-                this.lockedColumns = [];
-                this.normalColumns = [];
+                // TODO: create ranges
             },
 
-            genViewCols: function () {
-                var columns = this.columns,
-                    lcols = this.lockedColumns,
-                    len = this.lockedColumnCount,
-                    i = 0;
-
-                lcols.length = len;
-                for (i = 0; i < len; ++i) {
-                    lcols[i] = columns[i];
-                }
-
-                if (len > 0) {
-                    this.lockedTableView.generateDataIdx2ColIdx();
-                }
-
-                var ncols = this.normalColumns, ni = 0;
-                for (len = this.totalColumnCount; i < len; ++i) {
-                    ncols[ni++] = columns[i];
-                }
-                ncols.length = ni;
-                this.tableView.generateDataIdx2ColIdx();
-            },
-
-            validateColumnWidths: function () {
-                var columns = this.columns,
-                    flexCount = 0;
-
-                for (var len = this.totalColumnCount, i = 0; i < len; ++i) {
-                    var col = columns[i], cw = col.width,
-                        width = NaN, flex = 0;
-
-                    switch (typeof cw) {
-                        case 'number': width = cw; break;
-                        case 'string':
-                            width = parseFloat(cw);
-                            if (cw[cw.length-1] == '*') { flex = width; width = NaN; }
-                            break;
-                    }
-
-                    col.width = width;
-                    col.flex = flex;
-                    if (!isNaN(width)) col.actWidth = width;
-                    if (flex) ++flexCount;
-                }
-
-                this.flexColumnCount = flexCount;
-            },
-
-            calcColumnWidths: function (avail) {
-                if (this.flexColumnCount == 0) return;
-
-                var columns = this.columns,
-                    fixTotal = 0, fixMin = 0,
-                    flexTotal = 0, flexMin = 0,
-                    count = this.totalColumnCount,
-                    flexCols = [], i,
-                    changed = false;
-
-                for (i = 0; i < count; ++i) {
-                    var col = columns[i];
-                    if (!col.visible) {
-                        col.actWidth = 0;
-                        continue;
-                    }
-                    if (col.flex) {
-                        flexMin += col.minWidth;
-                        flexTotal += col.flex;
-                        flexCols.push(col);
-                    } else {
-                        if (col.actWidth != col.width) {
-                            col.actWidth = col.width;
-                            changed = true;
-                        }
-                        fixMin += col.minWidth;
-                        fixTotal += col.actWidth;
-                    }
-                }
-
-                var flexAvail = avail - fixTotal;
-                count = flexCols.length;
-                if (count) {
-                    flexCols.sort(function (a, b) { return a.flex / a.minWidth - b.flex / b.minWidth;});
-                    for (i = 0; i < count; ++i) {
-                        col = flexCols[i];
-                        var w = flexAvail * col.flex / flexTotal,
-                            mw = col.minWidth, act;
-                        if (w < mw) {
-                            act = mw;
-                            flexAvail -= mw;
-                            flexTotal -= col.flex;
-                        } else {
-                            act = w;
-                        }
-
-                        if (col.actWidth != act) {
-                            col.actWidth = act;
-                            changed = true;
-                        }
-                    }
-                }
-
-                if (changed) this.columnsChanged = true;
-            },
 
             getRenderer: function (renderer) {
                 renderer = Adapter.getClass(renderer);
@@ -361,7 +231,8 @@ define('v3grid/Grid',
 
                     this.lockedTable.style.position = 'absolute';
                     this.lockedTable.style.overflow = 'hidden';
-
+                    Adapter.addClass(this.lockedTableContainer, this.CLS_TABLE + ' locked');
+//                    Adapter.addClass(this.lockedHeader, this.CLS_TABLE + ' locked');
                     this.lockedTableView = new GridView({
                         grid: this,
                         table: this.lockedTable,
@@ -396,9 +267,9 @@ define('v3grid/Grid',
                         CLS_CELL       : this.CLS_CELL,
                         CLS_ROW_SIZE   : this.CLS_HEADER_SIZE,
                         CLS_ROW        : this.CLS_HEADER_ROW + ' locked',
-                        columnProperties: headerColumnProps,
-                        columnPosX: this.lockedTableView.columnPosX,
-                        dataIdx2ColIdx: this.lockedTableView.dataIdx2ColIdx
+                        columnProperties: headerColumnProps
+//                        columnPosX: this.lockedTableView.columnPosX,
+//                        dataIdx2ColIdx: this.lockedTableView.dataIdx2ColIdx
                     });
 
                     this.lockedTableContainer.appendChild(this.lockedTable);
@@ -413,17 +284,17 @@ define('v3grid/Grid',
 
                 if (!Adapter.hasTouch) Adapter.addListener(this.header, 'mousemove', this.colResizeCursorHandler, this);
 
-                new DragHelper({
-                    element: this.header,
-                    scope: this,
-                    dragStart: this.onHeaderDragStart,
-                    dragEnd: this.onHeaderDragEnd,
-                    dragMove: this.onHeaderDragging,
-                    endDragOnLeave: false,
-                    captureMouse: true,
-                    startDragOnDown: false,
-                    tolerance: 3
-                });
+//                new DragHelper({
+//                    element: this.header,
+//                    scope: this,
+//                    dragStart: this.onHeaderDragStart,
+//                    dragEnd: this.onHeaderDragEnd,
+//                    dragMove: this.onHeaderDragging,
+//                    endDragOnLeave: false,
+//                    captureMouse: true,
+//                    startDragOnDown: false,
+//                    tolerance: 3
+//                });
 
 
                 this.tableContainer = document.createElement('div');
@@ -441,7 +312,7 @@ define('v3grid/Grid',
                     grid: this,
                     table: this.table,
                     rowHeight: this.rowHeight,
-                    columns: this.normalColumns,
+                    colMgr: this.colMgr,
                     totalRowCount: this.totalRowCount,
                     data: this.data,
                     getData: this.getData,
@@ -461,20 +332,20 @@ define('v3grid/Grid',
                     grid: this,
                     table: this.header,
                     rowHeight: this.headerHeight,
-                    columns: this.normalColumns,
+                    colMgr: this.colMgr,
                     totalRowCount: 1,
-                    getData: function (row, col) { return this.columns[this.dataIdx2ColIdx[col]].header; },
+                    getData: function (row, col) { return this.colMgr.columns[this.colMgr.columnMap[col]].header; },
                     getDataRowIdx: this.getDataRowIdx,
                     getVisibleRowIdx: this.getVisibleRowIdx,
                     availableRenderers: this.availableRenderers,
                     rowBatchSize: 1,
                     columnBatchSize: this.columnBatchSize,
-                    CLS_ROW_SIZE: this.CLS_HEADER_SIZE,
-                    CLS_ROW: this.CLS_HEADER_ROW,
-                    CLS_CELL       : this.CLS_CELL,
-                    columnProperties: headerColumnProps,
-                    columnPosX: this.tableView.columnPosX,
-                    dataIdx2ColIdx: this.tableView.dataIdx2ColIdx
+                    CLS_ROW_SIZE    : this.CLS_HEADER_SIZE,
+                    CLS_ROW         : this.CLS_HEADER_ROW,
+                    CLS_CELL        : this.CLS_CELL,
+                    columnProperties: headerColumnProps
+//                    columnPosX: this.tableView.columnPosX,
+//                    dataIdx2ColIdx: this.tableView.dataIdx2ColIdx
                 });
 
                 this.tableContainer.appendChild(this.table);
@@ -542,10 +413,6 @@ define('v3grid/Grid',
             },
 
             iScrollMove: function (x, y) {
-//                this.headerView.onHorizontalScroll(Utils.minMax(-x, 0, this.maxScrollX));
-//                if (this.lockedColumnCount > 0) this.lockedTableView.onVerticalScroll(Utils.minMax(-y, 0, this.maxScrollY));
-//
-//                this.tableView.scrollTo(-x, -y);
                 this.scrollTo(-x, -y);
             },
 
@@ -558,13 +425,7 @@ define('v3grid/Grid',
             },
 
             scrollMove: function () {
-//                this.tableView.scrollTo(this.tableContainer.scrollLeft, this.tableContainer.scrollTop);
-//                this.headerView.onHorizontalScroll(this.tableContainer.scrollLeft);
-//                this.positionHeader();
-//                if (this.lockedColumnCount > 0) {
-//                    this.lockedTableView.onVerticalScroll(this.tableContainer.scrollTop);
-//                    this.positionLockedTable();
-//                }
+
                 this.scrollTo(this.tableContainer.scrollLeft, this.tableContainer.scrollTop);
                 this.positionHeader();
                 if (this.lockedColumnCount > 0) this.positionLockedTable();
@@ -577,13 +438,13 @@ define('v3grid/Grid',
                     colIdx = hView.getColumnIdx(posx),
                     curVal = '';
 
-                posx -= hView.columnPosX[colIdx];
+                posx -= hView.posX[colIdx];
                 if ((posx < 5 ? --colIdx >= 0 : posx > hView.columns[colIdx].actWidth - 5) &&
                     hView.columns[colIdx].resizable) curVal = 'col-resize';
 
                 if (this.lastHeaderCursor !== curVal) {
                     this.lastHeaderCursor = curVal;
-                    Adapter.updateCSSRule('.'+this.CLS_HEADER_SIZE, 'cursor',  curVal);
+                    this.headerCSSRule.style.cursor = curVal;
                 }
             },
 
@@ -639,7 +500,7 @@ define('v3grid/Grid',
 
                     this.setSize();
                 } else {
-                    Adapter.setXCSS('.'+this.headerView.columns[colIdx].layoutCls, this.headerView.columnPosX[colIdx]);
+                    Adapter.setXCSS(this.headerView.columns[colIdx].layoutRule, this.headerView.posX[colIdx]);
                     this.headerView.removeClassFromColumn(this.CLS_HEADER_MOVE, colIdx);
                     this.tableView.removeClassFromColumn(this.CLS_COLUMN_MOVE, colIdx);
                 }
@@ -747,39 +608,6 @@ define('v3grid/Grid',
 //                return colIdx;
 //            },
 
-            // both inclusive (normal: 0, total)
-            calcColumnPosX: function (columns, columnsX, fromIdx, toIdx) {
-                //if (toIdx === undefined) toIdx = this.totalColumnCount;
-
-                var startX;
-                if (fromIdx == 0) {
-                    columnsX[0] = startX = 0;
-                } else {
-                    startX = columnsX[--fromIdx];
-                }
-
-                for (var i = fromIdx; i < toIdx;) {
-                    startX += columns[i].visible ? columns[i].actWidth : 0;
-                    ++i;
-                    columnsX[i] = startX;
-                }
-            },
-
-            // both inclusive (normal: 0, total-1)
-            applyColumnStyles: function (columns, columnsX, from, to) {
-//                from = from || 0;
-//                if (to === undefined) to = this.totalColumnCount-1;
-
-//                var colPorps = this.columnProperties;
-
-                for (var dc = from; dc <= to; ++dc) {
-                    var colConfig = columns[dc];
-                    var ruleName = '.'+colConfig.layoutCls;
-                    Adapter.setXCSS(ruleName, columnsX[dc]);
-                    Adapter.updateCSSRule(ruleName, 'width', colConfig.actWidth + 'px');
-                }
-            },
-
             setTableSize: function () {
                 this.tableView.setTableSize();
                 this.headerView.setTableSize();
@@ -794,35 +622,36 @@ define('v3grid/Grid',
             applyColumnWidths: function (width) {
                 width = width || this.width;
 
-                this.calcColumnWidths(width);
+                this.colMgr.calcColumnWidths(width);
+                this.colMgr.applyColumnStyles();
 
                 var lockedWidth = 0;
 
-                if (this.lockedColumnCount > 0) {
-                    var lcols = this.lockedColumns;
-                    if (this.columnsChanged) {
-                        this.calcColumnPosX(lcols, this.lockedTableView.columnPosX, 0, lcols.length);
-                        this.applyColumnStyles(lcols, this.lockedTableView.columnPosX, 0, lcols.length - 1);
-
-                        this.lockedTableView.setTableSize();
-                        this.lockedHeaderView.setTableSize();
-                    }
-                    lockedWidth = this.lockedHeaderView.columnPosX[lcols.length];
-                }
+//                if (this.lockedColumnCount > 0) {
+//                    var lcols = this.lockedColumns;
+//                    if (this.columnsChanged) {
+//                        this.calcColumnPosX(lcols, this.lockedTableView.columnPosX, 0, lcols.length);
+//                        this.applyColumnStyles(lcols, this.lockedTableView.columnPosX, 0, lcols.length - 1);
+//
+//                        this.lockedTableView.setTableSize();
+//                        this.lockedHeaderView.setTableSize();
+//                    }
+//                    lockedWidth = this.lockedHeaderView.columnPosX[lcols.length];
+//                }
 
                 this.tableView.scrollXOffset = lockedWidth;
 
-                if (this.columnsChanged) {
-                    var ncols = this.normalColumns;
-                    this.calcColumnPosX(ncols, this.tableView.columnPosX, 0, ncols.length);
-                    this.applyColumnStyles(ncols, this.tableView.columnPosX, 0, ncols.length - 1);
+                if (this.colMgr.columnsChanged) {
+//                    var ncols = this.normalColumns;
+//                    this.calcColumnPosX(ncols, this.tableView.columnPosX, 0, ncols.length);
+//                    this.applyColumnStyles(ncols, this.tableView.columnPosX, 0, ncols.length - 1);
 
                     this.tableView.setTableSize();
                     this.headerView.setTableSize();
                 }
 
                 this.lockedWidth = lockedWidth;
-                this.columnsChanged = false;
+                this.colMgr.columnsChanged = false;
             },
 
             setSize: function (width, height) {
@@ -905,23 +734,23 @@ define('v3grid/Grid',
 //                console.log('size', this.tableWidth, this.tableHeight, visibleWidth, visibleHeight);
             },
 
-            getColumnIdx: function (dataIdx) {
-                var idx;
-
-                if (this.lockedColumnCount > 0) idx = this.lockedTableView.dataIdx2ColIdx[dataIdx];
-                if (idx !== undefined) return idx;
-
-                idx = this.tableView.dataIdx2ColIdx[dataIdx];
-
-                return idx !== undefined ? idx + this.lockedColumnCount : -1;
-            },
+//            getColumnIdx: function (dataIdx) {
+//                var idx;
+//
+//                if (this.lockedColumnCount > 0) idx = this.lockedTableView.dataIdx2ColIdx[dataIdx];
+//                if (idx !== undefined) return idx;
+//
+//                idx = this.tableView.dataIdx2ColIdx[dataIdx];
+//
+//                return idx !== undefined ? idx + this.lockedColumnCount : -1;
+//            },
 
             setColumnVisible: function (colDataIdx, visible) {
-                var idx = this.getColumnIdx(colDataIdx);
+                var idx = this.colMgr.columnMap[colDataIdx];
 
-                if (idx == -1 || this.columns[idx].visible == visible) return;
+                if (idx == -1 || this.colMgr.columns[idx].visible == visible) return;
 
-                this.columns[idx].visible = visible;
+                this.colMgr.columns[idx].visible = visible;
                 this.columnsChanged = true;
                 this.setSize();
 

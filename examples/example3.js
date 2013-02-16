@@ -48,7 +48,7 @@ require(['v3grid/Grid', 'v3grid/Adapter', 'v3grid/SortDataProvider', 'v3grid/Tre
                         columnBatchSize: 1,
                         rowBatchSize: 2,
                         features: [flatter, sorter, new ColumnSelector()],
-                        lockedColumnCount: 1,
+                        lockedColumnCount: 0,
                         columns: [
                             { dataIndex: 'Region', minWidth: 200, width: '2*', style: { color: 'red'} },
                             { header: 'Territory Rep', dataIndex: 'Territory_Rep', width: '2*', minWidth: 200 },

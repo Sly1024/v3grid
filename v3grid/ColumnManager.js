@@ -1,76 +1,264 @@
 define('v3grid/ColumnManager',
-    ['v3grid/Adapter'],
-    function (Adapter) {
+    ['v3grid/Adapter', 'v3grid/Utils', 'v3grid/ColumnRange'],
+    function (Adapter, Utils, Range) {
 
-        var Manager = function (configs) {
+        var Manager = function (grid, configs) {
+            this.grid = grid;
+            this.sheet = grid.styleSheet;
+            this.lastColId = 0;
             this.columns = Adapter.arrayMap(configs, this.processConfig, this);
+            this.ranges = [];
+            this.rangeStart = [0];
 
-            this.posX = new Array(configs.length+1);
-            this.calcPosX(0, configs.length);
+            this.validateColumnWidths();
+            // call super ctor
+            Range.call(this, this.columns);
 
-            this.columnMap = {};
-            this.generateColumnMap();
+            // for now
+            this.columnsChanged = true;
         };
 
-        Manager.prototype = Adapter.merge(new Adapter.ObservableClass(), {
+        Manager.prototype = Adapter.merge(Adapter.merge({}, Range.prototype), {
+            processConfig: function (config) {
+                var col = Adapter.merge({}, config),  //clone col
+                    idx = this.lastColId++,
+                    num = this.grid.instanceNum,
+                    sheet = this.sheet,
+                    ruleIdxs = col.ruleIdxs = [],
+                    clsName,
+                    finalCls = [],
+                    finalHeaderCls = [];
 
-            processConfig: function (col, idx) {
-                return Adapter.merge({}, col);  //clone col
+                // user specified cls/headerCls
+                if (col.cls) finalCls.push(col.cls);
+                if (col.headerCls) finalHeaderCls.push(col.headerCls);
+
+                // user specified style/headerStyle
+                if (col.style) {
+                    clsName = 'v3grid-'+num+'-column'+idx+'-user';
+                    ruleIdxs.push(Adapter.insertCSSRule(sheet, '.'+clsName, Utils.styleEncode(col.style)));
+                    finalCls.push(clsName);
+                }
+
+                if (col.headerStyle) {
+                    clsName = 'v3grid-'+num+'-header-'+idx+'-user';
+                    ruleIdxs.push(Adapter.insertCSSRule(sheet, '.'+clsName, Utils.styleEncode(col.headerStyle)));
+                    finalHeaderCls.push(clsName);
+                }
+
+                // generated layout classes
+                clsName = 'v3grid-'+num+'-column'+idx+'-layout';
+                finalCls.push(col.layoutCls = clsName);
+                finalHeaderCls.push(clsName);
+                var ruleIdx = Adapter.insertCSSRule(sheet, '.'+clsName, '');
+                col.layoutRule = Adapter.getCSSRule(sheet, ruleIdx);
+                ruleIdxs.push(ruleIdx);
+
+                col.finalCls = finalCls.join(' ');
+                col.finalHeaderCls = finalHeaderCls.join(' ');
+
+                return col;
             },
 
-            // both inclusive (normal: 0, total)
-            calcPosX: function (fromIdx, toIdx) {
+            validateColumnWidths: function () {
+                var columns = this.columns,
+                    flexCount = 0;
+
+                for (var len = columns.length, i = 0; i < len; ++i) {
+                    var col = columns[i], cw = col.width,
+                        width = NaN, flex = 0;
+
+                    switch (typeof cw) {
+                        case 'number': width = cw; break;
+                        case 'string':
+                            width = parseFloat(cw);
+                            if (cw[cw.length-1] == '*') { flex = width; width = NaN; }
+                            break;
+                    }
+
+                    col.width = width;
+                    col.flex = flex;
+                    if (!isNaN(width)) col.actWidth = width;
+                    if (flex) ++flexCount;
+                }
+
+                this.flexColumnCount = flexCount;
+            },
+
+            calcColumnWidths: function (avail) {
+                if (this.flexColumnCount == 0) return;
+
+                var columns = this.columns,
+                    fixTotal = 0, fixMin = 0,
+                    flexTotal = 0, flexMin = 0,
+                    count = columns.length,
+                    flexCols = [], i,
+                    changed = false;
+
+                for (i = 0; i < count; ++i) {
+                    var col = columns[i];
+                    if (!col.visible) {
+                        col.actWidth = 0;
+                        continue;
+                    }
+                    if (col.flex) {
+                        flexMin += col.minWidth;
+                        flexTotal += col.flex;
+                        flexCols.push(col);
+                    } else {
+                        if (col.actWidth != col.width) {
+                            col.actWidth = col.width;
+                            changed = true;
+                        }
+                        fixMin += col.minWidth;
+                        fixTotal += col.actWidth;
+                    }
+                }
+
+                var flexAvail = avail - fixTotal;
+                count = flexCols.length;
+                if (count) {
+                    flexCols.sort(function (a, b) { return a.flex / a.minWidth - b.flex / b.minWidth;});
+                    for (i = 0; i < count; ++i) {
+                        col = flexCols[i];
+                        var w = flexAvail * col.flex / flexTotal,
+                            mw = col.minWidth, act;
+                        if (w < mw) {
+                            act = mw;
+                            flexAvail -= mw;
+                            flexTotal -= col.flex;
+                        } else {
+                            act = w;
+                        }
+
+                        if (col.actWidth != act) {
+                            col.actWidth = act;
+                            changed = true;
+                        }
+                    }
+                }
+
+                // TODO: fire event instead ?
+                if (changed) {
+                    this.columnsChanged = true;
+                    this.applyColumnStyles();
+                }
+            },
+
+            // both inclusive (normal: 0, total-1)
+            applyColumnStyles: function (from, to) {
                 var columns = this.columns,
                     columnsX = this.posX;
 
-                var startX;
-                if (fromIdx == 0) {
-                    columnsX[0] = startX = 0;
-                } else {
-                    startX = columnsX[--fromIdx];
-                }
+                from = from || 0;
+                if (to === undefined) to = columns.length-1;
 
-                for (var i = fromIdx; i < toIdx;) {
-                    startX += columns[i].visible ? columns[i].actWidth : 0;
-                    ++i;
-                    columnsX[i] = startX;
-                }
-            },
-
-            generateColumnMap: function () {
-                var map = this.columnMap,
-                    columns = this.columns,
-                    len = columns.length;
-
-                for (var i = 0; i < len; ++i) {
-                    map[columns[i].dataIndex] = i;
+                for (var dc = from; dc <= to; ++dc) {
+                    var col = columns[dc];
+                    Adapter.setXCSS(col.layoutRule, columnsX[dc]);
+                    col.layoutRule.style.width = col.actWidth + 'px';
                 }
             },
 
             // public
-            moveColumn: function (fromIdx, toIdx) {
-                // TODO: validate indices
-
-                var map = this.columnMap,
+            getRanges: function (counts) {
+                var len = counts.length,
+                    ranges = this.ranges = new Array(len),
+                    rangeStart = this.rangeStart = new Array(len+1),
                     columns = this.columns,
-                    dir = fromIdx < toIdx ? 1 : -1;
+                    idx = 0, end;
 
-                // store 'fromIdx' in temp
-                var colObj = columns[fromIdx], i;
+                for (var i = 0; i < len; ++i) {
+                    rangeStart[i] = idx;
+                    end = idx + counts[i];
+                    ranges[i] = new Range(columns.slice(idx, end));
+                    ranges[i].addListener('columnMoved', this.createColumnMoveHandler(i), this);
+                    idx = end;
+                }
+                rangeStart[len] = idx;
 
-                for (i = fromIdx; i != toIdx; i += dir) {
-                    map[(columns[i] = columns[i + dir]).dataIndex] = i;
+                return ranges;
+            },
+
+            createColumnMoveHandler: function (rangeIdx) {
+                return function (fromIdx, toIdx) {
+                    var offset = this.rangeStart[rangeIdx];
+                    this.moveColumn(fromIdx + offset, toIdx + offset);
+                }
+            },
+
+            getRangeIdx: function (columnIdx) {
+                var rangeStart = this.rangeStart;
+                for (var len = this.ranges.length, i = -1; i < len; ++i) {
+                    if (columnIdx < rangeStart[i+1]) {
+                        return i;
+                    }
+                }
+                return -1;
+            },
+
+            addColumn: function (idx, config, suppressEvent) {
+                var ranges = this.ranges,
+                    rangeStart = this.rangeStart,
+                    col = this.processConfig(config);
+
+                // call super
+                Range.prototype.addColumn.call(this, idx, col, true);
+
+                for (var len = ranges.length, i = 0; i < len; ++i) {
+                    if (idx >= rangeStart[i] && idx < rangeStart[i+1]) {
+                        ranges[i].addColumn(idx - rangeStart[i], col);
+                    }
+                    if (idx < rangeStart[i+1]) ++rangeStart[i+1];
                 }
 
-                map[(columns[toIdx] = colObj).dataIndex] = toIdx;
+                if (!suppressEvent) this.fireEvent('columnAdded', idx, col);
+            },
 
-//                update stuff
-                var from = dir < 0 ? toIdx : fromIdx,
-                    to = fromIdx ^ toIdx ^ from;    // the other one
+            removeColumn: function (idx, suppressEvent) {
+                var ranges = this.ranges,
+                    rangeStart = this.rangeStart,
+                    col = this.columns[idx],
+                    len, i;
 
-                this.calcPosX(from, to);
-//            this.applyColumnStyles(fromIdx, toIdx);
-                this.fireEvent('columnMoved', fromIdx, toIdx);
+                for (len = col.ruleIdxs.length, i = 0; i < len; ++i) {
+                    Adapter.removeCSSRule(col.ruleIdxs[i]);
+                }
+
+                // call super
+                Range.prototype.removeColumn.call(this, idx, true);
+
+                for (len = ranges.length, i = 0; i < len; ++i) {
+                    if (idx >= rangeStart[i] && idx < rangeStart[i+1]) {
+                        ranges[i].removeColumn(idx - rangeStart[i]);
+                    }
+                    if (idx < rangeStart[i+1]) --rangeStart[i+1];
+                }
+
+                if (!suppressEvent) this.fireEvent('columnRemoved', idx, col);
+            },
+
+            moveColumn: function (fromIdx, toIdx, suppressEvent) {
+                Range.prototype.moveColumn.call(this, fromIdx, toIdx, true);
+
+                var fromRange = this.getRangeIdx(fromIdx),
+                    toRange = this.getRangeIdx(toIdx),
+                    rangeStart = this.rangeStart,
+                    ranges = this.ranges;
+
+                if (fromRange != -1 && toRange != -1) {
+                    if (fromRange == toRange) {
+                        var offset = rangeStart[toRange];
+                        ranges[toRange].moveColumn(fromIdx - offset, toIdx - offset);
+                    } else {
+                        ranges[fromRange].removeColumn(fromIdx - rangeStart[fromRange]);
+                        ranges[toRange].addColumn(toIdx - rangeStart[toRange], true);
+                        // modify rangeStart[]
+                        for (var i = fromRange + 1; i <= toRange; ++i) --rangeStart[i];
+                    }
+                }
+
+                if (!suppressEvent) this.fireEvent('columnMoved', fromIdx, toIdx);
             }
         });
 
