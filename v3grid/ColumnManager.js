@@ -86,7 +86,7 @@ define('v3grid/ColumnManager',
             },
 
             calcColumnWidths: function (avail) {
-                if (this.flexColumnCount == 0) return;
+                if (this.flexColumnCount == 0) return false;
 
                 var columns = this.columns,
                     fixTotal = 0, fixMin = 0,
@@ -98,6 +98,7 @@ define('v3grid/ColumnManager',
                 for (i = 0; i < count; ++i) {
                     var col = columns[i];
                     if (!col.visible) {
+                        if (col.actWidth != 0) changed = true;
                         col.actWidth = 0;
                         continue;
                     }
@@ -141,8 +142,11 @@ define('v3grid/ColumnManager',
                 // TODO: fire event instead ?
                 if (changed) {
                     this.columnsChanged = true;
-                    this.applyColumnStyles();
+                    this.calcPosX();
+//                    this.applyColumnStyles();
                 }
+
+                return changed;
             },
 
             // both inclusive (normal: 0, total-1)

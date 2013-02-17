@@ -16,6 +16,8 @@ Features:
  ? move column resize/reorder logic to GridView
  + getDataRowIdx(visualRowIdx) in Grid
  - is[H|V]ScrollbarVisible logic (need to calc twice)
+ - rethink column/rowBatchSize
+ - change getData() to dataProvider: {}
 
 Bugs:
  +/ expandToLevel() makes scrollbar disappear, visibleWidth not updated - works now, but need to refine (calling setSize())

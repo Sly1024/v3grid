@@ -62,7 +62,7 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3g
 
                 var grid = Ext.create('virtualgrid.VirtualGrid', {
                     gridConfig: {
-                        lockedColumnCount: 0,
+                        leftLockedColumnCount: 3,
                         rowHeight: 25,
                         headerHeight: 30,
                         columnBatchSize: 1,

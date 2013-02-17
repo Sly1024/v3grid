@@ -19,6 +19,8 @@ define('v3grid/GridView',
         scrollXOffset: 0,
 
         setVisibleSize: function (width, height) {
+            this.container.style.width = width + 'px';
+            this.container.style.height = height + 'px';
             this.visibleWidth = width;
             this.visibleHeight = height;
             this.scrollTo();
@@ -28,13 +30,8 @@ define('v3grid/GridView',
             this.tableHeight = (this.totalRowCount * this.rowHeight) || 1;
             this.table.style.height = this.tableHeight + 'px';
 
-            this.tableWidth = this.posX[this.columns.length] + this.scrollXOffset;
+            this.tableWidth = this.posX[this.columns.length];
             this.table.style.width = this.tableWidth + 'px';
-
-//            if (this.lastScrollXOffset != this.scrollXOffset) {
-//                this.lastScrollXOffset = this.scrollXOffset;
-//                Adapter.updateCSSRule('.' +this.CLS_ROW_SIZE.replace(' ', '.'), 'left', this.scrollXOffset + 'px');
-//            }
         },
 
         initProperties: function () {
@@ -459,18 +456,18 @@ define('v3grid/GridView',
         },
 
         addClassToColumn: function (cls, colIdx) {
-            var vcells = this.visibleCells,
+            var cells = this.visibleCells,
                 count = this.visibleRowCount,
                 vc = colIdx - this.firstVisibleColumn;
 
-            for (var r = 0; r < count; ++r) Adapter.addClass(vcells[r][vc].dom, cls)
+            for (var r = 0; r < count; ++r) Adapter.addClass(cells[r][vc].dom, cls)
         },
 
         removeClassFromColumn: function (cls, colIdx) {
-            var vcells = this.visibleCells,
+            var cells = this.visibleCells,
                 count = this.visibleRowCount,
                 vc = colIdx - this.firstVisibleColumn;
-            for (var r = 0; r < count; ++r) Adapter.removeClass(vcells[r][vc].dom, cls)
+            for (var r = 0; r < count; ++r) Adapter.removeClass(cells[r][vc].dom, cls)
         },
 
         copyVisibleColumn: function (fromIdx, toIdx) {
@@ -689,7 +686,7 @@ define('v3grid/GridView',
 
             this.highlightedRow = hlRow;
 
-            if (hlRow) Adapter.addClass(hlRow, 'hover');
+            if (hlRow) Adapter. addClass(hlRow, 'hover');
         },
 
         columnResized: function (delta) {
