@@ -38,6 +38,7 @@ define('v3grid/Adapter', [], function () {
             if (sheet.insertRule) {
                 sheet.insertRule(selector + '{' + ruleText + '}', idx);
             } else {
+                if (!ruleText) ruleText = ' ';
                 sheet.addRule(selector, ruleText, idx);
             }
             return idx;

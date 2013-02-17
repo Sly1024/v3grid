@@ -14,6 +14,10 @@ define('v3grid/ColumnRange',
 
         Range.prototype = Adapter.merge(new Adapter.ObservableClass(),{
 
+            getTotalWidth: function () {
+                return this.posX[this.columns.length];
+            },
+
             // both inclusive (normal: 0, total)
             calcPosX: function (fromIdx, toIdx) {
                 var columns = this.columns,

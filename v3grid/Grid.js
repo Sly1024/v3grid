@@ -210,79 +210,129 @@ define('v3grid/Grid',
             createComponents: function () {
                 var grid = this;
 
+                var panel = this.panel;
+                panel.style.position = 'relative';
+                panel.style.overflow = 'hidden';
+                panel.style.border = '1px solid gray';
+
                 var headerColumnProps = { renderer: 'headerRenderer', rendererConfig: 'headerRendererConfig', finalCls: 'finalHeaderCls' };
 
-                // locked column stuff
-                if (this.lockedColumnCount > 0) {
-                    this.lockedHeader = document.createElement('div');
-                    this.lockedHeader.style.position = 'absolute';
-                    this.lockedHeader.style.overflow = 'hidden';
+                var leftLCC = this.leftLockedColumnCount;
+                var rightLCC = this.rightLockedColumnCount;
+                var topLRC = this.topLockedRowCount;
+                var bottLRC = this.bottomLockedRowCount;
+                var viewsH = this.viewsH = 1 + (leftLCC > 0) + (rightLCC > 0),
+                    viewsV = this.viewsV = 2 + (topLRC > 0) + (bottLRC > 0),
+                    scrollViewX = this.scrollViewX = 0 + (leftLCC > 0),
+                    scrollViewY = this.scrollViewY = 1 + (topLRC > 0),
+                    views = this.views = new Array(viewsV);    // views[y][x] = GridView
 
-                    this.lockedTableContainer = document.createElement('div');
-
-                    var ltcStyle = this.lockedTableContainer.style;
-                    ltcStyle.position = 'absolute';
-                    ltcStyle.overflow = 'hidden';
-                    ltcStyle.borderStyle = 'solid';
-                    ltcStyle.borderColor = this.verticalSeparatorColor;
-                    ltcStyle.borderWidth = '0px ' + this.verticalSeparatorThickness + 'px 0px 0px';
-
-                    this.lockedTable = document.createElement('div');
-
-                    this.lockedTable.style.position = 'absolute';
-                    this.lockedTable.style.overflow = 'hidden';
-                    Adapter.addClass(this.lockedTableContainer, this.CLS_TABLE + ' locked');
-//                    Adapter.addClass(this.lockedHeader, this.CLS_TABLE + ' locked');
-                    this.lockedTableView = new GridView({
-                        grid: this,
-                        table: this.lockedTable,
-                        rowHeight: this.rowHeight,
-                        columns: this.lockedColumns,
-                        totalRowCount: this.totalRowCount,
-                        data: this.data,
-                        getData: this.getData,
-                        getDataRowIdx: this.getDataRowIdx,
-                        getVisibleRowIdx: this.getVisibleRowIdx,
-                        cellClicked: this.cellClicked,
-                        availableRenderers: this.availableRenderers,
-                        rowBatchSize: this.rowBatchSize,
-                        columnBatchSize: this.columnBatchSize,
-                        CLS_ROW        : this.CLS_ROW + ' locked',
-                        CLS_CELL       : this.CLS_CELL,
-                        CLS_ROW_SIZE   : this.CLS_ROW_SIZE
-                    });
-
-                    this.lockedHeaderView = new GridView({
-                        grid: this,
-                        table: this.lockedHeader,
-                        rowHeight: this.headerHeight,
-                        columns: this.lockedColumns,
-                        totalRowCount: 1,
-                        getData: function (row, col) { return this.columns[this.dataIdx2ColIdx[col]].header; },
-                        getDataRowIdx: this.getDataRowIdx,
-                        getVisibleRowIdx: this.getVisibleRowIdx,
-                        availableRenderers: this.availableRenderers,
-                        rowBatchSize: 1,
-                        columnBatchSize: 1,
-                        CLS_CELL       : this.CLS_CELL,
-                        CLS_ROW_SIZE   : this.CLS_HEADER_SIZE,
-                        CLS_ROW        : this.CLS_HEADER_ROW + ' locked',
-                        columnProperties: headerColumnProps
-//                        columnPosX: this.lockedTableView.columnPosX,
-//                        dataIdx2ColIdx: this.lockedTableView.dataIdx2ColIdx
-                    });
-
-                    this.lockedTableContainer.appendChild(this.lockedTable);
+                var colMgr = this.colMgr;
+                var ranges = [colMgr];
+                if (viewsH > 1) {
+                    var colCounts = [colMgr.columns.length];
+                    if (rightLCC) { colCounts[0] -= rightLCC; colCounts.push(rightLCC); }
+                    if (leftLCC) { colCounts[0] -= leftLCC; colCounts.unshift(leftLCC); }
+                    ranges = colMgr.getRanges(colCounts);
                 }
 
-                this.headerContainer = document.createElement('div');
-                this.headerContainer.style.position = 'absolute';
-                this.headerContainer.style.overflow = 'hidden';
-                this.header = document.createElement('div');
-                this.header.style.position = 'absolute';
-                this.headerContainer.appendChild(this.header);
+                for (var y = 0; y < viewsV; ++y) {
+                    views[y] = new Array(viewsH);
 
-                if (!Adapter.hasTouch) Adapter.addListener(this.header, 'mousemove', this.colResizeCursorHandler, this);
+                    for (var x = 0; x < viewsH; ++x) {
+                        // create div for the view
+                        var table = document.createElement('div');
+                        table.style.position = 'absolute';
+                        table.style.overflow = 'hidden';
+
+                        var container = table;
+                        Adapter.addClass(table, this.CLS_TABLE);    // TODO : locked?
+
+                        if (x == scrollViewX || y == scrollViewY) {
+                            container = document.createElement('div');
+                            container.style.position = 'absolute';
+                            container.style.overflow = 'hidden';
+                            container.appendChild(table);
+                        }
+
+                        panel.appendChild(container);
+
+                        if (y == 0) {
+                            views[0][x] = new GridView({
+                                grid: this,
+                                table: table,
+                                container: container,
+                                rowHeight: this.headerHeight,
+                                colMgr: ranges[x],
+                                totalRowCount: 1,
+                                getData: function (row, col) { return this.columns[this.colMgr.columnMap[col]].header; },
+                                getDataRowIdx: this.getDataRowIdx,
+                                getVisibleRowIdx: this.getVisibleRowIdx,
+                                availableRenderers: this.availableRenderers,
+                                rowBatchSize: 1,
+                                columnBatchSize: 1,
+                                CLS_CELL       : this.CLS_CELL,
+                                CLS_ROW_SIZE   : this.CLS_HEADER_SIZE,
+                                CLS_ROW        : this.CLS_HEADER_ROW + ' locked',
+                                columnProperties: headerColumnProps
+                            });
+                        } else {
+                            views[y][x] = new GridView({
+                                grid: this,
+                                table: table,
+                                container: container,
+                                rowHeight: this.rowHeight,
+                                colMgr: ranges[x],
+                                totalRowCount: this.totalRowCount,
+                                data: this.data,
+                                getData: this.getData,
+                                getDataRowIdx: this.getDataRowIdx,
+                                getVisibleRowIdx: this.getVisibleRowIdx,
+                                cellClicked: this.cellClicked,
+                                availableRenderers: this.availableRenderers,
+                                rowBatchSize: this.rowBatchSize,
+                                columnBatchSize: this.columnBatchSize,
+                                CLS_ROW        : this.CLS_ROW,
+                                CLS_CELL       : this.CLS_CELL,
+                                CLS_ROW_SIZE   : this.CLS_ROW_SIZE
+                            });
+                        }
+
+                    }
+                }
+
+                // locked column stuff
+//                if (this.lockedColumnCount > 0) {
+//                    this.lockedHeader = document.createElement('div');
+//                    this.lockedHeader.style.position = 'absolute';
+//                    this.lockedHeader.style.overflow = 'hidden';
+//
+//                    this.lockedTableContainer = document.createElement('div');
+//
+//                    var ltcStyle = this.lockedTableContainer.style;
+//                    ltcStyle.position = 'absolute';
+//                    ltcStyle.overflow = 'hidden';
+//                    ltcStyle.borderStyle = 'solid';
+//                    ltcStyle.borderColor = this.verticalSeparatorColor;
+//                    ltcStyle.borderWidth = '0px ' + this.verticalSeparatorThickness + 'px 0px 0px';
+//
+//                    this.lockedTable = document.createElement('div');
+//
+//                    this.lockedTable.style.position = 'absolute';
+//                    this.lockedTable.style.overflow = 'hidden';
+//                    Adapter.addClass(this.lockedTableContainer, this.CLS_TABLE + ' locked');
+//
+//                    this.lockedTableContainer.appendChild(this.lockedTable);
+//                }
+//
+//                this.headerContainer = document.createElement('div');
+//                this.headerContainer.style.position = 'absolute';
+//                this.headerContainer.style.overflow = 'hidden';
+//                this.header = document.createElement('div');
+//                this.header.style.position = 'absolute';
+//                this.headerContainer.appendChild(this.header);
+//
+//                if (!Adapter.hasTouch) Adapter.addListener(this.header, 'mousemove', this.colResizeCursorHandler, this);
 
 //                new DragHelper({
 //                    element: this.header,
@@ -297,80 +347,15 @@ define('v3grid/Grid',
 //                });
 
 
-                this.tableContainer = document.createElement('div');
-
-                this.tableContainer.style.position = 'absolute';
-                this.tableContainer.style.overflow = 'auto'; // !!!!!!
-
-                this.table = document.createElement('div');
-                Adapter.addClass(this.table, this.CLS_TABLE);
-
-                this.table.style.position = 'absolute';
-                this.table.style.overflow = 'hidden';
-
-                this.tableView = new GridView({
-                    grid: this,
-                    table: this.table,
-                    rowHeight: this.rowHeight,
-                    colMgr: this.colMgr,
-                    totalRowCount: this.totalRowCount,
-                    data: this.data,
-                    getData: this.getData,
-                    getDataRowIdx: this.getDataRowIdx,
-                    getVisibleRowIdx: this.getVisibleRowIdx,
-                    cellClicked: this.cellClicked,
-                    availableRenderers: this.availableRenderers,
-                    rowBatchSize: this.rowBatchSize,
-                    columnBatchSize: this.columnBatchSize,
-                    CLS_ROW        : this.CLS_ROW,
-                    CLS_CELL       : this.CLS_CELL,
-                    CLS_ROW_SIZE   : this.CLS_ROW_SIZE
-                });
-
-
-                this.headerView = new GridView({
-                    grid: this,
-                    table: this.header,
-                    rowHeight: this.headerHeight,
-                    colMgr: this.colMgr,
-                    totalRowCount: 1,
-                    getData: function (row, col) { return this.colMgr.columns[this.colMgr.columnMap[col]].header; },
-                    getDataRowIdx: this.getDataRowIdx,
-                    getVisibleRowIdx: this.getVisibleRowIdx,
-                    availableRenderers: this.availableRenderers,
-                    rowBatchSize: 1,
-                    columnBatchSize: this.columnBatchSize,
-                    CLS_ROW_SIZE    : this.CLS_HEADER_SIZE,
-                    CLS_ROW         : this.CLS_HEADER_ROW,
-                    CLS_CELL        : this.CLS_CELL,
-                    columnProperties: headerColumnProps
-//                    columnPosX: this.tableView.columnPosX,
-//                    dataIdx2ColIdx: this.tableView.dataIdx2ColIdx
-                });
-
-                this.tableContainer.appendChild(this.table);
-
-                var panel = this.panel;
-                panel.style.position = 'relative';
-                panel.style.overflow = 'hidden';
-                panel.style.border = '1px solid gray';
-
-                panel.appendChild(this.headerContainer);
-                panel.appendChild(this.tableContainer);
-                if (this.lockedColumnCount > 0) {
-                    panel.appendChild(this.lockedHeader);
-                    panel.appendChild(this.lockedTableContainer);
-                }
-
-                var me = this;
+                var me = this, scrollContainer = views[scrollViewY][scrollViewX].container;
                 if (Adapter.hasTouch) {
                     setTimeout(function () {
-                        me.maxScrollX = me.tableContainer.scrollWidth - me.tableContainer.clientWidth;
-                        me.maxScrollY = me.tableContainer.scrollHeight - me.tableContainer.clientHeight;
+                        me.maxScrollX = scrollContainer.scrollWidth - scrollContainer.clientWidth;
+                        me.maxScrollY = scrollContainer.scrollHeight -scrollContainer.clientHeight;
                         me.initiScroll();
                     }, 0);
                 } else {
-                    Adapter.addListener(this.tableContainer, 'scroll', this.scrollMove, this);
+                    Adapter.addListener(scrollContainer, 'scroll', this.scrollMove, this);
                 }
 
                 // hover stuff
@@ -380,15 +365,32 @@ define('v3grid/Grid',
 //            Adapter.addListener(this.table, 'touchend', this.mouseOutHandler, this);
 //            Adapter.addListener(this.lockedTable, 'touchend', this.mouseOutHandler, this);
                 } else {
-                    Adapter.addListener(this.table, 'mousemove', this.mouseMoveHandler, this);
-                    Adapter.addListener(this.table, 'mouseover', this.mouseOverHandler, this);
-                    Adapter.addListener(this.table, 'mouseout', this.mouseOutHandler, this);
-                    if (this.lockedColumnCount > 0) {
-                        Adapter.addListener(this.lockedTable, 'mousemove', this.mouseMoveHandler, this);
-                        Adapter.addListener(this.lockedTable, 'mouseover', this.mouseOverHandler, this);
-                        Adapter.addListener(this.lockedTable, 'mouseout', this.mouseOutHandler, this);
-                    }
+                    this.hScrollbar = this.createScrollbar('height');
+                    this.vScrollbar = this.createScrollbar('width');
+                    panel.appendChild(this.hScrollbar);
+                    panel.appendChild(this.vScrollbar);
+//                    Adapter.addListener(this.table, 'mousemove', this.mouseMoveHandler, this);
+//                    Adapter.addListener(this.table, 'mouseover', this.mouseOverHandler, this);
+//                    Adapter.addListener(this.table, 'mouseout', this.mouseOutHandler, this);
+//                    if (this.lockedColumnCount > 0) {
+//                        Adapter.addListener(this.lockedTable, 'mousemove', this.mouseMoveHandler, this);
+//                        Adapter.addListener(this.lockedTable, 'mouseover', this.mouseOverHandler, this);
+//                        Adapter.addListener(this.lockedTable, 'mouseout', this.mouseOutHandler, this);
+//                    }
                 }
+            },
+
+            createScrollbar: function (thicknessProp) {
+                var outer = document.createElement('div'),
+                    inner = document.createElement('div');
+
+                inner.style[thicknessProp] = '1px';
+                outer.style[thicknessProp] = Utils.scrollbarSize + 'px';
+                outer.style.position = 'absolute';
+                outer.style.overflow = 'scroll';
+                outer.appendChild(inner);
+
+                return outer;
             },
 
             initiScroll: function () {
@@ -414,6 +416,24 @@ define('v3grid/Grid',
 
             iScrollMove: function (x, y) {
                 this.scrollTo(-x, -y);
+            },
+
+            // use: allViews('functionName', [param1, param2, ...], yFrom, yTo, xFrom, xTo);
+            allViews: function (funcName, args, yFrom, yTo, xFrom, xTo) {
+                var views = this.views;
+
+                // default values
+                if (yFrom === undefined) yFrom = 0;
+                if (xFrom === undefined) xFrom = 0;
+                if (yTo === undefined) yTo = this.viewsV;
+                if (xTo === undefined) xTo = this.viewsH;
+
+                for (var y = yFrom; y < yTo; ++y) {
+                    var viewsY = views[y];
+                    for (var x = xFrom; x < xTo; ++x) {
+                        viewsY[x][funcName].apply(viewsY[x], args);
+                    }
+                }
             },
 
             positionHeader: function () {
@@ -609,13 +629,7 @@ define('v3grid/Grid',
 //            },
 
             setTableSize: function () {
-                this.tableView.setTableSize();
-                this.headerView.setTableSize();
-                if (this.lockedColumnCount > 0) {
-                    this.lockedHeaderView.setTableSize();
-                    this.lockedTableView.setTableSize();
-                }
-
+                this.allViews('setTableSize');
                 if (this.iScroll) this.iScroll.refresh();
             },
 
@@ -639,15 +653,12 @@ define('v3grid/Grid',
 //                    lockedWidth = this.lockedHeaderView.columnPosX[lcols.length];
 //                }
 
-                this.tableView.scrollXOffset = lockedWidth;
+//                this.tableView.scrollXOffset = lockedWidth;
 
                 if (this.colMgr.columnsChanged) {
-//                    var ncols = this.normalColumns;
-//                    this.calcColumnPosX(ncols, this.tableView.columnPosX, 0, ncols.length);
-//                    this.applyColumnStyles(ncols, this.tableView.columnPosX, 0, ncols.length - 1);
-
-                    this.tableView.setTableSize();
-                    this.headerView.setTableSize();
+//                    this.tableView.setTableSize();
+//                    this.headerView.setTableSize();
+                    this.setTableSize();
                 }
 
                 this.lockedWidth = lockedWidth;
@@ -659,76 +670,136 @@ define('v3grid/Grid',
                 width = width === undefined ? this.width : width-2; // border
                 height = height === undefined ? this.height : height-2; //
 
-                var headerHeight = this.headerHeight;
-                var availWidth = width;
-                if (this.totalRowCount * this.rowHeight + headerHeight > height) availWidth -= Utils.scrollbarSize;
-
-                this.applyColumnWidths(availWidth);
-
-                var lockedWidth = this.lockedWidth;
-
                 if (width < 0 || height < 0) return;
 
                 this.width = width;
                 this.height = height;
 
-                this.tableWidth = Math.max(width - lockedWidth, 0);
-                this.tableHeight = Math.max(height - headerHeight, 0);
-
-                // containers
                 this.panel.style.width = width + 'px';
                 this.panel.style.height = height + 'px';
 
-                var tContainer = this.tableContainer;
-                var tcStyle = tContainer.style;
-                tcStyle.width = /*this.tableWidth*/ (width) + 'px';
+                var headerHeight = this.headerHeight,
+                    rowHeight = this.rowHeight;
 
-//                if (Adapter.isIE && tContainer.clientWidth < tContainer.scrollWidth) {
-//                    tcStyle.width = /*this.tableWidth*/ (width + Utils.scrollbarSize) + 'px';
-//                }
+                // calculate scrollbar visibility
+                var availWidth = width,
+                    availHeight = height - headerHeight,
+                    totalHeight = this.totalRowCount * rowHeight,
+                    isVscroll =  totalHeight > availHeight,
+                    scrollbarWidth = availWidth,
+                    scrollbarHeight = availHeight;
+                if (isVscroll) availWidth -= Utils.scrollbarSize;
 
-                tcStyle.height = this.tableHeight + 'px';
 
-//                if (Adapter.isIE && tContainer.clientHeight < tContainer.scrollHeight) {
-//                    tcStyle.height = (this.tableHeight + Utils.scrollbarSize) + 'px';
-//                }
-
-//                tcStyle.left = /*lockedWidth +*/ '0px';
-                tcStyle.top = headerHeight + 'px';
-
-                var visibleWidth = Math.max(tContainer.clientWidth - lockedWidth, 0);
-                var visibleHeight = tContainer.clientHeight;
-
-                var hcStyle = this.headerContainer.style;
-                hcStyle.width = visibleWidth + 'px';
-                hcStyle.height = headerHeight + 'px';
-                hcStyle.left = lockedWidth + 'px';
-
-                if (this.lockedColumnCount > 0) {
-                    this.lockedHeader.style.width = lockedWidth + 'px';
-                    this.lockedHeader.style.height = headerHeight + 'px';
-
-                    var ltcStyle = this.lockedTableContainer.style;
-                    ltcStyle.width = lockedWidth + 'px';
-                    ltcStyle.height = visibleHeight + 'px';
-                    ltcStyle.top = headerHeight + 'px';
-
-                    //views
-                    this.lockedHeaderView.setVisibleSize(lockedWidth, headerHeight);
-                    this.lockedTableView.setVisibleSize(lockedWidth, visibleHeight);
+                var colMgr = this.colMgr;
+                var colsChanged = colMgr.calcColumnWidths(availWidth),
+                    totalWidth = colMgr.getTotalWidth(),
+                    isHscroll = totalWidth > availWidth;
+                if (isHscroll) {
+                    availHeight -= Utils.scrollbarSize;
+                    if (!isVscroll && (totalHeight = this.totalRowCount * rowHeight) > availHeight) {
+                        isVscroll = true;
+                        availWidth -= Utils.scrollbarSize;
+                        colsChanged |= colMgr.calcColumnWidths(availWidth);
+                        totalWidth = colMgr.getTotalWidth();
+                    }
                 }
 
-                this.maxScrollX = tContainer.scrollWidth - visibleWidth;
-                this.maxScrollY = tContainer.scrollHeight - visibleHeight;
+                if (colsChanged || colMgr.columnsChanged) {
+                    colMgr.applyColumnStyles();
+                    colMgr.columnsChanged = false;
+                }
 
-                this.headerView.setVisibleSize(visibleWidth, headerHeight);
-                this.tableView.setVisibleSize(visibleWidth, visibleHeight);
+                // sets inner table sizes
+                this.setTableSize();
+
+                var leftLCC = this.leftLockedColumnCount,
+                    rightLCC = this.rightLockedColumnCount,
+                    topLRC = this.topLockedRowCount,
+                    bottLRC = this.bottomLockedRowCount,
+                    viewsV = this.viewsV,
+                    viewsH = this.viewsH;
+
+                if (availWidth < 0) availWidth = 0;
+
+                var widths = [availWidth];
+                if (viewsH > 1) {
+                    var w;
+                    if (leftLCC) {
+                        w = Math.min(colMgr.ranges[0].getTotalWidth(), availWidth);
+                        availWidth -= w;
+                        widths = [w, availWidth];
+                    }
+                    if (rightLCC) {
+                        w = Math.min(colMgr.ranges[viewsH-1].getTotalWidth(), availWidth);
+                        widths[widths.length-1] -= w;
+                        widths.push(w);
+                    }
+                }
+
+                // headerHeight is already subtracted from avail
+                if (availHeight < 0) { headerHeight += availHeight; availHeight = 0; }
+
+                var heights = [headerHeight, availHeight];
+                if (viewsV > 1) {
+                    var h;
+                    if (topLRC) {
+                        h = Math.min(topLRC * rowHeight, availHeight);
+                        availHeight -= h;
+                        heights = [headerHeight, h, availHeight];
+                    }
+                    if (bottLRC) {
+                        h = Math.min(bottLRC * rowHeight, availHeight);
+                        heights[heights.length-1] -= h;
+                        heights.push(h);
+                    }
+                }
+
+                // set container positions & sizes
+                var views = this.views,
+                    yPos = 0, xPos;
+
+                for (var y = 0; y < viewsV; ++y) {
+                    var viewsY = views[y];
+                    xPos = 0;
+                    for (var x = 0; x < viewsH; ++x) {
+                        var contStyle = viewsY[x].container.style;
+                        contStyle.left = xPos + 'px';
+                        contStyle.top = yPos + 'px';
+                        viewsY[x].setVisibleSize(widths[x], heights[y]);
+                        xPos += widths[x];
+                    }
+                    yPos += heights[y];
+                }
+
+                // note: xPos, yPos contains the correct scrollbar positions
+                var hScrollbar = this.hScrollbar;
+                if (isHscroll) {
+                    hScrollbar.style.top = yPos + 'px';
+                    hScrollbar.style.width = scrollbarWidth + 'px';
+                    hScrollbar.firstChild.style.width = totalWidth + 'px';
+                } else {
+                    hScrollbar.style.width = '0px';
+                }
+
+                var vScrollbar = this.vScrollbar;
+                if (isVscroll) {
+                    vScrollbar.style.left = xPos + 'px';
+                    vScrollbar.style.top = headerHeight + 'px';
+                    vScrollbar.style.height = scrollbarHeight + 'px';
+                    vScrollbar.firstChild.style.height = totalHeight + 'px';
+                } else {
+                    vScrollbar.style.height = '0px';
+                }
+
+                this.maxScrollX = totalWidth - scrollbarWidth;
+                this.maxScrollY = totalHeight - scrollbarHeight;
 
                 // inner div is actually smaller, but the outer still displays a scrollbar with overflow=='auto'
                 // some bug in chrome ?? (haven't tried in other browsers)
                 // here's a workaround:
-                tcStyle.overflow = 'hidden';
-                setTimeout(function () { tcStyle.overflow = 'auto'; }, 0);
+//                tcStyle.overflow = 'hidden';
+//                setTimeout(function () { tcStyle.overflow = 'auto'; }, 0);
 
                 if (this.iScroll) this.iScroll.refresh();
 //                console.log('size', this.tableWidth, this.tableHeight, visibleWidth, visibleHeight);
@@ -765,33 +836,31 @@ define('v3grid/Grid',
                 }
             },
 
-            updateView:function () {
-                this.headerView.updateView();
-                this.tableView.updateView();
-                if (this.lockedColumnCount > 0) {
-                    this.lockedHeaderView.updateView();
-                    this.lockedTableView.updateView();
-                }
+            updateView: function () {
+                this.allViews('updateView');
             },
 
             scrollTo: function (x, y) {
                 x = Utils.minMax(x, 0, this.maxScrollX);
                 y = Utils.minMax(y, 0, this.maxScrollY);
 
-                this.headerView.scrollTo(x, 0);
-                this.tableView.scrollTo(x, y);
-                if (this.lockedColumnCount > 0) {
-                    this.lockedTableView.scrollTo(0, y);
-                    this.lockedHeaderView.scrollTo(0, 0);
+                var scrollViewX = this.scrollViewX,
+                    scrollViewY = this.scrollViewY,
+                    views = this.views;
+
+                for (var yLen = views.length, vy = 0; vy < yLen; ++vy) {
+                    var viewsY = views[vy];
+                    for (var xLen = viewsY.length, vx = 0; vx < xLen; ++vx) {
+                        viewsY[vx].scrollTo(vx == scrollViewX ? x : 0, vy == scrollViewY ? y : 0);
+                    }
                 }
             },
 
             setTotalRowCount: function (rowCount) {
                 this.totalRowCount = rowCount;
-                this.tableView.setTotalRowCount(rowCount);
-                if (this.lockedColumnCount > 0) {
-                    this.lockedTableView.setTotalRowCount(rowCount);
-                }
+                // except the header!
+                this.allViews('setTotalRowCount', [rowCount], 1);
+
                 // TODO: figure out what is needed here from setSize (not all I think)
                 this.setSize();
 //                if (this.iScroll) this.iScroll.refresh();
@@ -817,8 +886,9 @@ define('v3grid/Grid',
             },
 
             invalidateData:function (row, col) {
-                if (this.lockedColumnCount > 0) this.lockedTableView.invalidateData(row, col);
-                this.tableView.invalidateData(row, col);
+                // TODO: views
+//                if (this.lockedColumnCount > 0) this.lockedTableView.invalidateData(row, col);
+//                this.tableView.invalidateData(row, col);
             },
 
             mouseMoveHandler: function (evt) {
