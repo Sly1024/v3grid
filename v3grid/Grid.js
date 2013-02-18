@@ -245,15 +245,15 @@ define('v3grid/Grid',
                         table.style.position = 'absolute';
                         table.style.overflow = 'hidden';
 
-                        var container = table;
+//                        var container = table;
                         Adapter.addClass(table, this.CLS_TABLE);    // TODO : locked?
 
-                        if (x == scrollViewX || y == scrollViewY) {
-                            container = document.createElement('div');
+//                        if (x == scrollViewX || y == scrollViewY) {
+                            var container = document.createElement('div');
                             container.style.position = 'absolute';
                             container.style.overflow = 'hidden';
                             container.appendChild(table);
-                        }
+//                        }
 
                         panel.appendChild(container);
 
@@ -355,7 +355,7 @@ define('v3grid/Grid',
                         me.initiScroll();
                     }, 0);
                 } else {
-                    Adapter.addListener(scrollContainer, 'scroll', this.scrollMove, this);
+//                    Adapter.addListener(scrollContainer, 'scroll', this.scrollMove, this);
                 }
 
                 // hover stuff
@@ -365,10 +365,22 @@ define('v3grid/Grid',
 //            Adapter.addListener(this.table, 'touchend', this.mouseOutHandler, this);
 //            Adapter.addListener(this.lockedTable, 'touchend', this.mouseOutHandler, this);
                 } else {
-                    this.hScrollbar = this.createScrollbar('height');
-                    this.vScrollbar = this.createScrollbar('width');
-                    panel.appendChild(this.hScrollbar);
-                    panel.appendChild(this.vScrollbar);
+                    this.scrollPosX = this.scrollPosY = 0;
+                    var hScrollbar = this.hScrollbar = this.createScrollbar('height');
+                    var vScrollbar = this.vScrollbar = this.createScrollbar('width');
+                    panel.appendChild(hScrollbar);
+                    panel.appendChild(vScrollbar);
+
+
+                    // TODO: use onHscroll/onVscroll instead
+                    Adapter.addListener(hScrollbar, 'scroll', function (evt) {
+                        this.scrollTo(hScrollbar.scrollLeft, this.scrollPosY);
+                    }, this);
+
+                    Adapter.addListener(vScrollbar, 'scroll', function (evt) {
+                        this.scrollTo(this.scrollPosX, vScrollbar.scrollTop);
+                    }, this);
+
 //                    Adapter.addListener(this.table, 'mousemove', this.mouseMoveHandler, this);
 //                    Adapter.addListener(this.table, 'mouseover', this.mouseOverHandler, this);
 //                    Adapter.addListener(this.table, 'mouseout', this.mouseOutHandler, this);
@@ -792,8 +804,8 @@ define('v3grid/Grid',
                     vScrollbar.style.height = '0px';
                 }
 
-                this.maxScrollX = totalWidth - scrollbarWidth;
-                this.maxScrollY = totalHeight - scrollbarHeight;
+                this.maxScrollX = totalWidth - scrollbarWidth + Utils.scrollbarSize;
+                this.maxScrollY = totalHeight - scrollbarHeight + Utils.scrollbarSize;
 
                 // inner div is actually smaller, but the outer still displays a scrollbar with overflow=='auto'
                 // some bug in chrome ?? (haven't tried in other browsers)
@@ -843,6 +855,9 @@ define('v3grid/Grid',
             scrollTo: function (x, y) {
                 x = Utils.minMax(x, 0, this.maxScrollX);
                 y = Utils.minMax(y, 0, this.maxScrollY);
+
+                this.scrollPosX = x;
+                this.scrollPosY = y;
 
                 var scrollViewX = this.scrollViewX,
                     scrollViewY = this.scrollViewY,
