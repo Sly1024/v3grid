@@ -632,6 +632,10 @@ define('v3grid/GridView',
         },
 
         scrollTo: function (x, y) {
+            // TODO: remove it from here, do it in Grid, because if iScroll, it's going to do this auto
+            // use other methods (e.g. transform)
+            this.table.style.left = -x + 'px';
+            this.table.style.top = -y + 'px';
             this.onVerticalScroll(y);
             this.onHorizontalScroll(x);
         },

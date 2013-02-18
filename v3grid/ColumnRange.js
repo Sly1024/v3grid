@@ -93,6 +93,21 @@ define('v3grid/ColumnRange',
                 this.generateColumnMap(idx);
                 if (!suppressEvent) this.fireEvent('columnRemoved', idx, col);
                 return col;
+            },
+
+            // both inclusive (normal: 0, total-1)
+            applyColumnStyles: function (from, to) {
+                var columns = this.columns,
+                    columnsX = this.posX;
+
+                from = from || 0;
+                if (to === undefined) to = columns.length-1;
+
+                for (var dc = from; dc <= to; ++dc) {
+                    var col = columns[dc];
+                    Adapter.setXCSS(col.layoutRule, columnsX[dc]);
+                    col.layoutRule.style.width = col.actWidth + 'px';
+                }
             }
         });
 

@@ -18,7 +18,9 @@ define('v3grid/ColumnManager',
             this.columnsChanged = true;
         };
 
-        Manager.prototype = Adapter.merge(Adapter.merge({}, Range.prototype), {
+        var base = Range.prototype;
+
+        Manager.prototype = Adapter.merge(Adapter.merge({}, base), {
             processConfig: function (config) {
                 var col = Adapter.merge({}, config),  //clone col
                     idx = this.lastColId++,
@@ -151,16 +153,27 @@ define('v3grid/ColumnManager',
 
             // both inclusive (normal: 0, total-1)
             applyColumnStyles: function (from, to) {
-                var columns = this.columns,
-                    columnsX = this.posX;
-
                 from = from || 0;
-                if (to === undefined) to = columns.length-1;
+                if (to === undefined) to = this.columns.length-1;
 
-                for (var dc = from; dc <= to; ++dc) {
-                    var col = columns[dc];
-                    Adapter.setXCSS(col.layoutRule, columnsX[dc]);
-                    col.layoutRule.style.width = col.actWidth + 'px';
+                var ranges = this.ranges;
+                if (ranges.length) {
+                    var fromRng = this.getRangeIdx(from),
+                        toRng = this.getRangeIdx(to),
+                        rangeStart = this.rangeStart;
+
+                    if (fromRng == toRng) {
+                        var offset = rangeStart[toRng];
+                        ranges[toRng].applyColumnStyles(from - offset, to - offset);
+                    } else {
+                        ranges[fromRng].applyColumnStyles(from - rangeStart[fromRng]);
+                        for (++fromRng; fromRng < toRng; ++fromRng) {
+                            ranges[fromRng].applyColumnStyles();
+                        }
+                        ranges[toRng].applyColumnStyles(0, to - rangeStart[toRng]);
+                    }
+                } else {
+                    base.applyColumnStyles.call(this, from, to);
                 }
             },
 
@@ -207,7 +220,7 @@ define('v3grid/ColumnManager',
                     col = this.processConfig(config);
 
                 // call super
-                Range.prototype.addColumn.call(this, idx, col, true);
+                base.addColumn.call(this, idx, col, true);
 
                 for (var len = ranges.length, i = 0; i < len; ++i) {
                     if (idx >= rangeStart[i] && idx < rangeStart[i+1]) {
@@ -230,7 +243,7 @@ define('v3grid/ColumnManager',
                 }
 
                 // call super
-                Range.prototype.removeColumn.call(this, idx, true);
+                base.removeColumn.call(this, idx, true);
 
                 for (len = ranges.length, i = 0; i < len; ++i) {
                     if (idx >= rangeStart[i] && idx < rangeStart[i+1]) {
@@ -243,7 +256,7 @@ define('v3grid/ColumnManager',
             },
 
             moveColumn: function (fromIdx, toIdx, suppressEvent) {
-                Range.prototype.moveColumn.call(this, fromIdx, toIdx, true);
+                base.moveColumn.call(this, fromIdx, toIdx, true);
 
                 var fromRange = this.getRangeIdx(fromIdx),
                     toRange = this.getRangeIdx(toIdx),
