@@ -632,6 +632,8 @@ define('v3grid/GridView',
         },
 
         scrollTo: function (x, y) {
+            x = x || 0;
+            y = y || 0;
             // TODO: remove it from here, do it in Grid, because if iScroll, it's going to do this auto
             // use other methods (e.g. transform)
             this.table.style.left = -x + 'px';

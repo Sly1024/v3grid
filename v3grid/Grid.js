@@ -1,6 +1,6 @@
 define('v3grid/Grid',
-    ['v3grid/Adapter', 'v3grid/Utils', 'v3grid/GridView', 'v3grid/DragHelper', 'v3grid/DefaultItemRenderer', 'v3grid/ColumnManager'],
-    function (Adapter, Utils, GridView, DragHelper, DefaultItemRenderer, ColumnManager) {
+    ['v3grid/Adapter', 'v3grid/Utils', 'v3grid/GridView', 'v3grid/DragHelper', 'v3grid/DefaultItemRenderer', 'v3grid/ColumnManager', 'v3grid/Scrollbar'],
+    function (Adapter, Utils, GridView, DragHelper, DefaultItemRenderer, ColumnManager, Scrollbar) {
 
         var Grid = function (config) {
             this.initProperties(config);
@@ -366,19 +366,17 @@ define('v3grid/Grid',
 //            Adapter.addListener(this.lockedTable, 'touchend', this.mouseOutHandler, this);
                 } else {
                     this.scrollPosX = this.scrollPosY = 0;
-                    var hScrollbar = this.hScrollbar = this.createScrollbar('height');
-                    var vScrollbar = this.vScrollbar = this.createScrollbar('width');
-                    panel.appendChild(hScrollbar);
-                    panel.appendChild(vScrollbar);
+                    var hScrollbar = this.hScrollbar = new Scrollbar(panel, 'horizontal');
+                    var vScrollbar = this.vScrollbar = new Scrollbar(panel, 'vertical');
 
 
                     // TODO: use onHscroll/onVscroll instead
-                    Adapter.addListener(hScrollbar, 'scroll', function (evt) {
-                        this.scrollTo(hScrollbar.scrollLeft, this.scrollPosY);
+                    Adapter.addListener(hScrollbar.dom, 'scroll', function (evt) {
+                        this.scrollTo(hScrollbar.dom.scrollLeft, this.scrollPosY);
                     }, this);
 
-                    Adapter.addListener(vScrollbar, 'scroll', function (evt) {
-                        this.scrollTo(this.scrollPosX, vScrollbar.scrollTop);
+                    Adapter.addListener(vScrollbar.dom, 'scroll', function (evt) {
+                        this.scrollTo(this.scrollPosX, vScrollbar.dom.scrollTop);
                     }, this);
 
 //                    Adapter.addListener(this.table, 'mousemove', this.mouseMoveHandler, this);
@@ -390,19 +388,6 @@ define('v3grid/Grid',
 //                        Adapter.addListener(this.lockedTable, 'mouseout', this.mouseOutHandler, this);
 //                    }
                 }
-            },
-
-            createScrollbar: function (thicknessProp) {
-                var outer = document.createElement('div'),
-                    inner = document.createElement('div');
-
-                inner.style[thicknessProp] = '1px';
-                outer.style[thicknessProp] = Utils.scrollbarSize + 'px';
-                outer.style.position = 'absolute';
-                outer.style.overflow = 'scroll';
-                outer.appendChild(inner);
-
-                return outer;
             },
 
             initiScroll: function () {
@@ -443,7 +428,7 @@ define('v3grid/Grid',
                 for (var y = yFrom; y < yTo; ++y) {
                     var viewsY = views[y];
                     for (var x = xFrom; x < xTo; ++x) {
-                        viewsY[x][funcName].apply(viewsY[x], args);
+                        viewsY[x][funcName].apply(viewsY[x], args || []);
                     }
                 }
             },
@@ -697,10 +682,8 @@ define('v3grid/Grid',
                 var availWidth = width,
                     availHeight = height - headerHeight,
                     totalHeight = this.totalRowCount * rowHeight,
-                    isVscroll =  totalHeight > availHeight,
-                    scrollbarWidth = availWidth,
-                    scrollbarHeight = availHeight;
-                if (isVscroll) availWidth -= Utils.scrollbarSize;
+                    isVscroll =  totalHeight > availHeight;
+                if (isVscroll) availWidth -= Scrollbar.size;
 
 
                 var colMgr = this.colMgr;
@@ -708,10 +691,10 @@ define('v3grid/Grid',
                     totalWidth = colMgr.getTotalWidth(),
                     isHscroll = totalWidth > availWidth;
                 if (isHscroll) {
-                    availHeight -= Utils.scrollbarSize;
+                    availHeight -= Scrollbar.size;
                     if (!isVscroll && (totalHeight = this.totalRowCount * rowHeight) > availHeight) {
                         isVscroll = true;
-                        availWidth -= Utils.scrollbarSize;
+                        availWidth -= Scrollbar.size;
                         colsChanged |= colMgr.calcColumnWidths(availWidth);
                         totalWidth = colMgr.getTotalWidth();
                     }
@@ -733,6 +716,7 @@ define('v3grid/Grid',
                     viewsH = this.viewsH;
 
                 if (availWidth < 0) availWidth = 0;
+                var scrollbarWidth = availWidth;
 
                 var widths = [availWidth];
                 if (viewsH > 1) {
@@ -751,6 +735,7 @@ define('v3grid/Grid',
 
                 // headerHeight is already subtracted from avail
                 if (availHeight < 0) { headerHeight += availHeight; availHeight = 0; }
+                var scrollbarHeight = availHeight;
 
                 var heights = [headerHeight, availHeight];
                 if (viewsV > 1) {
@@ -787,25 +772,27 @@ define('v3grid/Grid',
                 // note: xPos, yPos contains the correct scrollbar positions
                 var hScrollbar = this.hScrollbar;
                 if (isHscroll) {
-                    hScrollbar.style.top = yPos + 'px';
-                    hScrollbar.style.width = scrollbarWidth + 'px';
-                    hScrollbar.firstChild.style.width = totalWidth + 'px';
+                    hScrollbar.dom.style.top = yPos + 'px';
+                    hScrollbar.setVisibleSize(scrollbarWidth);
+                    hScrollbar.setInnerSize(totalWidth);
                 } else {
-                    hScrollbar.style.width = '0px';
+                    hScrollbar.dom.style.width = '0px';
                 }
 
                 var vScrollbar = this.vScrollbar;
                 if (isVscroll) {
-                    vScrollbar.style.left = xPos + 'px';
-                    vScrollbar.style.top = headerHeight + 'px';
-                    vScrollbar.style.height = scrollbarHeight + 'px';
-                    vScrollbar.firstChild.style.height = totalHeight + 'px';
+                    vScrollbar.dom.style.left = xPos + 'px';
+                    vScrollbar.dom.style.top = headerHeight + 'px';
+                    vScrollbar.setVisibleSize(scrollbarHeight);
+                    vScrollbar.setInnerSize(totalHeight);
                 } else {
-                    vScrollbar.style.height = '0px';
+                    vScrollbar.dom.style.height = '0px';
                 }
 
-                this.maxScrollX = totalWidth - scrollbarWidth + Utils.scrollbarSize;
-                this.maxScrollY = totalHeight - scrollbarHeight + Utils.scrollbarSize;
+                this.maxScrollX = Math.max(0, totalWidth - scrollbarWidth);
+                this.maxScrollY = Math.max(0, totalHeight - scrollbarHeight);
+
+//                console.log('setsize scrollMax', this.maxScrollX, this.maxScrollY);
 
                 // inner div is actually smaller, but the outer still displays a scrollbar with overflow=='auto'
                 // some bug in chrome ?? (haven't tried in other browsers)
@@ -853,11 +840,18 @@ define('v3grid/Grid',
             },
 
             scrollTo: function (x, y) {
+                if (x === undefined) x = this.scrollPosX;
+                if (y === undefined) y = this.scrollPosY;
+
                 x = Utils.minMax(x, 0, this.maxScrollX);
                 y = Utils.minMax(y, 0, this.maxScrollY);
 
                 this.scrollPosX = x;
                 this.scrollPosY = y;
+
+                // set scrollbar positions
+                this.hScrollbar.dom.scrollLeft = x;
+                this.vScrollbar.dom.scrollTop = y;
 
                 var scrollViewX = this.scrollViewX,
                     scrollViewY = this.scrollViewY,
@@ -878,6 +872,10 @@ define('v3grid/Grid',
 
                 // TODO: figure out what is needed here from setSize (not all I think)
                 this.setSize();
+
+//                if (this.scrollPosY > this.maxScrollY) {
+                    this.scrollTo();
+//                }
 //                if (this.iScroll) this.iScroll.refresh();
             },
 
