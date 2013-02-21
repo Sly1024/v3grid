@@ -58,15 +58,13 @@ define('v3grid/Grid',
                 var container = Adapter.isString(config.renderTo) ?
                     document.getElementById(config.renderTo) : config.renderTo;
 
-                this.panel = document.createElement('div');
+                this.panel = container; //document.createElement('div');
                 this.panel.tabIndex = 0;
-                container.appendChild(this.panel);
+//                container.appendChild(this.panel);
 
                 this.width = config.width || container.clientWidth;
                 this.height = config.height || container.clientHeight;
                 this.data = config.data;
-
-//                this.columnsChanged = true;
             },
 
             validateConfig: function (config) {
@@ -191,11 +189,6 @@ define('v3grid/Grid',
                 this.colMgr = new ColumnManager(this, columns);
 
                 this.totalColumnCount = len;
-
-                // check for lockedColumns
-//                this.lockedColumnCount = Utils.minMax(this.lockedColumnCount >> 0, 0, len);
-
-                // TODO: create ranges
             },
 
 
@@ -208,7 +201,7 @@ define('v3grid/Grid',
             },
 
             createComponents: function () {
-                var grid = this;
+//                var grid = this;
 
                 var panel = this.panel;
                 panel.style.position = 'relative';
@@ -236,6 +229,10 @@ define('v3grid/Grid',
                     ranges = colMgr.getRanges(colCounts);
                 }
 
+                var viewContainer = this.viewContainer = document.createElement('div');
+                viewContainer.style.position = 'absolute';
+                viewContainer.style.overflow = 'hidden';
+
                 for (var y = 0; y < viewsV; ++y) {
                     views[y] = new Array(viewsH);
 
@@ -246,7 +243,7 @@ define('v3grid/Grid',
                         table.style.overflow = 'hidden';
 
 //                        var container = table;
-                        Adapter.addClass(table, this.CLS_TABLE);    // TODO : locked?
+                        Adapter.addClass(table, this.CLS_TABLE);    // TODO : locked, left/right/top/bottom/middle/center??
 
 //                        if (x == scrollViewX || y == scrollViewY) {
                             var container = document.createElement('div');
@@ -255,9 +252,10 @@ define('v3grid/Grid',
                             container.appendChild(table);
 //                        }
 
-                        panel.appendChild(container);
+                        viewContainer.appendChild(container);
 
                         if (y == 0) {
+                            // header view
                             views[0][x] = new GridView({
                                 grid: this,
                                 table: table,
@@ -300,6 +298,8 @@ define('v3grid/Grid',
 
                     }
                 }
+
+                panel.appendChild(viewContainer);
 
                 // locked column stuff
 //                if (this.lockedColumnCount > 0) {
@@ -347,17 +347,6 @@ define('v3grid/Grid',
 //                });
 
 
-                var me = this, scrollContainer = views[scrollViewY][scrollViewX].container;
-                if (Adapter.hasTouch) {
-                    setTimeout(function () {
-                        me.maxScrollX = scrollContainer.scrollWidth - scrollContainer.clientWidth;
-                        me.maxScrollY = scrollContainer.scrollHeight -scrollContainer.clientHeight;
-                        me.initiScroll();
-                    }, 0);
-                } else {
-//                    Adapter.addListener(scrollContainer, 'scroll', this.scrollMove, this);
-                }
-
                 // hover stuff
                 if (Adapter.hasTouch) {
 //            Adapter.addListener(this.table, 'touchstart', this.mouseMoveHandler, this);
@@ -379,15 +368,33 @@ define('v3grid/Grid',
                         this.scrollTo(this.scrollPosX, vScrollbar.dom.scrollTop);
                     }, this);
 
-//                    Adapter.addListener(this.table, 'mousemove', this.mouseMoveHandler, this);
-//                    Adapter.addListener(this.table, 'mouseover', this.mouseOverHandler, this);
-//                    Adapter.addListener(this.table, 'mouseout', this.mouseOutHandler, this);
-//                    if (this.lockedColumnCount > 0) {
-//                        Adapter.addListener(this.lockedTable, 'mousemove', this.mouseMoveHandler, this);
-//                        Adapter.addListener(this.lockedTable, 'mouseover', this.mouseOverHandler, this);
-//                        Adapter.addListener(this.lockedTable, 'mouseout', this.mouseOutHandler, this);
-//                    }
+                    if (Adapter.isFireFox) {
+                        Adapter.addListener(viewContainer, 'DOMMouseScroll', this.ffMouseWheelHandler, this);
+                    } else if (Adapter.isIE) {
+                        Adapter.addListener(viewContainer, 'mousewheel', this.ieMouseWheelHandler, this);
+                    } else {
+                        Adapter.addListener(viewContainer, 'mousewheel', this.mouseWheelHandler, this);
+                    }
+
+                    Adapter.addListener(viewContainer, 'mousemove', this.mouseMoveHandler, this);
+                    Adapter.addListener(viewContainer, 'mouseover', this.mouseMoveHandler, this);
+                    Adapter.addListener(viewContainer, 'mouseout', this.mouseOutHandler, this);
                 }
+            },
+
+            ffMouseWheelHandler: function (evt) {
+                var delta = 40*evt.detail;
+                if (evt.axis == 2) {
+                    this.scrollTo(this.scrollPosX, this.scrollPosY + delta);
+                } else {
+                    this.scrollTo(this.scrollPosX + delta, this.scrollPosY);
+                }
+            },
+            ieMouseWheelHandler: function (evt) {
+                this.scrollTo(this.scrollPosX, this.scrollPosY - evt.wheelDelta);
+            },
+            mouseWheelHandler: function (evt) {
+                this.scrollTo(this.scrollPosX - evt.wheelDeltaX, this.scrollPosY - evt.wheelDeltaY);
             },
 
             initiScroll: function () {
@@ -415,37 +422,22 @@ define('v3grid/Grid',
                 this.scrollTo(-x, -y);
             },
 
-            // use: allViews('functionName', [param1, param2, ...], yFrom, yTo, xFrom, xTo);
+            // from/to values are inclusive
             allViews: function (funcName, args, yFrom, yTo, xFrom, xTo) {
                 var views = this.views;
 
                 // default values
                 if (yFrom === undefined) yFrom = 0;
                 if (xFrom === undefined) xFrom = 0;
-                if (yTo === undefined) yTo = this.viewsV;
-                if (xTo === undefined) xTo = this.viewsH;
+                if (yTo === undefined) yTo = this.viewsV-1;
+                if (xTo === undefined) xTo = this.viewsH-1;
 
-                for (var y = yFrom; y < yTo; ++y) {
+                for (var y = yFrom; y <= yTo; ++y) {
                     var viewsY = views[y];
-                    for (var x = xFrom; x < xTo; ++x) {
+                    for (var x = xFrom; x <= xTo; ++x) {
                         viewsY[x][funcName].apply(viewsY[x], args || []);
                     }
                 }
-            },
-
-            positionHeader: function () {
-                this.headerContainer.scrollLeft = this.tableContainer.scrollLeft;
-            },
-
-            positionLockedTable: function () {
-                this.lockedTableContainer.scrollTop = this. tableContainer.scrollTop;
-            },
-
-            scrollMove: function () {
-
-                this.scrollTo(this.tableContainer.scrollLeft, this.tableContainer.scrollTop);
-                this.positionHeader();
-                if (this.lockedColumnCount > 0) this.positionLockedTable();
             },
 
             colResizeCursorHandler: function (evt) {
@@ -630,38 +622,6 @@ define('v3grid/Grid',
                 if (this.iScroll) this.iScroll.refresh();
             },
 
-            applyColumnWidths: function (width) {
-                width = width || this.width;
-
-                this.colMgr.calcColumnWidths(width);
-                this.colMgr.applyColumnStyles();
-
-                var lockedWidth = 0;
-
-//                if (this.lockedColumnCount > 0) {
-//                    var lcols = this.lockedColumns;
-//                    if (this.columnsChanged) {
-//                        this.calcColumnPosX(lcols, this.lockedTableView.columnPosX, 0, lcols.length);
-//                        this.applyColumnStyles(lcols, this.lockedTableView.columnPosX, 0, lcols.length - 1);
-//
-//                        this.lockedTableView.setTableSize();
-//                        this.lockedHeaderView.setTableSize();
-//                    }
-//                    lockedWidth = this.lockedHeaderView.columnPosX[lcols.length];
-//                }
-
-//                this.tableView.scrollXOffset = lockedWidth;
-
-                if (this.colMgr.columnsChanged) {
-//                    this.tableView.setTableSize();
-//                    this.headerView.setTableSize();
-                    this.setTableSize();
-                }
-
-                this.lockedWidth = lockedWidth;
-                this.colMgr.columnsChanged = false;
-            },
-
             setSize: function (width, height) {
 
                 width = width === undefined ? this.width : width-2; // border
@@ -687,22 +647,18 @@ define('v3grid/Grid',
 
 
                 var colMgr = this.colMgr;
-                var colsChanged = colMgr.calcColumnWidths(availWidth),
-                    totalWidth = colMgr.getTotalWidth(),
+                colMgr.calcColumnWidths(availWidth);
+                var totalWidth = colMgr.getTotalWidth(),
                     isHscroll = totalWidth > availWidth;
+
                 if (isHscroll) {
                     availHeight -= Scrollbar.size;
-                    if (!isVscroll && (totalHeight = this.totalRowCount * rowHeight) > availHeight) {
+                    if (!isVscroll && totalHeight > availHeight) {
                         isVscroll = true;
                         availWidth -= Scrollbar.size;
-                        colsChanged |= colMgr.calcColumnWidths(availWidth);
-                        totalWidth = colMgr.getTotalWidth();
+                        // don't need to recalc column widths, because if they didn't fit within 'availWidth',
+                        // they won't fit within 'availWidth-Scrollbar.size', so all columns will have fixed/min width
                     }
-                }
-
-                if (colsChanged || colMgr.columnsChanged) {
-                    colMgr.applyColumnStyles();
-                    colMgr.columnsChanged = false;
                 }
 
                 // sets inner table sizes
@@ -738,7 +694,7 @@ define('v3grid/Grid',
                 var scrollbarHeight = availHeight;
 
                 var heights = [headerHeight, availHeight];
-                if (viewsV > 1) {
+                if (viewsV > 2) {
                     var h;
                     if (topLRC) {
                         h = Math.min(topLRC * rowHeight, availHeight);
@@ -760,45 +716,25 @@ define('v3grid/Grid',
                     var viewsY = views[y];
                     xPos = 0;
                     for (var x = 0; x < viewsH; ++x) {
-                        var contStyle = viewsY[x].container.style;
-                        contStyle.left = xPos + 'px';
-                        contStyle.top = yPos + 'px';
-                        viewsY[x].setVisibleSize(widths[x], heights[y]);
+                        viewsY[x].setVisibleBox(xPos, yPos, widths[x], heights[y]);
                         xPos += widths[x];
                     }
                     yPos += heights[y];
                 }
 
                 // note: xPos, yPos contains the correct scrollbar positions
-                var hScrollbar = this.hScrollbar;
-                if (isHscroll) {
-                    hScrollbar.dom.style.top = yPos + 'px';
-                    hScrollbar.setVisibleSize(scrollbarWidth);
-                    hScrollbar.setInnerSize(totalWidth);
-                } else {
-                    hScrollbar.dom.style.width = '0px';
-                }
-
-                var vScrollbar = this.vScrollbar;
-                if (isVscroll) {
-                    vScrollbar.dom.style.left = xPos + 'px';
-                    vScrollbar.dom.style.top = headerHeight + 'px';
-                    vScrollbar.setVisibleSize(scrollbarHeight);
-                    vScrollbar.setInnerSize(totalHeight);
-                } else {
-                    vScrollbar.dom.style.height = '0px';
-                }
+                this.hScrollbar.setProperties(0, yPos, isHscroll ? scrollbarWidth : 0, totalWidth);
+                this.vScrollbar.setProperties(xPos, headerHeight, isVscroll ? scrollbarHeight : 0, totalHeight);
 
                 this.maxScrollX = Math.max(0, totalWidth - scrollbarWidth);
                 this.maxScrollY = Math.max(0, totalHeight - scrollbarHeight);
 
-//                console.log('setsize scrollMax', this.maxScrollX, this.maxScrollY);
+//                this.tableWidth = scrollbarWidth;
+//                this.tableHeight = scrollbarHeight;
 
-                // inner div is actually smaller, but the outer still displays a scrollbar with overflow=='auto'
-                // some bug in chrome ?? (haven't tried in other browsers)
-                // here's a workaround:
-//                tcStyle.overflow = 'hidden';
-//                setTimeout(function () { tcStyle.overflow = 'auto'; }, 0);
+                this.viewContainer.style.width = scrollbarWidth + 'px';
+                this.viewContainer.style.height = (scrollbarHeight + headerHeight) + 'px';
+//                console.log('setsize scrollMax', this.maxScrollX, this.maxScrollY);
 
                 if (this.iScroll) this.iScroll.refresh();
 //                console.log('size', this.tableWidth, this.tableHeight, visibleWidth, visibleHeight);
@@ -821,7 +757,7 @@ define('v3grid/Grid',
                 if (idx == -1 || this.colMgr.columns[idx].visible == visible) return;
 
                 this.colMgr.columns[idx].visible = visible;
-                this.columnsChanged = true;
+                //this.columnsChanged = true;
                 this.setSize();
 
                 var lColCnt = this.lockedColumnCount;
@@ -867,15 +803,12 @@ define('v3grid/Grid',
 
             setTotalRowCount: function (rowCount) {
                 this.totalRowCount = rowCount;
-                // except the header!
-                this.allViews('setTotalRowCount', [rowCount], 1);
+                // TODO: subtract the locked rows
+                this.allViews('setTotalRowCount', [rowCount], this.scrollViewY, this.scrollViewY);
 
                 // TODO: figure out what is needed here from setSize (not all I think)
                 this.setSize();
-
-//                if (this.scrollPosY > this.maxScrollY) {
-                    this.scrollTo();
-//                }
+                this.scrollTo();    // needed because filtering...
 //                if (this.iScroll) this.iScroll.refresh();
             },
 
@@ -906,30 +839,11 @@ define('v3grid/Grid',
 
             mouseMoveHandler: function (evt) {
                 Adapter.fixPageCoords(evt);
-
-                var x = evt.pageX;
-                var y = evt.pageY;
-
-                this.tableView.mouseIsOver(x, y);
-                if (this.lockedColumnCount > 0) this.lockedTableView.mouseIsOver(x, y);
+                this.allViews('mouseIsOver', [evt.pageX, evt.pageY], 1);
             },
 
-            mouseOverCount: 0,
-
-            mouseOverHandler: function (evt) {
-                if (++this.mouseOverCount == 1) {
-                    this.mouseMoveHandler(evt);
-                } else {
-                    this.tableView.mouseIsOver(-1, -1);
-                    if (this.lockedColumnCount > 0) this.lockedTableView.mouseIsOver(-1, -1);
-                }
-            },
-
-            mouseOutHandler: function (evt) {
-                if (--this.mouseOverCount == 0){
-                    this.tableView.mouseIsOver(-1, -1);
-                    if (this.lockedColumnCount > 0) this.lockedTableView.mouseIsOver(-1, -1);
-                }
+            mouseOutHandler: function () {
+                this.allViews('mouseIsOver', [-1, -1], 1);
             }
         };
 

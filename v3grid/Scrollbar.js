@@ -27,12 +27,11 @@ define('v3grid/Scrollbar', ['v3grid/Adapter'],
         };
 
         Scrollbar.prototype = {
-            setVisibleSize: function (size) {
-                this.dom.style[this.lengthProp] = size + 'px';
-            },
-
-            setInnerSize: function (size) {
-                this.dom.firstChild.style[this.lengthProp] = size + 'px';
+            setProperties: function (x, y, visibleSize, scrollSize) {
+                this.dom.style.left = x + 'px';
+                this.dom.style.top = y + 'px';
+                this.dom.style[this.lengthProp] = visibleSize + 'px';
+                this.dom.firstChild.style[this.lengthProp] = scrollSize + 'px';
             }
         };
 

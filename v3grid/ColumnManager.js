@@ -10,12 +10,11 @@ define('v3grid/ColumnManager',
             this.ranges = [];
             this.rangeStart = [0];
 
-            this.validateColumnWidths();
             // call super ctor
             Range.call(this, this.columns);
 
-            // for now
-            this.columnsChanged = true;
+            // this forces calcColumnWidths to update the first time
+            this.flexColumnCount = -1;
         };
 
         var base = Range.prototype;
@@ -59,32 +58,22 @@ define('v3grid/ColumnManager',
                 col.finalCls = finalCls.join(' ');
                 col.finalHeaderCls = finalHeaderCls.join(' ');
 
-                return col;
-            },
+                // validate width
+                var cw = col.width, width = NaN, flex = 0;
 
-            validateColumnWidths: function () {
-                var columns = this.columns,
-                    flexCount = 0;
-
-                for (var len = columns.length, i = 0; i < len; ++i) {
-                    var col = columns[i], cw = col.width,
-                        width = NaN, flex = 0;
-
-                    switch (typeof cw) {
-                        case 'number': width = cw; break;
-                        case 'string':
-                            width = parseFloat(cw);
-                            if (cw[cw.length-1] == '*') { flex = width; width = NaN; }
-                            break;
-                    }
-
-                    col.width = width;
-                    col.flex = flex;
-                    if (!isNaN(width)) col.actWidth = width;
-                    if (flex) ++flexCount;
+                switch (typeof cw) {
+                    case 'number': width = cw; break;
+                    case 'string':
+                        width = parseFloat(cw);
+                        if (cw[cw.length-1] == '*') { flex = width; width = NaN; }
+                        break;
                 }
 
-                this.flexColumnCount = flexCount;
+                col.width = width;
+                col.flex = flex;
+                if (!isNaN(width)) col.actWidth = width;
+
+                return col;
             },
 
             calcColumnWidths: function (avail) {
@@ -95,7 +84,7 @@ define('v3grid/ColumnManager',
                     flexTotal = 0, flexMin = 0,
                     count = columns.length,
                     flexCols = [], i,
-                    changed = false;
+                    changed = this.flexColumnCount == -1;
 
                 for (i = 0; i < count; ++i) {
                     var col = columns[i];
@@ -119,7 +108,7 @@ define('v3grid/ColumnManager',
                 }
 
                 var flexAvail = avail - fixTotal;
-                count = flexCols.length;
+                this.flexColumnCount = count = flexCols.length;
                 if (count) {
                     flexCols.sort(function (a, b) { return a.flex / a.minWidth - b.flex / b.minWidth;});
                     for (i = 0; i < count; ++i) {
@@ -143,9 +132,8 @@ define('v3grid/ColumnManager',
 
                 // TODO: fire event instead ?
                 if (changed) {
-                    this.columnsChanged = true;
                     this.calcPosX();
-//                    this.applyColumnStyles();
+                    this.applyColumnStyles();
                 }
 
                 return changed;
