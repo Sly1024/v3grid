@@ -18,9 +18,12 @@ define('v3grid/GridView',
 
         scrollXOffset: 0,
 
-        setVisibleSize: function (width, height) {
-            this.container.style.width = width + 'px';
-            this.container.style.height = height + 'px';
+        setVisibleBox: function (x, y, width, height) {
+            var style = this.container.style;
+            style.left = x + 'px';
+            style.top = y + 'px';
+            style.width = width + 'px';
+            style.height = height + 'px';
             this.visibleWidth = width;
             this.visibleHeight = height;
             this.scrollTo();
@@ -455,6 +458,14 @@ define('v3grid/GridView',
             return false;
         },
 
+        addClassToRow: function (cls, row) {
+            Adapter.addClass(this.visibleCells[row - this.firstVisibleRow].dom, cls);
+        },
+
+        removeClassFromRow: function (cls, row) {
+            Adapter.removeClass(this.visibleCells[row - this.firstVisibleRow].dom, cls);
+        },
+
         addClassToColumn: function (cls, colIdx) {
             var cells = this.visibleCells,
                 count = this.visibleRowCount,
@@ -585,6 +596,7 @@ define('v3grid/GridView',
             this.totalRowCount = rowCount;
             this.setTableSize();
             this.onVerticalScroll(undefined, true);
+            // TODO: update only the part that was not updated by onVerticalScroll()
             this.updateView();
         },
 
@@ -677,6 +689,7 @@ define('v3grid/GridView',
 
             // highlight the row the mouse is over
             y -= Adapter.getPageY(this.table);
+
             var row = y < 0 ? -1 : (y / this.rowHeight) >> 0;
             this.highlightRow(row);
         },
