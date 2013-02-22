@@ -111,6 +111,7 @@ define('v3grid/Adapter', [], function () {
 
             if (Adapter.isWebKit) {
                 this.setY = function (el, val) { el.style['-webkit-transform'] = 'translate3d(0,'+ val + 'px,0)'; };
+                this.setPos = function (el, x, y) {el.style['-webkit-transform'] = 'translate3d('+x+'px,'+y+'px,0)'; };
                 this.transXProp = '-webkit-transform';
 
                 // In FireFox I use top/left, because it seems to be faster
@@ -122,9 +123,11 @@ define('v3grid/Adapter', [], function () {
 //                this.transXPost = ',0,0)';
             } else if (Adapter.ieVersion >= 9) {
                 this.setY = function (el, val) { el.style['msTransform'] = 'translateY('+ val + 'px)'; };
+                this.setPos = function (el, x, y) {el.style['msTransform'] = 'translate('+x+'px,'+y+'px)'; };
                 this.transXProp = 'msTransform';
             } else {
                 this.setY = function (el, val) { el.style['top'] = val + 'px'; };
+                this.setPos = function (el, x, y) { el.style.left = x+'px'; el.style.top = y+'px'; };
                 this.transXPre = '';
                 this.transXPost = '';
                 this.transXProp = 'left';

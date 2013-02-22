@@ -115,8 +115,7 @@ define('v3grid/Grid',
                         overflow: 'hidden',
                         width   : '100%',
                         height  : this.headerHeight + 'px'
-                    }),
-                    '.' +this.CLS_ROW_SIZE+'.locked { left: 0px; }'
+                    })
                 ];
 
                 this.styleSheet = Adapter.createStyleSheet(rules.join(''), 'v3grid-' + num + '-style');
@@ -229,6 +228,10 @@ define('v3grid/Grid',
                     ranges = colMgr.getRanges(colCounts);
                 }
 
+                var headerContainer = this.headerContainer = document.createElement('div');
+                headerContainer.style.position = 'absolute';
+                headerContainer.style.overflow = 'hidden';
+
                 var viewContainer = this.viewContainer = document.createElement('div');
                 viewContainer.style.position = 'absolute';
                 viewContainer.style.overflow = 'hidden';
@@ -252,11 +255,10 @@ define('v3grid/Grid',
                             container.appendChild(table);
 //                        }
 
-                        viewContainer.appendChild(container);
-
                         if (y == 0) {
                             // header view
                             views[0][x] = new GridView({
+                                isHeader: true,
                                 grid: this,
                                 table: table,
                                 container: container,
@@ -270,10 +272,11 @@ define('v3grid/Grid',
                                 rowBatchSize: 1,
                                 columnBatchSize: 1,
                                 CLS_CELL       : this.CLS_CELL,
-                                CLS_ROW_SIZE   : this.CLS_HEADER_SIZE,
-                                CLS_ROW        : this.CLS_HEADER_ROW + ' locked',
+                                CLS_ROW        : this.CLS_HEADER_ROW + ' ' + this.CLS_HEADER_SIZE + (x == scrollViewX ? '' : ' locked'),
+                                CLS_COLUMN_MOVE: this.CLS_HEADER_MOVE,
                                 columnProperties: headerColumnProps
                             });
+                            headerContainer.appendChild(container);
                         } else {
                             views[y][x] = new GridView({
                                 grid: this,
@@ -290,15 +293,17 @@ define('v3grid/Grid',
                                 availableRenderers: this.availableRenderers,
                                 rowBatchSize: this.rowBatchSize,
                                 columnBatchSize: this.columnBatchSize,
-                                CLS_ROW        : this.CLS_ROW,
+                                CLS_ROW        : this.CLS_ROW + ' ' + this.CLS_ROW_SIZE,
                                 CLS_CELL       : this.CLS_CELL,
-                                CLS_ROW_SIZE   : this.CLS_ROW_SIZE
+                                CLS_COLUMN_MOVE: this.CLS_COLUMN_MOVE
                             });
+                            viewContainer.appendChild(container);
                         }
 
                     }
                 }
 
+                panel.appendChild(headerContainer);
                 panel.appendChild(viewContainer);
 
                 // locked column stuff
@@ -332,7 +337,7 @@ define('v3grid/Grid',
 //                this.header.style.position = 'absolute';
 //                this.headerContainer.appendChild(this.header);
 //
-//                if (!Adapter.hasTouch) Adapter.addListener(this.header, 'mousemove', this.colResizeCursorHandler, this);
+//                if (!Adapter.hasTouch) Adapter.addListener(this.headerContainer, 'mousemove', this.colResizeCursorHandler, this);
 
 //                new DragHelper({
 //                    element: this.header,
@@ -347,25 +352,21 @@ define('v3grid/Grid',
 //                });
 
 
-                // hover stuff
+                this.scrollPosX = this.scrollPosY = 0;
+
                 if (Adapter.hasTouch) {
-//            Adapter.addListener(this.table, 'touchstart', this.mouseMoveHandler, this);
-//            Adapter.addListener(this.lockedTable, 'touchstart', this.mouseMoveHandler, this);
-//            Adapter.addListener(this.table, 'touchend', this.mouseOutHandler, this);
-//            Adapter.addListener(this.lockedTable, 'touchend', this.mouseOutHandler, this);
+                    this.initiScroll();
                 } else {
-                    this.scrollPosX = this.scrollPosY = 0;
                     var hScrollbar = this.hScrollbar = new Scrollbar(panel, 'horizontal');
                     var vScrollbar = this.vScrollbar = new Scrollbar(panel, 'vertical');
 
 
-                    // TODO: use onHscroll/onVscroll instead
                     Adapter.addListener(hScrollbar.dom, 'scroll', function (evt) {
-                        this.scrollTo(hScrollbar.dom.scrollLeft, this.scrollPosY);
+                        this.hScrollTo(hScrollbar.dom.scrollLeft);
                     }, this);
 
                     Adapter.addListener(vScrollbar.dom, 'scroll', function (evt) {
-                        this.scrollTo(this.scrollPosX, vScrollbar.dom.scrollTop);
+                        this.vScrollTo(vScrollbar.dom.scrollTop);
                     }, this);
 
                     if (Adapter.isFireFox) {
@@ -376,6 +377,7 @@ define('v3grid/Grid',
                         Adapter.addListener(viewContainer, 'mousewheel', this.mouseWheelHandler, this);
                     }
 
+                    // hover stuff
                     Adapter.addListener(viewContainer, 'mousemove', this.mouseMoveHandler, this);
                     Adapter.addListener(viewContainer, 'mouseover', this.mouseMoveHandler, this);
                     Adapter.addListener(viewContainer, 'mouseout', this.mouseOutHandler, this);
@@ -385,23 +387,50 @@ define('v3grid/Grid',
             ffMouseWheelHandler: function (evt) {
                 var delta = 40*evt.detail;
                 if (evt.axis == 2) {
-                    this.scrollTo(this.scrollPosX, this.scrollPosY + delta);
+                    this.vScrollTo(this.scrollPosY + delta);
                 } else {
-                    this.scrollTo(this.scrollPosX + delta, this.scrollPosY);
+                    this.hScrollTo(this.scrollPosX + delta);
                 }
             },
             ieMouseWheelHandler: function (evt) {
-                this.scrollTo(this.scrollPosX, this.scrollPosY - evt.wheelDelta);
+                this.vScrollTo(this.scrollPosY - evt.wheelDelta);
             },
             mouseWheelHandler: function (evt) {
-                this.scrollTo(this.scrollPosX - evt.wheelDeltaX, this.scrollPosY - evt.wheelDeltaY);
+                if (evt.wheelDeltaX) {
+                    this.hScrollTo(this.scrollPosX - evt.wheelDeltaX);
+                }
+                if (evt.wheelDeltaY) {
+                    this.vScrollTo(this.scrollPosY - evt.wheelDeltaY);
+                }
             },
 
             initiScroll: function () {
                 var me = this;
 
-                this.iScroll = new iScroll(this.tableContainer, {
-                    extraEventEl: this.lockedTable,
+                var eventEl = [], hLinked = [], vLinked = [],
+                    views = this.views,
+                    scrollViewX = this.scrollViewX,
+                    scrollViewY = this.scrollViewY,
+                    yTo = this.viewsV-1,
+                    xTo = this.viewsH-1;
+
+                for (var y = 0; y <= yTo; ++y) {
+                    var viewsY = views[y];
+                    for (var x = 0; x <= xTo; ++x) {
+                        if (x == scrollViewX && y != scrollViewY) {
+                            hLinked.push(viewsY[x].table);
+                        }
+                        if (x != scrollViewX && y == scrollViewY) {
+                            vLinked.push(viewsY[x].table);
+                        }
+                        if (x != scrollViewX || y != scrollViewY) {
+                            eventEl.push(viewsY[x].container); // table??
+                        }
+                    }
+                }
+
+                this.iScroll = new iScroll(this.views[scrollViewY][scrollViewX].container, {
+                    extraEventEl: eventEl,
                     onMoved: function (x, y) {
                         me.iScrollMove(x, y);
                     },
@@ -409,11 +438,8 @@ define('v3grid/Grid',
                     onBeforeScrollMove: function (e) { e.preventDefault(); },
                     useTransition:false,
                     bounce: true,
-                    hLinked: this.header,
-                    vLinked: this.lockedTable
-                    // doesn't work!?
-//            hScrollbar: true,
-//            vScrollbar: true
+                    hLinked: hLinked,
+                    vLinked: vLinked
                 });
 
             },
@@ -440,22 +466,34 @@ define('v3grid/Grid',
                 }
             },
 
-            colResizeCursorHandler: function (evt) {
-                Adapter.fixPageCoords(evt);
-                var hView = this.headerView,
-                    posx = evt.pageX - Adapter.getPageX(this.header),
-                    colIdx = hView.getColumnIdx(posx),
-                    curVal = '';
+            getHeaderViewUnder: function (headerX) {
+                var views = this.views[0], vx = 0;
 
-                posx -= hView.posX[colIdx];
-                if ((posx < 5 ? --colIdx >= 0 : posx > hView.columns[colIdx].actWidth - 5) &&
-                    hView.columns[colIdx].resizable) curVal = 'col-resize';
-
-                if (this.lastHeaderCursor !== curVal) {
-                    this.lastHeaderCursor = curVal;
-                    this.headerCSSRule.style.cursor = curVal;
+                while (vx < this.viewsH && headerX >= views[vx].visibleWidth) {
+                    headerX -= views[vx].visibleWidth;
+                    ++vx;
                 }
+                return views[vx];
             },
+
+//            colResizeCursorHandler: function (evt) {
+//                Adapter.fixPageCoords(evt);
+//                var view = this.getHeaderViewUnder(evt.pageX - Adapter.getPageX(this.headerContainer)),
+//                    posx = evt.pageX - Adapter.getPageX(view.table),
+//                    colIdx = view.getColumnIdx(posx),
+//                    curVal = '';
+//
+//                posx -= view.posX[colIdx];
+//                if ((posx < 5 ? --colIdx >= 0 : posx > view.columns[colIdx].actWidth - 5) &&
+//                    view.columns[colIdx].resizable) curVal = 'col-resize';
+//
+////                console.log('colResize mousemove', posx, colIdx, curVal);
+//
+//                if (this.lastHeaderCursor !== curVal) {
+//                    this.lastHeaderCursor = curVal;
+//                    this.headerCSSRule.style.cursor = curVal;
+//                }
+//            },
 
             onHeaderDragStart: function (evt) {
                 var columns = this.headerView.columns,
@@ -719,19 +757,23 @@ define('v3grid/Grid',
                         viewsY[x].setVisibleBox(xPos, yPos, widths[x], heights[y]);
                         xPos += widths[x];
                     }
-                    yPos += heights[y];
+                    if (y) yPos += heights[y];  // don't add header, b/c the rest is in a separate container
                 }
 
-                // note: xPos, yPos contains the correct scrollbar positions
-                this.hScrollbar.setProperties(0, yPos, isHscroll ? scrollbarWidth : 0, totalWidth);
-                this.vScrollbar.setProperties(xPos, headerHeight, isVscroll ? scrollbarHeight : 0, totalHeight);
+                if (!Adapter.hasTouch) {
+                    yPos += headerHeight;   // and _now_ we add header b/c the scrollbars are in the outer container
+                    // note: xPos, yPos contains the correct scrollbar positions
+                    this.hScrollbar.setProperties(0, yPos, isHscroll ? scrollbarWidth : 0, totalWidth);
+                    this.vScrollbar.setProperties(xPos, headerHeight, isVscroll ? scrollbarHeight : 0, totalHeight);
+                }
 
                 this.maxScrollX = Math.max(0, totalWidth - scrollbarWidth);
                 this.maxScrollY = Math.max(0, totalHeight - scrollbarHeight);
 
-//                this.tableWidth = scrollbarWidth;
-//                this.tableHeight = scrollbarHeight;
+                this.headerContainer.style.width = scrollbarWidth + 'px';
+                this.headerContainer.style.height = headerHeight + 'px';
 
+                this.viewContainer.style.top = headerHeight + 'px';
                 this.viewContainer.style.width = scrollbarWidth + 'px';
                 this.viewContainer.style.height = (scrollbarHeight + headerHeight) + 'px';
 //                console.log('setsize scrollMax', this.maxScrollX, this.maxScrollY);
@@ -775,6 +817,39 @@ define('v3grid/Grid',
                 this.allViews('updateView');
             },
 
+            hScrollTo: function (x) {
+                if (x === undefined) x = this.scrollPosX;
+                x = Utils.minMax(x, 0, this.maxScrollX);
+                this.scrollPosX = x;
+
+                // set scrollbar positions
+                if (!Adapter.hasTouch) this.hScrollbar.dom.scrollLeft = x;
+
+                var scrollViewX = this.scrollViewX,
+                    views = this.views;
+
+                for (var yLen = views.length, vy = 0; vy < yLen; ++vy) {
+                    views[vy][scrollViewX].setXPos(x);
+                    views[vy][scrollViewX].hScrollTo(x);
+                }
+            },
+
+            vScrollTo: function (y) {
+                if (y === undefined) y = this.scrollPosY;
+                y = Utils.minMax(y, 0, this.maxScrollY);
+                this.scrollPosY = y;
+
+                // set scrollbar positions
+                if (!Adapter.hasTouch) this.vScrollbar.dom.scrollTop = y;
+
+                var viewsY = this.views[this.scrollViewY];
+                for (var xLen = viewsY.length, vx = 0; vx < xLen; ++vx) {
+                    viewsY[vx].setYPos(y);
+                    viewsY[vx].vScrollTo(y);
+                }
+            },
+
+            // calls 'scrollTo' but does not position views
             scrollTo: function (x, y) {
                 if (x === undefined) x = this.scrollPosX;
                 if (y === undefined) y = this.scrollPosY;
@@ -786,8 +861,10 @@ define('v3grid/Grid',
                 this.scrollPosY = y;
 
                 // set scrollbar positions
-                this.hScrollbar.dom.scrollLeft = x;
-                this.vScrollbar.dom.scrollTop = y;
+                if (!Adapter.hasTouch) {
+                    this.hScrollbar.dom.scrollLeft = x;
+                    this.vScrollbar.dom.scrollTop = y;
+                }
 
                 var scrollViewX = this.scrollViewX,
                     scrollViewY = this.scrollViewY,
@@ -832,9 +909,7 @@ define('v3grid/Grid',
             },
 
             invalidateData:function (row, col) {
-                // TODO: views
-//                if (this.lockedColumnCount > 0) this.lockedTableView.invalidateData(row, col);
-//                this.tableView.invalidateData(row, col);
+                this.allViews('invalidateData', [row, col], 1);
             },
 
             mouseMoveHandler: function (evt) {

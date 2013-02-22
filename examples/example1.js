@@ -1,5 +1,5 @@
-require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3grid/FilterDataProvider'],
-    function (V3Grid, SortDataProvider, ColumnSelector, FilterDataProvider) {
+require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3grid/FilterDataProvider', 'v3grid/ColumnDragger'],
+    function (V3Grid, SortDataProvider, ColumnSelector, FilterDataProvider, ColumnDragger) {
         Ext.namespace('v3grid');
         v3grid.V3Grid = V3Grid;
 
@@ -70,7 +70,7 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3g
                         rowBatchSize: 2,
                         data: cellData,
                         columns: columns,
-                        features: [filter, sorter, new ColumnSelector()]
+                        features: [filter, sorter, new ColumnSelector(), new ColumnDragger()]
                     }
                 });
 

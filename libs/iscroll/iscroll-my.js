@@ -54,7 +54,7 @@ var m = Math,
 	iScroll = function (el, options) {
 		var that = this,
 			doc = document,
-			i;
+            i, len;
 
 		that.wrapper = typeof el == 'object' ? el : doc.getElementById(el);
 		that.wrapper.style.overflow = 'hidden';
@@ -89,7 +89,7 @@ var m = Math,
 		// User defined options
 		for (i in options) that.options[i] = options[i];
 
-        // horizontally/vertically linked element
+        // horizontally/vertically linked elements
         that.hLinked = options.hLinked;
         that.vLinked = options.vLinked;
 
@@ -111,31 +111,21 @@ var m = Math,
 		that.scroller.style[vendor + 'TransformOrigin'] = '0 0';
 		if (that.options.useTransition) {
             that.scroller.style[vendor + 'TransitionTimingFunction'] = 'cubic-bezier(0.33,0.66,0.66,1)';
-            if (that.hLinked) {
-                that.hLinked.style[vendor + 'TransitionTimingFunction'] = 'cubic-bezier(0.33,0.66,0.66,1)';
-            }
-            if (that.vLinked) {
-                that.vLinked.style[vendor + 'TransitionTimingFunction'] = 'cubic-bezier(0.33,0.66,0.66,1)';
-            }
+            that._style(that.hLinked, vendor + 'TransitionTimingFunction', 'cubic-bezier(0.33,0.66,0.66,1)');
+            that._style(that.vLinked, vendor + 'TransitionTimingFunction', 'cubic-bezier(0.33,0.66,0.66,1)');
         }
 		
 		if (that.options.useTransform) {
             that.scroller.style[vendor + 'Transform'] = trnOpen + that.x + 'px,' + that.y + 'px' + trnClose;
-            if (that.hLinked) {
-                that.hLinked.style[vendor + 'Transform'] = trnOpen + that.x + 'px,0px' + trnClose;
-            }
-            if (that.vLinked) {
-                that.vLinked.style[vendor + 'Transform'] = trnOpen + '0px,' + that.y + 'px' + trnClose;
-            }
+            that._style(that.hLinked, vendor + 'Transform', trnOpen + that.x + 'px,0px' + trnClose);
+            that._style(that.vLinked, vendor + 'Transform', trnOpen + '0px,' + that.y + 'px' + trnClose);
         }
 		else {
             that.scroller.style.cssText += ';position:absolute;top:' + that.y + 'px;left:' + that.x + 'px';
-            if (that.hLinked) {
-                that.hLinked.style.cssText += ';position:absolute;left:' + that.x + 'px';
-            }
-            if (that.vLinked) {
-                that.vLinked.style.cssText += ';position:absolute;top:' + that.y + 'px';
-            }
+            that._style(that.hLinked, 'position', 'absolute');
+            that._style(that.vLinked, 'position', 'absolute');
+            that._style(that.hLinked, 'left', that.x + 'px');
+            that._style(that.vLinked, 'top', that.y + 'px');
         }
 
 		that.refresh();
@@ -169,6 +159,13 @@ iScroll.prototype = {
 		}
 	},
 
+    _style: function (items, prop, value) {
+        if (items) {
+            for (var len = items.length, i = 0; i < len; ++i) {
+                items[i].style[prop] = value;
+            }
+        }
+    },
 	_resize: function () {
 		this.refresh();
 	},
@@ -179,24 +176,16 @@ iScroll.prototype = {
 
 		if (this.options.useTransform) {
 			this.scroller.style[vendor + 'Transform'] = trnOpen + x + 'px,' + y + 'px' + trnClose; // + ' scale(' + this.scale + ')';
-            // linked element
-            if (this.hLinked) {
-                this.hLinked.style[vendor + 'Transform'] = trnOpen + x + 'px,0px' + trnClose;
-            }
-            if (this.vLinked) {
-                this.vLinked.style[vendor + 'Transform'] = trnOpen + '0px,' + y + 'px' + trnClose;
-            }
+            // linked elements
+            this._style(this.hLinked, vendor + 'Transform', trnOpen + x + 'px,0px' + trnClose);
+            this._style(this.vLinked, vendor + 'Transform', trnOpen + '0px,' + y + 'px' + trnClose);
         } else {
 			x = mround(x);
 			y = mround(y);
 			this.scroller.style.left = x + 'px';
 			this.scroller.style.top = y + 'px';
-            if (this.hLinked) {
-                this.hLinked.style.left = x + 'px';
-            }
-            if (this.vLinked) {
-                this.vLinked.style.top = y + 'px';
-            }
+            this._style(this.hLinked, 'left', x + 'px');
+            this._style(this.vLinked, 'top', y + 'px');
         }
 
 		this.x = x;
@@ -483,12 +472,8 @@ iScroll.prototype = {
 
 	_transitionTime: function (time) {
 		this.scroller.style[vendor + 'TransitionDuration'] = time + 'ms';
-        if (this.hLinked) {
-            this.hLinked.style[vendor + 'TransitionDuration'] = time + 'ms';
-        }
-        if (this.vLinked) {
-            this.vLinked.style[vendor + 'TransitionDuration'] = time + 'ms';
-        }
+        this._style(this.hLinked, vendor + 'TransitionDuration', time + 'ms');
+        this._style(this.vLinked, vendor + 'TransitionDuration', time + 'ms');
     },
 	
 	_momentum: function (dist, time, maxDistUpper, maxDistLower, size) {
@@ -533,7 +518,10 @@ iScroll.prototype = {
             el.addEventListener(type, this, !!bubble);
         } else {
             this.scroller.addEventListener(type, this, !!bubble);
-            if (this.extraEventEl) this.extraEventEl.addEventListener(type, this, !!bubble);
+            if (this.extraEventEl) {
+                for(var len = this.extraEventEl.length, i = 0; i < len; ++i)
+                    this.extraEventEl[i].addEventListener(type, this, !!bubble);
+            }
         }
 	},
 
@@ -542,7 +530,10 @@ iScroll.prototype = {
             el.removeEventListener(type, this, !!bubble);
         } else {
             this.scroller.removeEventListener(type, this, !!bubble);
-            if (this.extraEventEl) this.extraEventEl.removeEventListener(type, this, !!bubble);
+            if (this.extraEventEl) {
+                for(var len = this.extraEventEl.length, i = 0; i < len; ++i)
+                    this.extraEventEl[i].removeEventListener(type, this, !!bubble);
+            }
         }
     },
 

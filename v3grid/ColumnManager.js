@@ -188,7 +188,7 @@ define('v3grid/ColumnManager',
             createColumnMoveHandler: function (rangeIdx) {
                 return function (fromIdx, toIdx) {
                     var offset = this.rangeStart[rangeIdx];
-                    this.moveColumn(fromIdx + offset, toIdx + offset);
+                    this.moveColumn(fromIdx + offset, toIdx + offset, false, true);
                 }
             },
 
@@ -243,25 +243,31 @@ define('v3grid/ColumnManager',
                 if (!suppressEvent) this.fireEvent('columnRemoved', idx, col);
             },
 
-            moveColumn: function (fromIdx, toIdx, suppressEvent) {
+            moveColumn: function (fromIdx, toIdx, suppressEvent, calledFromRange) {
                 base.moveColumn.call(this, fromIdx, toIdx, true);
 
-                var fromRange = this.getRangeIdx(fromIdx),
-                    toRange = this.getRangeIdx(toIdx),
-                    rangeStart = this.rangeStart,
-                    ranges = this.ranges;
+                if (!calledFromRange) {
+                    var fromRange = this.getRangeIdx(fromIdx),
+                        toRange = this.getRangeIdx(toIdx),
+                        rangeStart = this.rangeStart,
+                        ranges = this.ranges;
 
-                if (fromRange != -1 && toRange != -1) {
-                    if (fromRange == toRange) {
-                        var offset = rangeStart[toRange];
-                        ranges[toRange].moveColumn(fromIdx - offset, toIdx - offset);
-                    } else {
-                        ranges[fromRange].removeColumn(fromIdx - rangeStart[fromRange]);
-                        ranges[toRange].addColumn(toIdx - rangeStart[toRange], true);
-                        // modify rangeStart[]
-                        for (var i = fromRange + 1; i <= toRange; ++i) --rangeStart[i];
+                    if (fromRange != -1 && toRange != -1) {
+                        if (fromRange == toRange) {
+                            var offset = rangeStart[toRange];
+                            ranges[toRange].moveColumn(fromIdx - offset, toIdx - offset);
+                        } else {
+                            ranges[fromRange].removeColumn(fromIdx - rangeStart[fromRange]);
+                            ranges[toRange].addColumn(toIdx - rangeStart[toRange], true);
+                            // modify rangeStart[]
+                            for (var i = fromRange + 1; i <= toRange; ++i) --rangeStart[i];
+                        }
                     }
                 }
+
+                var from = toIdx < fromIdx ? toIdx : fromIdx,
+                    to = fromIdx ^ toIdx ^ from;    // the other one
+                this.applyColumnStyles(from, to);
 
                 if (!suppressEvent) this.fireEvent('columnMoved', fromIdx, toIdx);
             }
