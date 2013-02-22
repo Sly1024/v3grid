@@ -21,14 +21,14 @@ define('v3grid/DragHelper', ['v3grid/Adapter'], function (Adapter) {
         endDragOnLeave: true,
         startDragOnDown: false,
         tolerance: 5,
-        dragMove: emptyFn,
         dragStart: emptyFn,
+        dragMove: emptyFn,
         dragEnd: emptyFn,
         scope: window,
         captureMouse: false,
 
         isDragging: false,
-        tangent:    Math.tan(22.5/180*Math.PI),
+//        tangent:    Math.tan(22.5/180*Math.PI),
 
         // destroy() ??
 
@@ -40,13 +40,15 @@ define('v3grid/DragHelper', ['v3grid/Adapter'], function (Adapter) {
 
 //        console.log('[DH]mdown ', this.lastX);
 
-            addListener(this.eventElement, 'mouseup', this.onMouseUp, this);
-            addListener(this.eventElement, 'mousemove', this.onMouseMove, this);
-            addListener(this.eventElement, 'mouseleave', this.onMouseLeave, this);
+            var evtEl = this.eventElement;
 
             if (Adapter.hasTouch) {
-                addListener(this.eventElement, 'touchend', this.onMouseUp, this);
-                addListener(this.eventElement, 'touchmove', this.onMouseMove, this);
+                addListener(evtEl, 'touchend', this.onMouseUp, this);
+                addListener(evtEl, 'touchmove', this.onMouseMove, this);
+            } else {
+                addListener(evtEl, 'mouseup', this.onMouseUp, this);
+                addListener(evtEl, 'mousemove', this.onMouseMove, this);
+                addListener(evtEl, 'mouseleave', this.onMouseLeave, this);
             }
 
             if (this.startDragOnDown) {
@@ -74,13 +76,14 @@ define('v3grid/DragHelper', ['v3grid/Adapter'], function (Adapter) {
 //            console.log('mouseUp');
             Adapter.fixPageCoords(evt);
 
-            removeListener(this.eventElement, 'mouseup', this.onMouseUp, this);
-            removeListener(this.eventElement, 'mousemove', this.onMouseMove, this);
-            removeListener(this.eventElement, 'mouseleave', this.onMouseLeave, this);
-
+            var evtEl = this.eventElement;
             if (Adapter.hasTouch) {
-                removeListener(this.eventElement, 'touchend', this.onMouseUp, this);
-                removeListener(this.eventElement, 'touchmove', this.onMouseMove, this);
+                removeListener(evtEl, 'touchend', this.onMouseUp, this);
+                removeListener(evtEl, 'touchmove', this.onMouseMove, this);
+            } else {
+                removeListener(evtEl, 'mouseup', this.onMouseUp, this);
+                removeListener(evtEl, 'mousemove', this.onMouseMove, this);
+                removeListener(evtEl, 'mouseleave', this.onMouseLeave, this);
             }
 
             this.wasDragging = this.isDragging;
@@ -99,13 +102,12 @@ define('v3grid/DragHelper', ['v3grid/Adapter'], function (Adapter) {
             Adapter.fixPageCoords(evt);
 
             var x = evt.pageX, lx = this.lastX,
-                y = evt.pageY, ly = this.lastY;
+                y = evt.pageY, ly = this.lastY,
+                dx = x - lx, dy = y - ly;
 
             if (this.isDragging) {
 //            console.log('[DH]dragging', lx, x);
-                var dx = x - lx, dy = y - ly;
-                if (Adapter.hasTouch)
-                {
+                if (Adapter.hasTouch) {
                     var adx = Math.abs(x - this.firstX);
                     var ady = Math.abs(y - this.firstY);
                     if (adx > ady*2) {
@@ -120,14 +122,13 @@ define('v3grid/DragHelper', ['v3grid/Adapter'], function (Adapter) {
                 this.lastY = y;
             } else {
                 var t = this.tolerance;
-                if (x - lx > t || lx - x > t || y - ly > t || ly - y > t) {
+                if (dx > t || -dx > t || dy > t || -dy > t) {
 //                console.log('[DH]tolerance reached', lx, x);
                     if (this.dragStart.call(this.scope, this.downEvt) === false) {
                         this.onMouseUp(evt);
                         return;
                     }
                     this.isDragging = true;
-                    var dx = x - lx, dy = y - ly;
 
                     this.dragMove.call(this.scope, dx, dy, evt);
                     this.lastX = x;

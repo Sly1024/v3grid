@@ -6,7 +6,6 @@ define('v3grid/GridView',
         Adapter.merge(this, config);
 
         this.initProperties();
-        this.validateConfig();
         this.attachHandlers();
         this.throttledUpdateDirtyCells = Adapter.createThrottled(this.updateDirtyCells, 200, this);
     }
@@ -15,8 +14,6 @@ define('v3grid/GridView',
         rowHeight: 22,
         columnBatchSize: 2,
         rowBatchSize: 4,
-
-        scrollXOffset: 0,
 
         setVisibleBox: function (x, y, width, height) {
             var style = this.container.style;
@@ -33,7 +30,7 @@ define('v3grid/GridView',
             this.tableHeight = (this.totalRowCount * this.rowHeight) || 1;
             this.table.style.height = this.tableHeight + 'px';
 
-            this.tableWidth = this.posX[this.columns.length];
+            this.tableWidth = this.columnsX[this.columns.length];
             this.table.style.width = this.tableWidth + 'px';
         },
 
@@ -55,7 +52,7 @@ define('v3grid/GridView',
             var gridView = this;
             var rowCacheConfig = {
                 parentDom: this.table,
-                rowCls: this.CLS_ROW + ' ' + this.CLS_ROW_SIZE + ' even',
+                rowCls: this.CLS_ROW + ' even',
                 create: function () {
                     var row = [];
                     Adapter.addClass(row.dom = document.createElement('div'), this.rowCls);
@@ -114,19 +111,31 @@ define('v3grid/GridView',
             this.visibleCells = [];
             // even & odd rows
             this.visibleCells.cache = [new DOMCache(rowCacheConfig)];
-            rowCacheConfig.rowCls = this.CLS_ROW + ' ' + this.CLS_ROW_SIZE + ' odd';
+            rowCacheConfig.rowCls = this.CLS_ROW + ' odd';
             this.visibleCells.cache[1] = new DOMCache(rowCacheConfig);
 
             // dirtyCells[linearIdx] = true;
             this.dirtyCells = {};
             this.dirtyCellCount = 0;
-        },
 
-        validateConfig: function () {
+            this.xPos = this.yPos = 0;
+
             // the ColumnManager does not change the arrays, just their contents, we can cache them
             this.columns = this.colMgr.columns || [];
-            this.posX = this.colMgr.posX;
+            this.columnsX = this.colMgr.posX;
             this.totalRowCount = this.totalRowCount || (this.data ? this.data.length : 0);
+
+            this.colMgr.addListener('columnMoved', this.columnMoved, this);
+        },
+
+        columnMoved: function (from, to) {
+            var dir = from < to ? 1 : -1;
+
+            this.copyVisibleColumn(from, -1);
+            for (var i = from; i != to; i += dir) {
+                this.copyVisibleColumn(i + dir, i);
+            }
+            this.copyVisibleColumn(-1, to);
         },
 
         attachHandlers: function () {
@@ -138,7 +147,7 @@ define('v3grid/GridView',
         tableClicked: function (evt) {
             Adapter.fixPageCoords(evt);
 
-            var x = evt.pageX - Adapter.getPageX(this.table) - this.scrollXOffset,
+            var x = evt.pageX - Adapter.getPageX(this.table),
                 y = evt.pageY - Adapter.getPageY(this.table),
                 first = this.firstVisibleColumn,
                 colIdx = this.searchColumn(x, first, first + this.visibleColumnCount),
@@ -150,14 +159,24 @@ define('v3grid/GridView',
             }
         },
 
-        onVerticalScroll:function (topPos, forceUpdate) {
+        setYPos: function (y) {
+            this.yPos = -y;
+            Adapter.setPos(this.table, this.xPos, this.yPos);
+        },
+
+        setXPos: function (x) {
+            this.xPos = -x;
+            Adapter.setPos(this.table, this.xPos, this.yPos);
+        },
+
+        vScrollTo: function (topPos, forceUpdate) {
             if (this.updateViewPortV(topPos, forceUpdate)) {
                 this.updateRows();
                 if (!Adapter.hasTouch) this.mouseIsOver();
             }
         },
 
-        onHorizontalScroll:function (leftPos, forceUpdate) {
+        hScrollTo: function (leftPos, forceUpdate) {
             if (this.updateViewPortH(leftPos, forceUpdate)) {
                 this.updateColumns();
             }
@@ -168,7 +187,7 @@ define('v3grid/GridView',
             if (scrollPos === undefined) scrollPos = this.lastHScrollPos;
             else this.lastHScrollPos = scrollPos;
 
-            var columnsX = this.posX,
+            var columnsX = this.columnsX,
                 first = this.firstVisibleColumn,
                 offset = scrollPos - columnsX[first];
 
@@ -281,7 +300,7 @@ define('v3grid/GridView',
 
         // binary search to find the column index under X position 'pos'
         searchColumn: function (pos, low, high) {
-            var mid, columnX = this.posX;
+            var mid, columnX = this.columnsX;
             while (low+1 < high) if (columnX[mid = (low+high) >> 1] > pos) high = mid-1; else low = mid;
             return (low+1 == high && high < this.columns.length && columnX[high] < pos) ? high : low;
         },
@@ -500,30 +519,30 @@ define('v3grid/GridView',
             this.visibleCells.cache[dr & 1].release(this.visibleCells[vr]);
         },
 
-        dragColumn: function (colIdx, pos) {
-            var columns = this.columns,
-                columnsX = this.posX,
-                first = this.firstVisibleColumn,
-                targetIdx;
-
-            if (pos < columnsX[colIdx]) {
-                targetIdx = this.searchColumn(pos, first, colIdx/*-1 ?*/);
-                if (targetIdx < columns.length-1 &&
-                    pos > columnsX[targetIdx] + (columns[targetIdx].actWidth >> 1)) ++targetIdx;
-            } else {
-                var rightPos = pos + columns[colIdx].actWidth;
-                targetIdx = this.searchColumn(rightPos, colIdx /*+1 ?*/, first + this.visibleColumnCount);
-                if (targetIdx > 0 &&
-                    rightPos < columnsX[targetIdx] + (columns[targetIdx].actWidth >> 1)) --targetIdx;
-            }
-
-//            console.log('draggin', pos, colIdx, targetIdx, columnsX[colIdx], columnsX[targetIdx]);
-
-            if (colIdx !== targetIdx) this.grid.moveColumn(colIdx, targetIdx);
-            Adapter.setXCSS(columns[targetIdx].layoutRule, pos);
-
-            return targetIdx;
-        },
+//        dragColumn: function (colIdx, pos) {
+//            var columns = this.columns,
+//                columnsX = this.columnsX,
+//                first = this.firstVisibleColumn,
+//                targetIdx;
+//
+//            if (pos < columnsX[colIdx]) {
+//                targetIdx = this.searchColumn(pos, first, colIdx/*-1 ?*/);
+//                if (targetIdx < columns.length-1 &&
+//                    pos > columnsX[targetIdx] + (columns[targetIdx].actWidth >> 1)) ++targetIdx;
+//            } else {
+//                var rightPos = pos + columns[colIdx].actWidth;
+//                targetIdx = this.searchColumn(rightPos, colIdx /*+1 ?*/, first + this.visibleColumnCount);
+//                if (targetIdx > 0 &&
+//                    rightPos < columnsX[targetIdx] + (columns[targetIdx].actWidth >> 1)) --targetIdx;
+//            }
+//
+////            console.log('draggin', pos, colIdx, targetIdx, columnsX[colIdx], columnsX[targetIdx]);
+//
+//            if (colIdx !== targetIdx) this.grid.moveColumn(colIdx, targetIdx);
+//            Adapter.setXCSS(columns[targetIdx].layoutRule, pos);
+//
+//            return targetIdx;
+//        },
 
         // public
         moveColumn: function (fromIdx, toIdx) {
@@ -595,7 +614,7 @@ define('v3grid/GridView',
         setTotalRowCount: function (rowCount) {
             this.totalRowCount = rowCount;
             this.setTableSize();
-            this.onVerticalScroll(undefined, true);
+            this.vScrollTo(undefined, true);
             // TODO: update only the part that was not updated by onVerticalScroll()
             this.updateView();
         },
@@ -644,14 +663,10 @@ define('v3grid/GridView',
         },
 
         scrollTo: function (x, y) {
-            x = x || 0;
-            y = y || 0;
-            // TODO: remove it from here, do it in Grid, because if iScroll, it's going to do this auto
-            // use other methods (e.g. transform)
-            this.table.style.left = -x + 'px';
-            this.table.style.top = -y + 'px';
-            this.onVerticalScroll(y);
-            this.onHorizontalScroll(x);
+//            x = x || 0;
+//            y = y || 0;
+            this.vScrollTo(y);
+            this.hScrollTo(x);
         },
 
         // row:Number - rowIndex
@@ -663,7 +678,7 @@ define('v3grid/GridView',
         // row:Number - rowIndex
         // colIdx:Number - column's Index
         invalidateData:function (row, col) {
-            var colIdx = this.dataIdx2ColIdx[col];
+            var colIdx = this.colMgr.columnMap[col];
             if (colIdx === undefined) return;
 
             var vrow = row - this.firstVisibleRow,
@@ -711,8 +726,26 @@ define('v3grid/GridView',
         columnResized: function (delta) {
             this.visibleColumnsWidth += delta;
             this.setTableSize();
-            this.onHorizontalScroll();
+            this.hScrollTo();
         }
+
+//        colResizeCursorHandler: function (evt) {
+//            Adapter.fixPageCoords(evt);
+//            var posx = evt.pageX - Adapter.getPageX(this.table),
+//                colIdx = this.getColumnIdx(posx),
+//                curVal = '';
+//
+//            posx -= this.posX[colIdx];
+//            if ((posx < 5 ? --colIdx >= 0 : posx > this.columns[colIdx].actWidth - 5) &&
+//                this.columns[colIdx].resizable) curVal = 'col-resize';
+//
+////            console.log('colResize mousemove', posx, colIdx, curVal);
+//
+//            if (this.lastHeaderCursor !== curVal) {
+//                this.lastHeaderCursor = curVal;
+//                this.headerCSSRule.style.cursor = curVal;
+//            }
+//        }
     };
 
     return GridView;

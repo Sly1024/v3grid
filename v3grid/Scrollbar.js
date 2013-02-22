@@ -61,7 +61,9 @@ define('v3grid/Scrollbar', ['v3grid/Adapter'],
             Scrollbar.size = (w1 - w2);
         }
 
-        if(Adapter.isIE) {
+        if (Adapter.hasTouch) {
+            Scrollbar.size = 0;
+        } else if(Adapter.isIE) {
 //        Adapter.addListener(document, 'load', getScrollBarWidth);
             // TODO: ???
             Scrollbar.size = 17;
