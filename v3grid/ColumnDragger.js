@@ -29,8 +29,10 @@ define('v3grid/ColumnDragger',
                 for (var x = 0; x < viewsH; ++x) {
                     var view = header[x];
                     Adapter.addListener(view.table, 'mousemove', this.colResizeCursorHandler, view);
+
                     view.dragColumn = this.dragColumn;
-                    new DragHelper({
+
+                    view.dragHelper = new DragHelper({
                         element: view.table,
                         scope: view,
                         dragStart: this.onHeaderDragStart,
@@ -46,6 +48,8 @@ define('v3grid/ColumnDragger',
                         view = views[y][x];
                         view.colMgr.addListener('columnDragStart', this.dragStarted, view);
                         view.colMgr.addListener('columnDragEnd', this.dragEnded, view);
+                        view.colMgr.addListener('columnResizeStart', this.resizeStarted, view);
+                        view.colMgr.addListener('columnResizeEnd', this.resizeEnded, view);
                     }
                 }
             },
@@ -56,6 +60,14 @@ define('v3grid/ColumnDragger',
 
             dragEnded: function (colIdx) {
                 this.removeClassFromColumn(this.CLS_COLUMN_MOVE, colIdx);
+            },
+
+            resizeStarted: function (colIdx) {
+                this.addClassToColumn(this.CLS_COLUMN_RES, colIdx);
+            },
+
+            resizeEnded: function (colIdx) {
+                this.removeClassFromColumn(this.CLS_COLUMN_RES, colIdx);
             },
 
             // called on the view
@@ -100,10 +112,8 @@ define('v3grid/ColumnDragger',
                     if (!columns[colIdx].resizable) return false;
 
                     this.dragColWidth = columns[colIdx].actWidth + posOffset;
-//                    this.resizeColumn(colIdx, this.dragColWidth);
-
-//                    this.headerView.addClassToColumn(this.CLS_HEADER_RES, colIdx);
-//                    this.tableView.addClassToColumn(this.CLS_COLUMN_RES, colIdx);
+                    this.colMgr.fireEvent('columnResizeStart', colIdx);
+                    this.colMgr.resizeColumn(colIdx, this.dragColWidth);
                 } else {
                     this.colMgr.fireEvent('columnDragStart', colIdx);
                 }
@@ -112,7 +122,7 @@ define('v3grid/ColumnDragger',
             onHeaderDragging: function (deltaX) {
                 if (this.dragColResize) {
                     this.dragColWidth += deltaX;
-//                    this.resizeColumn(this.dragColIdx, this.dragColWidth);
+                    this.colMgr.resizeColumn(this.dragColIdx, this.dragColWidth);
                 } else {
                     this.dragColOffset += deltaX;
                     this.dragColIdx = this.dragColumn(this.dragColIdx, this.dragColOffset);
@@ -123,9 +133,7 @@ define('v3grid/ColumnDragger',
                 var colIdx = this.dragColIdx;
 
                 if (this.dragColResize) {
-//                    this.headerView.removeClassFromColumn(this.CLS_HEADER_RES, colIdx);
-//                    this.tableView.removeClassFromColumn(this.CLS_COLUMN_RES, colIdx);
-
+                    this.colMgr.fireEvent('columnResizeEnd', colIdx);
                     this.grid.setSize();
                 } else {
                     this.colMgr.fireEvent('columnDragEnd', colIdx);
@@ -159,8 +167,6 @@ define('v3grid/ColumnDragger',
 
                 return targetIdx;
             }
-
-
         };
 
         return ColumnDragger;

@@ -22,8 +22,10 @@ define('v3grid/ColumnRange',
 
             // both inclusive (normal: 0, total)
             calcPosX: function (fromIdx, toIdx) {
-                var columns = this.columns,
-                    columnsX = this.posX;
+                var columnsX = this.posX;
+                if (!columnsX) return;
+
+                var columns = this.columns;
 
                 fromIdx = fromIdx || 0;
                 if(toIdx === undefined) toIdx = columns.length;
@@ -78,6 +80,18 @@ define('v3grid/ColumnRange',
 
                 this.calcPosX(from, to);
                 if (!suppressEvent) this.fireEvent('columnMoved', fromIdx, toIdx);
+            },
+
+            resizeColumn: function (idx, newWidth, suppressEvent) {
+                var col = this.columns[idx];
+
+                if (newWidth < col.minWidth) newWidth = col.minWidth;
+                var oldWidth = col.actWidth;
+
+                col.actWidth = newWidth;
+                this.calcPosX(idx+1);
+
+                if (!suppressEvent) this.fireEvent('columnResized', idx, oldWidth, newWidth);
             },
 
             addColumn: function (idx, config, suppressEvent) {

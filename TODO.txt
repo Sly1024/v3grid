@@ -12,12 +12,13 @@ Features:
  + formatter feature
  + TreeDP/expandToLevel()
  - context menu on columns!
- - try separate scrollbar divs -> can remove ScrollXOffset
- ? move column resize/reorder logic to GridView
+ + try separate scrollbar divs -> can remove ScrollXOffset
+ + move column resize/reorder logic to ColumnDragger
  + getDataRowIdx(visualRowIdx) in Grid
  + is[H|V]ScrollbarVisible logic (need to calc twice)
  - rethink column/rowBatchSize
  - change getData() to dataProvider: {}
+ - make locked rows work
 
 Bugs:
  +/ expandToLevel() makes scrollbar disappear, visibleWidth not updated - works now, but need to refine (calling setSize())

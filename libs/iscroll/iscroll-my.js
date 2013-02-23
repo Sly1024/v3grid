@@ -93,7 +93,7 @@ var m = Math,
         that.hLinked = options.hLinked;
         that.vLinked = options.vLinked;
 
-        that.extraEventEl = options.extraEventEl;
+        that.eventElements = options.eventElements;
 
 		// Set starting position
 		that.x = that.options.x;
@@ -517,10 +517,8 @@ iScroll.prototype = {
         if (el) {
             el.addEventListener(type, this, !!bubble);
         } else {
-            this.scroller.addEventListener(type, this, !!bubble);
-            if (this.extraEventEl) {
-                for(var len = this.extraEventEl.length, i = 0; i < len; ++i)
-                    this.extraEventEl[i].addEventListener(type, this, !!bubble);
+            for(var len = this.eventElements.length, i = 0; i < len; ++i) {
+                this.eventElements[i].addEventListener(type, this, !!bubble);
             }
         }
 	},
@@ -529,10 +527,8 @@ iScroll.prototype = {
         if (el) {
             el.removeEventListener(type, this, !!bubble);
         } else {
-            this.scroller.removeEventListener(type, this, !!bubble);
-            if (this.extraEventEl) {
-                for(var len = this.extraEventEl.length, i = 0; i < len; ++i)
-                    this.extraEventEl[i].removeEventListener(type, this, !!bubble);
+            for(var len = this.eventElements.length, i = 0; i < len; ++i) {
+                this.eventElements[i].removeEventListener(type, this, !!bubble);
             }
         }
     },
