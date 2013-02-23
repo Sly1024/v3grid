@@ -38,7 +38,7 @@ define('v3grid/ColumnSelector', ['v3grid/Adapter'], function (Adapter) {
                 style = popup.style;
 
             var chboxes = [],
-                columns = this.grid.columns,
+                columns = this.grid.colMgr.columns,
                 len = columns.length;
 
             for (var i = 0; i < len; ++i) {

@@ -1,5 +1,5 @@
-require(['v3grid/Grid', 'v3grid/Adapter', 'v3grid/SortDataProvider', 'v3grid/TreeDataProvider', 'v3grid/ColumnSelector', 'v3grid/FormatterItemRenderer'],
-    function (V3Grid, V3GridAdapter, SortDataProvider, TreeDataProvider, ColumnSelector, FormatterRenderer) {
+require(['v3grid/Grid', 'v3grid/Adapter', 'v3grid/SortDataProvider', 'v3grid/TreeDataProvider', 'v3grid/ColumnSelector', 'v3grid/FormatterItemRenderer', 'v3grid/ColumnDragger'],
+    function (V3Grid, V3GridAdapter, SortDataProvider, TreeDataProvider, ColumnSelector, FormatterRenderer, ColumnDragger) {
         Ext.namespace('v3grid');
         v3grid.V3Grid = V3Grid;
 
@@ -47,7 +47,7 @@ require(['v3grid/Grid', 'v3grid/Adapter', 'v3grid/SortDataProvider', 'v3grid/Tre
                         headerHeight: 30,
                         columnBatchSize: 1,
                         rowBatchSize: 2,
-                        features: [flatter, sorter, new ColumnSelector()],
+                        features: [flatter, sorter, new ColumnSelector(), new ColumnDragger()],
                         lockedColumnCount: 0,
                         columns: [
                             { dataIndex: 'Region', minWidth: 200, width: '2*', style: { color: 'red'} },

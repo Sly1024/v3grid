@@ -98,10 +98,6 @@ define('v3grid/ColumnManager',
                         flexTotal += col.flex;
                         flexCols.push(col);
                     } else {
-                        if (col.actWidth != col.width) {
-                            col.actWidth = col.width;
-                            changed = true;
-                        }
                         fixMin += col.minWidth;
                         fixTotal += col.actWidth;
                     }
@@ -177,18 +173,44 @@ define('v3grid/ColumnManager',
                     rangeStart[i] = idx;
                     end = idx + counts[i];
                     ranges[i] = new Range(columns.slice(idx, end));
-                    ranges[i].addListener('columnMoved', this.createColumnMoveHandler(i), this);
+                    ranges[i].addListener('columnMoved', this.createColumnMovedHandler(i), this);
+                    ranges[i].addListener('columnResized', this.createColumnResizedHandler(i), this);
                     idx = end;
                 }
                 rangeStart[len] = idx;
 
+                // the manager doesn't need to keep track of x positions, if it has ranges
+                this.posX = null;
+
                 return ranges;
             },
 
-            createColumnMoveHandler: function (rangeIdx) {
+            createColumnMovedHandler: function (rangeIdx) {
                 return function (fromIdx, toIdx) {
                     var offset = this.rangeStart[rangeIdx];
                     this.moveColumn(fromIdx + offset, toIdx + offset, false, true);
+                }
+            },
+
+            createColumnResizedHandler: function (rangeIdx) {
+                return function (idx, oldWidth, newWidth) {
+                    var offset = this.rangeStart[rangeIdx];
+                    this.resizeColumn(idx + offset, newWidth, true, true);
+                    this.fireEvent('columnResized', idx, oldWidth, newWidth);
+                }
+            },
+
+            getTotalWidth: function () {
+                var ranges = this.ranges, len = ranges.length;
+                if (len) {
+                    var total = 0;
+                    for (var i = 0; i < len; ++i) {
+                        total += ranges[i].getTotalWidth();
+                    }
+                    return total;
+                } else {
+                    // could call base.getTotalWidth, but it isn't worth it
+                    return this.posX[this.columns.length];
                 }
             },
 
@@ -270,6 +292,36 @@ define('v3grid/ColumnManager',
                 this.applyColumnStyles(from, to);
 
                 if (!suppressEvent) this.fireEvent('columnMoved', fromIdx, toIdx);
+            },
+
+            resizeColumn: function (idx, newWidth, suppressEvent, calledFromRange) {
+                var col = this.columns[idx];
+                var rng, oldWidth = col.actWidth;
+
+                if (col.flex) {
+                    col.flex = 0;
+                    --this.flexColumnCount;
+                }
+
+                if (!calledFromRange) {
+                    if ((rng = this.getRangeIdx(idx)) == -1) {
+                        base.resizeColumn.call(this, idx, newWidth, true);
+                    } else {
+                        this.ranges[rng].resizeColumn(idx - this.rangeStart[rng], newWidth, true);
+                    }
+                }
+                this.applyColumnStyles(idx);
+
+                if (!suppressEvent) this.fireEvent('columnResized', idx, oldWidth, newWidth);
+            },
+
+            fireUpdateColumn: function (idx) {
+                var rng = this.getRangeIdx(idx);
+                if (rng == -1) {
+                    this.fireEvent('updateColumn', idx);
+                } else {
+                    this.ranges[rng].fireEvent('updateColumn', idx - this.rangeStart[rng]);
+                }
             }
         });
 

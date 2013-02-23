@@ -126,9 +126,14 @@ define('v3grid/GridView',
             this.totalRowCount = this.totalRowCount || (this.data ? this.data.length : 0);
 
             this.colMgr.addListener('columnMoved', this.columnMoved, this);
+            this.colMgr.addListener('columnResized', this.columnResized, this);
+            this.colMgr.addListener('updateColumn', this.updateColumn, this);
         },
 
         columnMoved: function (from, to) {
+            from -= this.firstVisibleColumn;
+            to -= this.firstVisibleColumn;
+
             var dir = from < to ? 1 : -1;
 
             this.copyVisibleColumn(from, -1);
@@ -136,6 +141,12 @@ define('v3grid/GridView',
                 this.copyVisibleColumn(i + dir, i);
             }
             this.copyVisibleColumn(-1, to);
+        },
+
+        columnResized: function (idx, oldW, newW) {
+            this.visibleColumnsWidth += newW - oldW;
+            this.setTableSize();
+            this.hScrollTo();
         },
 
         attachHandlers: function () {
@@ -519,62 +530,6 @@ define('v3grid/GridView',
             this.visibleCells.cache[dr & 1].release(this.visibleCells[vr]);
         },
 
-//        dragColumn: function (colIdx, pos) {
-//            var columns = this.columns,
-//                columnsX = this.columnsX,
-//                first = this.firstVisibleColumn,
-//                targetIdx;
-//
-//            if (pos < columnsX[colIdx]) {
-//                targetIdx = this.searchColumn(pos, first, colIdx/*-1 ?*/);
-//                if (targetIdx < columns.length-1 &&
-//                    pos > columnsX[targetIdx] + (columns[targetIdx].actWidth >> 1)) ++targetIdx;
-//            } else {
-//                var rightPos = pos + columns[colIdx].actWidth;
-//                targetIdx = this.searchColumn(rightPos, colIdx /*+1 ?*/, first + this.visibleColumnCount);
-//                if (targetIdx > 0 &&
-//                    rightPos < columnsX[targetIdx] + (columns[targetIdx].actWidth >> 1)) --targetIdx;
-//            }
-//
-////            console.log('draggin', pos, colIdx, targetIdx, columnsX[colIdx], columnsX[targetIdx]);
-//
-//            if (colIdx !== targetIdx) this.grid.moveColumn(colIdx, targetIdx);
-//            Adapter.setXCSS(columns[targetIdx].layoutRule, pos);
-//
-//            return targetIdx;
-//        },
-
-        // public
-        moveColumn: function (fromIdx, toIdx) {
-            // TODO: validate indices
-
-            var dataIdx2ColIdx = this.dataIdx2ColIdx,
-                columns = this.columns,
-                grid = this.grid,
-                copyVisibleColumn = grid.copyVisibleColumn,
-                dir = fromIdx < toIdx ? 1 : -1;
-
-            // store 'fromIdx' in temp
-            var colObj = columns[fromIdx], i;
-            copyVisibleColumn.call(grid, fromIdx, -1);
-
-            for (i = fromIdx; i != toIdx; i += dir) {
-                dataIdx2ColIdx[(columns[i] = columns[i + dir]).dataIndex] = i;
-                copyVisibleColumn.call(grid, i + dir, i);
-            }
-
-            dataIdx2ColIdx[(columns[toIdx] = colObj).dataIndex] = toIdx;
-            copyVisibleColumn.call(grid, -1, toIdx);
-
-            // swap from/to if needed
-//            if (dir < 0) {
-//                fromIdx ^= toIdx ^= fromIdx ^= toIdx;
-//            }
-            // update stuff
-//            this.calcColumnPosX(fromIdx, toIdx);
-//            this.applyColumnStyles(fromIdx, toIdx);
-        },
-
         updateCell: function (row, col, cell, rendererType, rendererConfig) {
             var renderer = cell.renderer;
 
@@ -721,31 +676,9 @@ define('v3grid/GridView',
             this.highlightedRow = hlRow;
 
             if (hlRow) Adapter. addClass(hlRow, 'hover');
-        },
-
-        columnResized: function (delta) {
-            this.visibleColumnsWidth += delta;
-            this.setTableSize();
-            this.hScrollTo();
         }
 
-//        colResizeCursorHandler: function (evt) {
-//            Adapter.fixPageCoords(evt);
-//            var posx = evt.pageX - Adapter.getPageX(this.table),
-//                colIdx = this.getColumnIdx(posx),
-//                curVal = '';
-//
-//            posx -= this.posX[colIdx];
-//            if ((posx < 5 ? --colIdx >= 0 : posx > this.columns[colIdx].actWidth - 5) &&
-//                this.columns[colIdx].resizable) curVal = 'col-resize';
-//
-////            console.log('colResize mousemove', posx, colIdx, curVal);
-//
-//            if (this.lastHeaderCursor !== curVal) {
-//                this.lastHeaderCursor = curVal;
-//                this.headerCSSRule.style.cursor = curVal;
-//            }
-//        }
+
     };
 
     return GridView;
