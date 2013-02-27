@@ -49,7 +49,9 @@ define('v3grid/GridView',
 
             // DOM elements
 
-            var gridView = this;
+            var gridView = this,
+                colCls = this.columnProperties.finalCls;
+
             var rowCacheConfig = {
                 parentDom: this.table,
                 rowCls: this.CLS_ROW + ' even',
@@ -64,21 +66,30 @@ define('v3grid/GridView',
                             gridView.makeUnSelectable(cell.dom);
                             return cell;
                         },
-                        initializeItem: function(cell, cls) {
+                        initializeItem: function(cell, row, column) {
+                            var cls = column[colCls];
                             Adapter.addClass(cell.dom, cls);
                             cell.cls = cls;
+                            if (gridView.getCellStyle) {
+                                var cellStyle = gridView.getCellStyle(gridView.getDataRowIdx(row), column);
+                                gridView.saveAndApply(cell, cellStyle);
+                            }
                         },
                         itemReleased: function (cell) {
                             Adapter.removeClass(cell.dom, cell.cls);
                             cell.cls = undefined;
+                            if (cell.oldStyle) {
+                                Adapter.merge(cell.dom.style, cell.oldStyle);
+                                delete cell.oldStyle;
+                            }
                         }
                     });
                     return row;
                 },
-                initializeItem: function (row) {
+                initializeItem: function (row, dr) {
                     var columns = gridView.columns,
                         firstCol = gridView.firstVisibleColumn,
-                        finalCls = gridView.columnProperties.finalCls,
+//                        finalCls = gridView.columnProperties.finalCls,
                         cache = row.cache,
                         columnCount = gridView.visibleColumnCount,
                         len = row.length;
@@ -90,14 +101,23 @@ define('v3grid/GridView',
 //                    }
 
                     while (len < columnCount) {
-                        row[len] = cache.get(columns[len + firstCol][finalCls]);
+                        row[len] = cache.get(dr, columns[len + firstCol]);
                         ++len;
                     }
                     row.length = len;
 
+                    if (gridView.getRowStyle) {
+                        var rowStyle = gridView.getRowStyle(gridView.getDataRowIdx(dr));
+                        gridView.saveAndApply(row, rowStyle);
+                    }
+
                     cache.validate();
                 },
-                itemRemoved: function(row) {
+                itemReleased: function (row) {
+                    Adapter.merge(row.dom.style, row.oldStyle);
+                    delete row.oldStyle;
+                },
+                itemRemoved: function (row) {
                     var cache = row.cache;
                     for (var len = row.length, i = 0; i < len; ++i) {
                         cache.release(row[i]);
@@ -128,6 +148,17 @@ define('v3grid/GridView',
             this.colMgr.addListener('columnMoved', this.columnMoved, this);
             this.colMgr.addListener('columnResized', this.columnResized, this);
             this.colMgr.addListener('updateColumn', this.updateColumn, this);
+        },
+
+        saveAndApply: function (item, style) {
+            var domStyle = item.dom.style,
+                oldValues = item.oldStyle = {};
+
+            for (var key in style) if (style.hasOwnProperty(key)) {
+                oldValues[key] = domStyle[key];
+            }
+
+            Adapter.merge(domStyle, style);
         },
 
         columnMoved: function (from, to) {
@@ -433,12 +464,12 @@ define('v3grid/GridView',
         addColumn: function (vc) {
             var cells = this.visibleCells,
                 column = this.columns[this.firstVisibleColumn + vc],
-                colCls = column[this.columnProperties.finalCls],
+//                colCls = column[this.columnProperties.finalCls],
                 count = this.visibleRowCount,
                 vr, dr;
 
             for (vr = 0, dr = this.firstVisibleRow; vr < count; ++vr, ++dr) {
-                cells[vr][vc] = cells[vr].cache.get(colCls);
+                cells[vr][vc] = cells[vr].cache.get(dr, column);
             }
             this.updateVisibleColumn(vc);
         },
@@ -471,7 +502,7 @@ define('v3grid/GridView',
                 colProps = this.columnProperties,
                 updateCell = this.updateCell;
 
-            cells[vr] = cells.cache[dr & 1].get();
+            cells[vr] = cells.cache[dr & 1].get(dr);
             Adapter.setY(cells[vr].dom, (vr + this.firstVisibleRow) * this.rowHeight);
 
             for (var count = this.visibleColumnCount, vc = 0, dc = this.firstVisibleColumn; vc < count; ++vc, ++dc) {
@@ -556,6 +587,15 @@ define('v3grid/GridView',
             }
 
             if (col.visible) {
+                // apply user cell style
+                if (this.getCellStyle) {
+                    if (cell.oldStyle) {
+                        Adapter.merge(cell.dom.style, cell.oldStyle);
+                        delete cell.oldStyle;
+                    }
+                    var cellStyle = this.getCellStyle(this.getDataRowIdx(row), col);
+                    this.saveAndApply(cell, cellStyle);
+                }
                 if (rendererConfig) renderer.setConfig(rendererConfig);
                 renderer.updateData(this, row, col);
             }
@@ -599,17 +639,38 @@ define('v3grid/GridView',
             this.dirtyCellCount = 0;
         },
 
+        updateRowStyles: function (from, to) {
+            var cells = this.visibleCells;
+
+            for (var vr = from, dr = this.firstVisibleRow + from; vr < to; ++dr, ++vr) {
+                var row = cells[vr];
+                Adapter.merge(row.dom.style, row.oldStyle);
+                var rowStyle = this.getRowStyle(this.getDataRowIdx(dr));
+                this.saveAndApply(row, rowStyle);
+            }
+        },
+
         updateView:function () {
             var colCount = this.visibleColumnCount,
                 rowCount = this.visibleRowCount,
                 cells = this.visibleCells,
                 columns = this.columns;
 
+            // update row styles
+            if (this.getRowStyle) {
+                this.updateRowStyles(0, rowCount);
+            }
+
             for (var vc = 0, dc = this.firstVisibleColumn; vc < colCount; ++dc, ++vc) {
                 if (!columns[dc].visible) continue;
 
                 for (var vr = 0, dr = this.firstVisibleRow; vr < rowCount; ++dr, ++vr) {
                     cells[vr][vc].renderer.updateData(this, dr, columns[dc]);
+                    // apply user cell style
+                    if (this.getCellStyle) {
+                        var cellStyle = this.getCellStyle(this.getDataRowIdx(dr), columns[dc]);
+                        this.saveAndApply(cells[vr][vc], cellStyle);
+                    }
                 }
             }
 
