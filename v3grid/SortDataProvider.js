@@ -39,18 +39,6 @@ define('v3grid/SortDataProvider',
                         var feat = features[i];
                         if (feat instanceof treeDP) {
                             this.treeDataProvider = feat;
-
-//                            feat.getInfo = (function (feat, getInfo) {
-//                                return function (row) {
-//                                    return getInfo.call(feat, index[row]);
-//                                };
-//                            })(feat, feat.getInfo);
-//
-//                            feat.rowClicked = (function (feat, rowClicked) {
-//                                return function (row, evt) {
-//                                    rowClicked.call(feat, index[row], evt);
-//                                };
-//                            })(feat, feat.rowClicked);
                         }
                     }
                 }
