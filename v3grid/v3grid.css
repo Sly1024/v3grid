@@ -1,6 +1,7 @@
 .v3grid-table {
     color: #465c98;
     cursor: default;
+    background-color: white;
 }
 .v3grid-table.locked {
     -moz-box-shadow:    50px 0px 50px -50px #000;
@@ -8,20 +9,47 @@
     box-shadow:         50px 0px 50px -50px #000;
 }
 .v3grid-header-row {
+    padding: 0;
+    border-right: 1px solid #c5c5c5;
+    border-left: 0 none;
+    border-top: 0 none;
+    border-bottom: 0 none;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
+    font: normal 11px tahoma, arial, verdana, sans-serif;
+    background-image: none;
+    background-color: #c5c5c5;
+    background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #f9f9f9), color-stop(100%, #e3e4e6));
+    background-image: -webkit-linear-gradient(top, #f9f9f9, #e3e4e6);
+    background-image: -moz-linear-gradient(top, #f9f9f9, #e3e4e6);
+    background-image: -o-linear-gradient(top, #f9f9f9, #e3e4e6);
+    background-image: -ms-linear-gradient(top, #f9f9f9, #e3e4e6);
+    background-image: linear-gradient(top, #f9f9f9, #e3e4e6);
+
     color: black;
-    background-color: #adc3e7;
     font-weight: bold;
     text-align: center;
     cursor: default;
+}
+.v3grid-header-row > div:hover {
+    border-left-color: #aaccf6;
+    border-right-color: #aaccf6;
+    background-image: none;
+    background-color: #aaccf6;
+    background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #ebf3fd), color-stop(39%, #ebf3fd), color-stop(40%, #d9e8fb), color-stop(100%, #d9e8fb));
+    background-image: -webkit-linear-gradient(top, #ebf3fd, #ebf3fd 39%, #d9e8fb 40%, #d9e8fb);
+    background-image: -moz-linear-gradient(top, #ebf3fd, #ebf3fd 39%, #d9e8fb 40%, #d9e8fb);
+    background-image: -o-linear-gradient(top, #ebf3fd, #ebf3fd 39%, #d9e8fb 40%, #d9e8fb);
+    background-image: -ms-linear-gradient(top, #ebf3fd, #ebf3fd 39%, #d9e8fb 40%, #d9e8fb);
+    background-image: linear-gradient(top, #ebf3fd, #ebf3fd 39%, #d9e8fb 40%, #d9e8fb);
 }
 .v3grid-row.even {
     background-color: #ffffff;
 }
 .v3grid-row.odd {
-    background-color: #f0f0f0;
+    background-color: #f6f6f6;
 }
 .v3grid-row.hover {
-    background-color: #c0d0f0;
+    background-color: #dee8f6;
 }
 .v3grid-column-move {
     opacity: 0.6;
@@ -33,13 +61,12 @@
     background-color: #ffffff;
     z-index: 1
 }
-.v3grid-header-resize {
-    background-color: #ffffff;
-}
 .v3grid-column-resize {
     background-color: #e3eef9;
 }
-
+.v3grid-header-resize {
+    background-color: #ffffff;
+}
 /*
     Column Selector
 */

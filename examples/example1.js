@@ -52,7 +52,8 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3g
                     columns[c] = {
                         header: 'Column '+c,
                         width: (((c*10) % 50)+50),
-                        renderer: c % 5 == 0 ? 'virtualgrid.CheckBoxItemRenderer' : c % 5 == 3 ? 'virtualgrid.LinkItemRenderer' : 'virtualgrid.NumberItemRenderer'
+                        renderer: c % 5 == 0 ? 'virtualgrid.CheckBoxItemRenderer' : c % 5 == 3 ? 'virtualgrid.LinkItemRenderer' : 'virtualgrid.NumberItemRenderer',
+                        disableSort: c % 5 == 0
                     };
                 }
 
@@ -71,6 +72,14 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3g
                         data: cellData,
                         columns: columns,
                         features: [filter, sorter, new ColumnSelector(), new ColumnDragger()]
+//                        getRowStyle: function (row) {
+//                            var val = 255 - (row*2.5 >> 0);
+//                            return { backgroundColor: 'rgb(200,'+val+',0)'};
+//                        },
+//                        getCellStyle: function (row, col) {
+//                            var val = (row + col.dataIndex) & 1;
+//                            return { backgroundColor: 'rgba(200,'+((val*200)&255)+',0,0.5)'};
+//                        }
                     }
                 });
 

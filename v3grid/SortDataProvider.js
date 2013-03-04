@@ -85,6 +85,7 @@ define('v3grid/SortDataProvider',
                         rendererConfig: col.headerRendererConfig,
                         sortDataProvider: this,
                         dataIdx: col.dataIndex || i,
+                        column: col,
                         sortOrder: null
                     };
                     col.headerRenderer = this.headerRenderer;

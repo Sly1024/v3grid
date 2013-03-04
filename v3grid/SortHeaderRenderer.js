@@ -11,7 +11,7 @@ define('v3grid/SortHeaderRenderer',
             this.config = config;
 
             var temp = document.createElement('div');
-            temp.innerHTML = '<table width="100%" height="100%"><tr><td></td><td valign="middle" style="width: 10px">' +
+            temp.innerHTML = '<table width="100%" height="100%"><tr><td></td><td valign="middle">' +
                 '<img style="display: none;" width="10" height="10"></td><td style="font-size: 10px">x</td></tr></table>';
             this.view = temp.firstChild;
             this.rendererContainer = this.view.getElementsByTagName('td')[0];
@@ -55,7 +55,10 @@ define('v3grid/SortHeaderRenderer',
             },
 
             clickHandler: function (evt) {
-                this.config.sortDataProvider.columnClicked(this.config.dataIdx, evt);
+                var config = this.config;
+                if (!config.column.disableSort) {
+                    config.sortDataProvider.columnClicked(config.dataIdx, evt);
+                }
             },
 
             destroy: function () {

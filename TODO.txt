@@ -1,25 +1,28 @@
 Features:
+ - rethink column/rowBatchSize
+ - change getData() to dataProvider: {}
+ - make locked rows work
+ - column autosize - to content
+ - column drag - scroll when reached the first/last visible pos.
+ - colspan/rowspan
+ - column groups
+ - context menu on columns!
+ + getRowStyle(row) / getCellStyle(row, column) ??
  + column resizable
  + column resize => fixed width
  + column resize -> recalc widths
  + column resize cursor <-||->
  + column visibility
- - column autosize - to content
- - column drag - scroll when reached the first/last visible pos.
- - colspan/rowspan
- - column groups
- - getRowStyle(row) / getCellStyle() ??
  + formatter feature
  + TreeDP/expandToLevel()
- - context menu on columns!
  + try separate scrollbar divs -> can remove ScrollXOffset
  + move column resize/reorder logic to ColumnDragger
  + getDataRowIdx(visualRowIdx) in Grid
  + is[H|V]ScrollbarVisible logic (need to calc twice)
- - rethink column/rowBatchSize
- - change getData() to dataProvider: {}
- - make locked rows work
+ + column:disableSort
+ + not-allowed cursor when trying to resize non-resizable column
 
 Bugs:
+ - not full header clickable - for sorting
  +/ expandToLevel() makes scrollbar disappear, visibleWidth not updated - works now, but need to refine (calling setSize())
  + show scrollbar even if totalRowCount = 0

@@ -1,6 +1,6 @@
 define('v3grid/ColumnDragger',
-    ['v3grid/Adapter', 'v3grid/DragHelper'],
-    function (Adapter, DragHelper) {
+    ['v3grid/Adapter', 'v3grid/Utils', 'v3grid/DragHelper'],
+    function (Adapter, Utils, DragHelper) {
 
         var ColumnDragger = function () {
 
@@ -78,13 +78,15 @@ define('v3grid/ColumnDragger',
                     curVal = '';
 
                 posx -= this.columnsX[colIdx];
-                if ((posx < 5 ? --colIdx >= 0 : posx > this.columns[colIdx].actWidth - 5) &&
-                    this.columns[colIdx].resizable) curVal = 'col-resize';
+                if (posx < 5 ? --colIdx >= 0 : posx > this.columns[colIdx].actWidth - 5) {
+                    if (this.columns[colIdx].resizable) curVal = 'col-resize';
+                    else curVal = 'not-allowed';
+                }
 
-//            console.log('colResize mousemove', posx, colIdx, curVal);
+//                console.log('colResize mousemove', posx, colIdx, curVal);
 
-                if (this.lastHeaderCursor !== curVal) {
-                    this.lastHeaderCursor = curVal;
+                if (this.grid.lastHeaderCursor !== curVal) {
+                    this.grid.lastHeaderCursor = curVal;
                     this.grid.headerCSSRule.style.cursor = curVal;
                 }
             },
@@ -120,6 +122,8 @@ define('v3grid/ColumnDragger',
             },
 
             onHeaderDragging: function (deltaX) {
+//                console.log('drag', deltaX);
+
                 if (this.dragColResize) {
                     this.dragColWidth += deltaX;
                     this.colMgr.resizeColumn(this.dragColIdx, this.dragColWidth);
@@ -136,6 +140,10 @@ define('v3grid/ColumnDragger',
                     this.colMgr.fireEvent('columnResizeEnd', colIdx);
                     this.grid.setSize();
                 } else {
+                    if (this.autoDrag !== undefined) {
+                        Utils.cancelFrame.call(window, this.autoDrag);
+                        this.autoDrag = undefined;
+                    }
                     this.colMgr.fireEvent('columnDragEnd', colIdx);
                     Adapter.setXCSS(this.columns[colIdx].layoutRule, this.columnsX[colIdx]);
                 }
@@ -158,12 +166,34 @@ define('v3grid/ColumnDragger',
                         rightPos < columnsX[targetIdx] + (columns[targetIdx].actWidth >> 1)) --targetIdx;
                 }
 
-//            console.log('draggin', pos, colIdx, targetIdx, columnsX[colIdx], columnsX[targetIdx]);
+//                console.log('draggin', pos, colIdx, targetIdx, columnsX[colIdx], columnsX[targetIdx]);
 
                 if (colIdx !== targetIdx) {
                     this.colMgr.moveColumn(colIdx, targetIdx);
                 }
                 Adapter.setXCSS(columns[targetIdx].layoutRule, pos);
+
+                if (!this.isLocked) {
+                    if (this.autoDrag !== undefined) {
+                        Utils.cancelFrame.call(window, this.autoDrag);
+                        this.autoDrag = undefined;
+                    }
+
+                    var target;
+
+                    if ((target = pos) < this.lastHScrollPos ||
+                        (target = pos + this.columns[targetIdx].actWidth - this.visibleWidth) > this.lastHScrollPos) {
+                        var me = this,
+                            hdrag = this.dragHelper.dragMove;
+
+                        this.autoDrag = Utils.nextFrame.call(window, function () {
+                            var delta = me.lastHScrollPos;
+                            me.grid.hScrollTo(target);
+                            delta = me.lastHScrollPos - delta;
+                            hdrag.call(me, delta);
+                        });
+                    }
+                }
 
                 return targetIdx;
             }

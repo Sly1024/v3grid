@@ -5,7 +5,7 @@ define('v3grid/InlineFilterHeaderRenderer',
             this.config = config;
 
             var temp = document.createElement('div');
-            temp.innerHTML = '<table width="100%" height="100%"><tr><td></td></tr><tr><td valign="bottom"><input type="text" style="width: 100%"></td></tr></table>';
+            temp.innerHTML = '<table width="100%" height="100%"><tr style="height:100%"><td></td></tr><tr><td valign="bottom"><input type="text" style="width: 100%"></td></tr></table>';
             this.view = temp.firstChild;
             this.textInput = this.view.getElementsByTagName('input')[0];
 

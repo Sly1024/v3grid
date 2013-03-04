@@ -45,6 +45,24 @@ define('v3grid/Utils', ['v3grid/Adapter'], function (Adapter) {
 
         identity: function (x) { return x; },
 
+        nextFrame: (function() {
+            return window.requestAnimationFrame
+                || window.webkitRequestAnimationFrame
+                || window.mozRequestAnimationFrame
+                || window.oRequestAnimationFrame
+                || window.msRequestAnimationFrame
+                || function(callback) { return setTimeout(callback, 17); }
+        })(),
+        cancelFrame: (function () {
+            return window.cancelRequestAnimationFrame
+                || window.webkitCancelAnimationFrame
+                || window.webkitCancelRequestAnimationFrame
+                || window.mozCancelRequestAnimationFrame
+                || window.oCancelRequestAnimationFrame
+                || window.msCancelRequestAnimationFrame
+                || clearTimeout
+        })(),
+
         TapHandler: function (element, handler, scope, tolerance) {
             this.t = tolerance || 10;
             this.element = element;
