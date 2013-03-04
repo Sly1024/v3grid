@@ -246,7 +246,6 @@ define('v3grid/Grid',
                         table.style.overflow = 'hidden';
 
 //                        var container = table;
-                        Adapter.addClass(table, this.CLS_TABLE);    // TODO : locked, left/right/top/bottom/middle/center??
 
 //                        if (x == scrollViewX || y == scrollViewY) {
                             var container = document.createElement('div');
@@ -254,11 +253,13 @@ define('v3grid/Grid',
                             container.style.overflow = 'hidden';
                             container.appendChild(table);
 //                        }
+                        Adapter.addClass(container, this.CLS_TABLE);    // TODO : locked, left/right/top/bottom/middle/center??
 
                         if (y == 0) {
                             // header view
                             views[0][x] = new GridView({
                                 isHeader: true,
+                                isLocked: x != scrollViewX,
                                 grid: this,
                                 table: table,
                                 container: container,
