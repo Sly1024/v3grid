@@ -65,6 +65,8 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3g
                     gridConfig: {
                         leftLockedColumnCount: 3,
                         rightLockedColumnCount: 3,
+                        topLockedRowCount: 3,
+                        bottomLockedRowCount: 3,
                         rowHeight: 25,
                         headerHeight: 30,
                         columnBatchSize: 1,

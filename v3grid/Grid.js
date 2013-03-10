@@ -236,8 +236,15 @@ define('v3grid/Grid',
                 viewContainer.style.position = 'absolute';
                 viewContainer.style.overflow = 'hidden';
 
+                var origGetData = this.getData;
+                var rowCounts = this.getRowCounts();
+                this.topRowIdx = [0];
+                this.calcTopRowIdx(rowCounts);
+
                 for (var y = 0; y < viewsV; ++y) {
                     views[y] = new Array(viewsH);
+
+                    var getDataFunc = y <= 1 ? origGetData : this.createGetDataForView(origGetData, this.topRowIdx, y-1);
 
                     for (var x = 0; x < viewsH; ++x) {
                         // create div for the view
@@ -253,7 +260,15 @@ define('v3grid/Grid',
                             container.style.overflow = 'hidden';
                             container.appendChild(table);
 //                        }
-                        Adapter.addClass(container, this.CLS_TABLE);    // TODO : locked, left/right/top/bottom/middle/center??
+
+                        // add user customizable class and position marker classes:
+                        // horizontally: left, center, right
+                        // vertically: header, top, middle, bottom
+
+                        Adapter.addClass(container, this.CLS_TABLE + ' ' +
+                            (x < scrollViewX ? 'left' : x == scrollViewX ? 'center' : 'right') + ' ' +
+                            (y == 0 ? 'header' : y < scrollViewY ? 'top' : y == scrollViewY ? 'middle' : 'bottom')
+                        );
 
                         if (y == 0) {
                             // header view
@@ -273,7 +288,7 @@ define('v3grid/Grid',
                                 rowBatchSize: 1,
                                 columnBatchSize: 1,
                                 CLS_CELL       : this.CLS_CELL,
-                                CLS_ROW        : this.CLS_HEADER_ROW + ' ' + this.CLS_HEADER_SIZE + (x == scrollViewX ? '' : ' locked'),
+                                CLS_ROW        : this.CLS_HEADER_ROW + ' ' + this.CLS_HEADER_SIZE, // + (x == scrollViewX ? '' : ' locked'),
                                 CLS_COLUMN_MOVE: this.CLS_HEADER_MOVE,
                                 CLS_COLUMN_RES : this.CLS_HEADER_RES,
                                 columnProperties: headerColumnProps
@@ -286,9 +301,9 @@ define('v3grid/Grid',
                                 container: container,
                                 rowHeight: this.rowHeight,
                                 colMgr: ranges[x],
-                                totalRowCount: this.totalRowCount,
+                                totalRowCount: rowCounts[y-1],
                                 data: this.data,
-                                getData: this.getData,
+                                getData: getDataFunc,
                                 getDataRowIdx: this.getDataRowIdx,
                                 getVisibleRowIdx: this.getVisibleRowIdx,
                                 cellClicked: this.cellClicked,
@@ -340,6 +355,12 @@ define('v3grid/Grid',
                     Adapter.addListener(viewContainer, 'mousemove', this.mouseMoveHandler, this);
                     Adapter.addListener(viewContainer, 'mouseover', this.mouseMoveHandler, this);
                     Adapter.addListener(viewContainer, 'mouseout', this.mouseOutHandler, this);
+                }
+            },
+
+            createGetDataForView: function (origGetData, topRowIdx, y) {
+                return function (row, col) {
+                    return origGetData.call(this, row + topRowIdx[y], col);
                 }
             },
 
@@ -406,6 +427,40 @@ define('v3grid/Grid',
 
             iScrollMove: function (x, y) {
                 this.scrollTo(-x, -y);
+            },
+
+            getRowCounts: function () {
+                var topLRC = this.topLockedRowCount,
+                    bottLRC = this.bottomLockedRowCount,
+                    avail = this.totalRowCount,
+                    rowCounts = [];
+
+                if (topLRC) {
+                    topLRC = Math.min(topLRC, avail);
+                    rowCounts.push(topLRC);
+                    avail -= topLRC;
+                }
+
+                if (bottLRC) {
+                    bottLRC = Math.min(bottLRC, avail);
+                    rowCounts.push(bottLRC);
+                    avail -= bottLRC;
+                }
+
+                rowCounts.splice(topLRC ? 1 : 0, 0, avail);
+
+                return rowCounts;
+            },
+
+            calcTopRowIdx: function(rowCounts) {
+                var len = rowCounts.length,
+                    topIdx = this.topRowIdx,
+                    curr = rowCounts[0];
+
+                for (var i = 1; i < len; ++i) {
+                    topIdx[i] = curr;
+                    curr += rowCounts[i];
+                }
             },
 
             // from/to values are inclusive
@@ -657,8 +712,22 @@ define('v3grid/Grid',
 
             setTotalRowCount: function (rowCount) {
                 this.totalRowCount = rowCount;
-                // TODO: subtract the locked rows
-                this.allViews('setTotalRowCount', [rowCount], this.scrollViewY, this.scrollViewY);
+
+                var views = this.views,
+                    rowCounts = this.getRowCounts(),
+                    yTo = this.viewsV,
+                    xTo = this.viewsH;
+
+                this.calcTopRowIdx(rowCounts);
+
+                for (var y = 1; y < yTo; ++y) {
+                    var viewsY = views[y];
+                    for (var x = 0; x < xTo; ++x) {
+                        viewsY[x].setTotalRowCount(rowCounts[y-1]);
+                    }
+                }
+//                TODO: subtract the locked rows
+//                this.allViews('setTotalRowCount', [rowCount], this.scrollViewY, this.scrollViewY);
 
                 // TODO: figure out what is needed here from setSize (not all I think)
                 this.setSize();

@@ -31,6 +31,7 @@ define('v3grid/ColumnDragger',
                     Adapter.addListener(view.table, 'mousemove', this.colResizeCursorHandler, view);
 
                     view.dragColumn = this.dragColumn;
+                    view.correctTargetPos = this.correctTargetPos;
 
                     view.dragHelper = new DragHelper({
                         element: view.table,
@@ -140,9 +141,9 @@ define('v3grid/ColumnDragger',
                     this.colMgr.fireEvent('columnResizeEnd', colIdx);
                     this.grid.setSize();
                 } else {
-                    if (this.autoDrag !== undefined) {
-                        Utils.cancelFrame.call(window, this.autoDrag);
-                        this.autoDrag = undefined;
+                    if (this.autoScroll !== undefined) {
+                        Utils.cancelFrame.call(window, this.autoScroll);
+                        this.autoScroll = undefined;
                     }
                     this.colMgr.fireEvent('columnDragEnd', colIdx);
                     Adapter.setXCSS(this.columns[colIdx].layoutRule, this.columnsX[colIdx]);
@@ -155,6 +156,8 @@ define('v3grid/ColumnDragger',
                     first = this.firstVisibleColumn,
                     targetIdx;
 
+                // figure out if it is being moved to left or right
+                // then the target column index
                 if (pos < columnsX[colIdx]) {
                     targetIdx = this.searchColumn(pos, first, colIdx/*-1 ?*/);
                     if (targetIdx < columns.length-1 &&
@@ -173,29 +176,43 @@ define('v3grid/ColumnDragger',
                 }
                 Adapter.setXCSS(columns[targetIdx].layoutRule, pos);
 
+                // autoscroll the grid if the dragged column is at one of the ends
                 if (!this.isLocked) {
-                    if (this.autoDrag !== undefined) {
-                        Utils.cancelFrame.call(window, this.autoDrag);
-                        this.autoDrag = undefined;
+                    if (this.autoScroll !== undefined) {
+                        Utils.cancelFrame.call(window, this.autoScroll);
+                        this.autoScroll = undefined;
                     }
 
                     var target;
 
                     if ((target = pos) < this.lastHScrollPos ||
-                        (target = pos + this.columns[targetIdx].actWidth - this.visibleWidth) > this.lastHScrollPos) {
-                        var me = this,
-                            hdrag = this.dragHelper.dragMove;
+                        (target = pos + columns[targetIdx].actWidth - this.visibleWidth) > this.lastHScrollPos) {
+                        var me = this;
 
-                        this.autoDrag = Utils.nextFrame.call(window, function () {
+                        this.autoScroll = Utils.nextFrame.call(window, function () {
                             var delta = me.lastHScrollPos;
-                            me.grid.hScrollTo(target);
+                            me.grid.hScrollTo(me.correctTargetPos(target, me.dragColIdx));
                             delta = me.lastHScrollPos - delta;
-                            hdrag.call(me, delta);
+                            me.dragColOffset += delta;
+                            me.dragColIdx = me.dragColumn(me.dragColIdx, me.dragColOffset);
                         });
                     }
                 }
 
                 return targetIdx;
+            },
+
+            // corrects the scroll target position, so that the 'viewport' contains column colIdx after the scroll
+            correctTargetPos: function (pos, colIdx) {
+                var colX = this.columnsX[colIdx],
+                    target;
+
+                if ((target = colX - this.visibleWidth) >= pos) {
+                    pos = target+1;
+                } else if ((target = colX + this.columns[colIdx].actWidth) <= pos) {
+                    pos = target-1;
+                }
+                return pos;
             }
         };
 

@@ -132,7 +132,7 @@ define('v3grid/GridView',
             // the ColumnManager does not change the arrays, just their contents, we can cache them
             this.columns = this.colMgr.columns || [];
             this.columnsX = this.colMgr.posX;
-            this.totalRowCount = this.totalRowCount || (this.data ? this.data.length : 0);
+            if (this.totalRowCount === undefined) this.totalRowCount = (this.data ? this.data.length : 0);
 
             this.colMgr.addListener('columnMoved', this.columnMoved, this);
             this.colMgr.addListener('columnResized', this.columnResized, this);
