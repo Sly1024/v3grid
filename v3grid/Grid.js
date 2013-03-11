@@ -46,6 +46,7 @@ define('v3grid/Grid',
             CLS_HEADER_MOVE: 'v3grid-header-move',
             CLS_COLUMN_RES : 'v3grid-column-resize',
             CLS_HEADER_RES : 'v3grid-header-resize',
+            CLS_SCROLLBAR  : 'v3grid-scrollbar',
 
             initProperties: function (config) {
                 var num = this.instanceNum = ++Grid.prototype.instanceCnt;
@@ -331,16 +332,18 @@ define('v3grid/Grid',
                 if (Adapter.hasTouch) {
                     this.initiScroll();
                 } else {
-                    var hScrollbar = this.hScrollbar = new Scrollbar(panel, 'horizontal');
-                    var vScrollbar = this.vScrollbar = new Scrollbar(panel, 'vertical');
+                    var hScrollbar = (this.hScrollbar = new Scrollbar(panel, 'horizontal')).dom;
+                    var vScrollbar = (this.vScrollbar = new Scrollbar(panel, 'vertical')).dom;
 
+                    Adapter.addClass(hScrollbar, this.CLS_SCROLLBAR + ' horizontal');
+                    Adapter.addClass(vScrollbar, this.CLS_SCROLLBAR + ' vertical');
 
-                    Adapter.addListener(hScrollbar.dom, 'scroll', function (evt) {
-                        this.hScrollTo(hScrollbar.dom.scrollLeft);
+                    Adapter.addListener(hScrollbar, 'scroll', function (evt) {
+                        this.hScrollTo(hScrollbar.scrollLeft);
                     }, this);
 
-                    Adapter.addListener(vScrollbar.dom, 'scroll', function (evt) {
-                        this.vScrollTo(vScrollbar.dom.scrollTop);
+                    Adapter.addListener(vScrollbar, 'scroll', function (evt) {
+                        this.vScrollTo(vScrollbar.scrollTop);
                     }, this);
 
                     if (Adapter.isFireFox) {
