@@ -3,7 +3,7 @@ v3grid
 
 A virtual datagrid in JavaScript.
 
-Please see [the wiki](/Sly1024/v3grid/wiki)
+Please see [the wiki](https://github.com/Sly1024/v3grid/wiki)
 
 What is v3grid?
 ---
