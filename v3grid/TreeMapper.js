@@ -147,14 +147,16 @@ define('v3grid/TreeMapper', [],
 
                 while (idx < len)  {
                     lastComp = comp(tIdx, ranges[idx].idx);
-                    if (lastComp > 0) sum += ranges[idx++].len;
-                    else break;
+                    if (lastComp > 0)
+                        sum += ranges[idx++].len;
+                    else
+                        break;
                 }
 
-                var stepback;
-                if (idx < len) stepback = lastComp < 0; else {
-                    var lastIdx = ranges[len-1].idx.concat();
-                    lastIdx[lastIdx.length-1] += ranges[len-1].len;
+                var stepback = false;
+                if (idx >= len || lastComp < 0 && idx > 0) {
+                    var lastIdx = ranges[idx-1].idx.concat();
+                    lastIdx[lastIdx.length-1] += ranges[idx-1].len;
                     stepback = comp(tIdx, lastIdx) < 0;
                 }
                 if (stepback) sum -= ranges[--idx].len;
