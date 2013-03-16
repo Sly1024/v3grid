@@ -152,7 +152,7 @@ define('v3grid/Grid',
             fixColumnConfig: function (idx, col) {
                 var availRenderers = this.availableRenderers; //[name]= []
 
-                col.dataIndex = col.dataIndex || idx;
+                col.dataIndex = col.dataIndex == null ? idx : col.dataIndex;
                 col.header = col.header || col.dataIndex;
 
                 // renderer

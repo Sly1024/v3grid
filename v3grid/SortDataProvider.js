@@ -84,7 +84,7 @@ define('v3grid/SortDataProvider',
                         renderer: grid.getRenderer(col.headerRenderer || grid.headerRenderer),
                         rendererConfig: col.headerRendererConfig,
                         sortDataProvider: this,
-                        dataIdx: col.dataIndex || i,
+                        dataIdx: col.dataIndex == null ? i : col.dataIndex,
                         column: col,
                         sortOrder: null
                     };
