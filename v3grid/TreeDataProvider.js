@@ -30,12 +30,13 @@ define('v3grid/TreeDataProvider',
                     return me.getCellData(mapper.getTreeIdx(row), col);
                 };
 
-                config.invalidateData = function (row, col) {
-                    origInvData.call(grid, invIndex[row], col);
-                };
+//                config.invalidateData = function (row, col) {
+//                    origInvData.call(grid, invIndex[row], col);
+//                };
 
             },
             initRev: function (grid, config) {
+                // TODO : context?
                 this.getDataRowIdx = config.getDataRowIdx || grid.getDataRowIdx;
             },
             processColumnRenderer: function (column) {
@@ -48,6 +49,12 @@ define('v3grid/TreeDataProvider',
 
                 column.renderer = this.renderer;
                 column.rendererConfig = rendererConfig;
+            },
+
+            refresh: function () {
+                var mapper = this.mapper;
+                mapper.refresh();
+                this.grid.setTotalRowCount(mapper.totalCount);
             },
 
             childrenField: 'children',

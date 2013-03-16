@@ -1,9 +1,9 @@
 Features:
  - rethink column/rowBatchSize
  - change getData() to dataProvider: {}
- - make locked rows work
+ + make locked rows work
  - column autosize - to content
- - column drag - scroll when reached the first/last visible pos.
+ / column drag - scroll when reached the first/last visible pos.
  - colspan/rowspan
  - column groups
  - context menu on columns!

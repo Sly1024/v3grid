@@ -2,7 +2,7 @@ define('v3grid/ColumnManager',
     ['v3grid/Adapter', 'v3grid/Utils', 'v3grid/ColumnRange'],
     function (Adapter, Utils, Range) {
 
-        var Manager = function (grid, configs) {
+        var ColumnManager = function (grid, configs) {
             this.grid = grid;
             this.sheet = grid.styleSheet;
             this.lastColId = 0;
@@ -19,7 +19,7 @@ define('v3grid/ColumnManager',
 
         var base = Range.prototype;
 
-        Manager.prototype = Adapter.merge(Adapter.merge({}, base), {
+        ColumnManager.prototype = Adapter.merge(Adapter.merge({}, base), {
             processConfig: function (config) {
                 var col = Adapter.merge({}, config),  //clone col
                     idx = this.lastColId++,
@@ -325,6 +325,6 @@ define('v3grid/ColumnManager',
             }
         });
 
-        return Manager;
+        return ColumnManager;
     }
 );

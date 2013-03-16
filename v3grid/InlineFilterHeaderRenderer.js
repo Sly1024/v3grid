@@ -1,7 +1,7 @@
 define('v3grid/InlineFilterHeaderRenderer',
     ['v3grid/Adapter'],
     function (Adapter) {
-        var Renderer = function (config) {
+        var InlineFilterHeaderRenderer = function (config) {
             this.config = config;
 
             var temp = document.createElement('div');
@@ -20,7 +20,7 @@ define('v3grid/InlineFilterHeaderRenderer',
             this.updateRenderer(config);
         }
 
-        Renderer.prototype = {
+        InlineFilterHeaderRenderer.prototype = {
             updateRenderer: function (config) {
                 while (this.rendererContainer.firstChild) this.rendererContainer.removeChild(this.rendererContainer.firstChild);
                 this.renderer = new config.renderer(config.rendererConfig);
@@ -54,6 +54,6 @@ define('v3grid/InlineFilterHeaderRenderer',
             }
         }
 
-        return Renderer;
+        return InlineFilterHeaderRenderer;
     }
 );
