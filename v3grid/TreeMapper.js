@@ -2,16 +2,21 @@ define('v3grid/TreeMapper', [],
     function () {
         var TreeMapper = function (treeDataProvider) {
             this.tdp = treeDataProvider;
-            var rootChildrenCount = treeDataProvider.getChildCount([]);
-            // [] = { len:number, idx:Array }
-            this.ranges = [{ len: rootChildrenCount, idx: [0] }];
-            this.totalCount = rootChildrenCount;
-            this.removed = {};
-            this.linearCache = {};
+            this.refresh();
         };
 
         TreeMapper.prototype = {
             // public API
+            refresh: function () {
+                var rootChildrenCount = this.tdp.getChildCount([]);
+
+                // [] = { len:number, idx:Array }
+                this.ranges = [{ len: rootChildrenCount, idx: [0] }];
+                this.totalCount = rootChildrenCount;
+                this.removed = {};
+                this.linearCache = {};
+            },
+
             getLinearIdx: function (treeIdx) {
                 var ridx = this.searchTIdx(treeIdx);
                 var ranges = this.ranges;
@@ -33,6 +38,7 @@ define('v3grid/TreeMapper', [],
             isOpen: function (linearIdx) {
                 var ranges = this.ranges;
                 var ridx = this.searchLin(linearIdx);
+                // open if it's the last item in the range and the next range exists and has a longer treeindex (depth)
                 return ridx+1 < ranges.length && this.rangeSum + ranges[ridx].len == linearIdx + 1 &&
                     ranges[ridx+1].idx.length > ranges[ridx].idx.length;
             },

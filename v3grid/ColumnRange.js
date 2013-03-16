@@ -2,7 +2,7 @@ define('v3grid/ColumnRange',
     ['v3grid/Adapter'],
     function (Adapter) {
 
-        var Range = function (columns) {
+        var ColumnRange = function (columns) {
             Adapter.ObservableClass.call(this);
 
             this.columns = columns;
@@ -14,7 +14,7 @@ define('v3grid/ColumnRange',
             this.generateColumnMap();
         };
 
-        Range.prototype = Adapter.merge(Adapter.merge({}, Adapter.ObservableClass.prototype), {
+        ColumnRange.prototype = Adapter.merge(Adapter.merge({}, Adapter.ObservableClass.prototype), {
 
             getTotalWidth: function () {
                 return this.posX[this.columns.length];
@@ -126,6 +126,6 @@ define('v3grid/ColumnRange',
             }
         });
 
-        return Range;
+        return ColumnRange;
     }
 );

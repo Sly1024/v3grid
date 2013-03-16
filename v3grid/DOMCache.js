@@ -8,13 +8,13 @@ define('v3grid/DOMCache',
          *     create: function() -> item: { dom : DOM }
          * }
          */
-        var Cache = function (config) {
+        var DOMCache = function (config) {
             Adapter.merge(this, config);
             this.available = [];
             this.addToDom = [];
         }
 
-        Cache.prototype = {
+        DOMCache.prototype = {
 
             itemRemoved: Adapter.emptyFn,
             itemReleased: Adapter.emptyFn,
@@ -69,6 +69,6 @@ define('v3grid/DOMCache',
             }
         }
 
-        return Cache;
+        return DOMCache;
     }
 );

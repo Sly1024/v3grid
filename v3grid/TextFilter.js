@@ -1,11 +1,11 @@
 define('v3grid/TextFilter',
   [],
   function () {
-    var Filter = function (columnName) {
+    var TextFilter = function (columnName) {
       this.columnName = columnName;
     }
 
-    Filter.prototype = {
+    TextFilter.prototype = {
       filterString: '',
 
       filter: function (grid, getData, row) {
@@ -15,6 +15,6 @@ define('v3grid/TextFilter',
       }
     }
 
-    return Filter;
+    return TextFilter;
   }
 );
