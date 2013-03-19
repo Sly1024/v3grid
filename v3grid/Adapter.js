@@ -93,6 +93,19 @@ define('v3grid/Adapter', [], function () {
             }
         },
 
+        // I could use Ext.data.UuidGenerator, but this is faster
+        // not real GUID, but I just need a big random number
+        generateUID: function () {
+            //this gives 4x32 = 128 random bits
+            var r1 = Math.random()*0x100000000,
+                r2 = Math.random()*0x100000000,
+                r3 = Math.random()*0x100000000,
+                r4 = Math.random()*0x100000000;
+
+            // make it compact => base 36 (0..9, a..z) encoding
+            return r1.toString(36) + r2.toString(36) + r3.toString(36) + r4.toString(36);
+        },
+
         getPageX: function (element) { return Ext.fly(element).getX(); },
         getPageY: function (element) { return Ext.fly(element).getY(); },
 

@@ -8,8 +8,8 @@ define('v3grid/TextFilter',
     TextFilter.prototype = {
       filterString: '',
 
-      filter: function (grid, getData, row) {
-        var value = getData.call(grid, row, this.columnName);
+      filter: function (grid, dataProvider, row) {
+        var value = dataProvider.getCellData(row, this.columnName);
         if (typeof value !== 'string') value = value ? value.toString() : '';
         return value.indexOf(this.filterString) >= 0;
       }

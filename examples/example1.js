@@ -1,5 +1,5 @@
-require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3grid/FilterDataProvider', 'v3grid/ColumnDragger'],
-    function (V3Grid, SortDataProvider, ColumnSelector, FilterDataProvider, ColumnDragger) {
+require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3grid/FilterDataProvider', 'v3grid/ColumnDragger', 'v3grid/ArrayDataProvider'],
+    function (V3Grid, SortDataProvider, ColumnSelector, FilterDataProvider, ColumnDragger, ArrayDataProvider) {
         Ext.namespace('v3grid');
         v3grid.V3Grid = V3Grid;
 
@@ -59,7 +59,9 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3g
 
                 var sorter = new SortDataProvider();
 
-                var filter = new FilterDataProvider();
+                var filter = new FilterDataProvider({
+                    dataProvider: new ArrayDataProvider(cellData)
+                });
 
                 var grid = Ext.create('virtualgrid.VirtualGrid', {
                     gridConfig: {
@@ -69,11 +71,9 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3g
                         bottomLockedRowCount: 3,
                         rowHeight: 25,
                         headerHeight: 30,
-                        columnBatchSize: 1,
-                        rowBatchSize: 2,
-                        data: cellData,
+                        dataProvider: filter,
                         columns: columns,
-                        features: [filter, sorter, new ColumnSelector(), new ColumnDragger()]
+                        features: [filter, new ColumnDragger()]//[filter, sorter, new ColumnSelector(), new ColumnDragger()]
 //                        getRowStyle: function (row) {
 //                            var val = 255 - (row*2.5 >> 0);
 //                            return { backgroundColor: 'rgb(200,'+val+',0)'};

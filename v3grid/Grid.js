@@ -1,6 +1,8 @@
 define('v3grid/Grid',
-    ['v3grid/Adapter', 'v3grid/Utils', 'v3grid/GridView', 'v3grid/DragHelper', 'v3grid/DefaultItemRenderer', 'v3grid/ColumnManager', 'v3grid/Scrollbar'],
-    function (Adapter, Utils, GridView, DragHelper, DefaultItemRenderer, ColumnManager, Scrollbar) {
+    ['v3grid/Adapter', 'v3grid/Utils', 'v3grid/GridView', 'v3grid/DragHelper', 'v3grid/DefaultItemRenderer',
+     'v3grid/ColumnManager', 'v3grid/Scrollbar', 'v3grid/RangeDataProvider', 'v3grid/Observable'],
+    function (Adapter, Utils, GridView, DragHelper, DefaultItemRenderer,
+              ColumnManager, Scrollbar, RangeDataProvider, Observable) {
 
         var Grid = function (config) {
             this.initProperties(config);
@@ -12,6 +14,8 @@ define('v3grid/Grid',
             this.createStyles();
             this.createColumnManager();
             this.createComponents();
+
+            this.setRowCounts();
 
             this.setSize(this.width, this.height);
             this.scrollTo();
@@ -29,8 +33,8 @@ define('v3grid/Grid',
             itemRenderer: DefaultItemRenderer,
             headerRenderer: DefaultItemRenderer,
 
-            columnBatchSize: 5,
-            rowBatchSize: 10,
+            columnBatchSize: 1,
+            rowBatchSize: 2,
 
             verticalSeparatorThickness: 1,
             horizontalSeparatorThickness: 1,
@@ -56,30 +60,32 @@ define('v3grid/Grid',
                 this.CLS_ROW_SIZE    = 'v3grid-' + num + '-row-size';
                 this.CLS_HEADER_SIZE = 'v3grid-' + num + '-header-size';
 
-                var container = Adapter.isString(config.renderTo) ?
-                    document.getElementById(config.renderTo) : config.renderTo;
+                var container = config.renderTo;
+                if (Adapter.isString(container)) {
+                    container = document.getElementById(container) || document.querySelector(container);
+                }
 
-                this.panel = container; //document.createElement('div');
-                this.panel.tabIndex = 0;
-//                container.appendChild(this.panel);
+                this.panel = container;
+                container.tabIndex = 0;
 
                 this.width = config.width || container.clientWidth;
                 this.height = config.height || container.clientHeight;
-                this.data = config.data;
             },
 
             validateConfig: function (config) {
                 config.columns = config.columns || [];
                 config.totalColumnCount = config.columns.length;
-                config.getData = config.getData || this.getData;
-                config.totalRowCount = config.totalRowCount  || (config.data ? config.data.length : 0);
+                if (!config.dataProvider) {
+                    Adapter.error('V3Grid needs a dataProvider');
+                }
             },
 
             initFeatures: function (config) {
                 var features = config.features;
                 if (!Adapter.isArray(features)) return;
 
-                for (var len = features.length, i = 0; i < len; ++i) if (Adapter.isFunction(features[i].init)) {
+                var len = features.length;
+                for (var i = 0; i < len; ++i) if (Adapter.isFunction(features[i].init)) {
                     features[i].init(this, config);
                 }
 
@@ -127,20 +133,8 @@ define('v3grid/Grid',
                 Adapter.removeStyleSheet('v3grid-' + this.instanceNum + '-style');
             },
 
-            // not real GUID, but I just need a big random number
-            generateUID: function () {
-                //this gives 4x32 = 128 random bits
-                var r1 = Math.random()*0x100000000,
-                    r2 = Math.random()*0x100000000,
-                    r3 = Math.random()*0x100000000,
-                    r4 = Math.random()*0x100000000;
-
-                // make it compact => base 36 (0..9, a..z) encoding
-                return r1.toString(36) + r2.toString(36) + r3.toString(36) + r4.toString(36);
-            },
-
             registerRendererType: function (obj, availRenderers) {
-                var type = obj['-v3grid-type-id'] || (obj['-v3grid-type-id'] = this.generateUID());
+                var type = obj['-v3grid-type-id'] || (obj['-v3grid-type-id'] = Adapter.generateUID());
                 availRenderers[type] = availRenderers[type] || [];
             },
 
@@ -195,7 +189,7 @@ define('v3grid/Grid',
             getRenderer: function (renderer) {
                 renderer = Adapter.getClass(renderer);
                 if (!renderer.prototype.updateData) {
-                    renderer.prototype.updateData = function (grid, row, column) { this.setData(grid.getData(row, column.dataIndex)); };
+                    renderer.prototype.updateData = function (grid, row, column) { this.setData(grid.dataProvider.getCellData(row, column.dataIndex)); };
                 }
                 return renderer;
             },
@@ -237,15 +231,21 @@ define('v3grid/Grid',
                 viewContainer.style.position = 'absolute';
                 viewContainer.style.overflow = 'hidden';
 
-                var origGetData = this.getData;
-                var rowCounts = this.getRowCounts();
-                this.topRowIdx = [0];
-                this.calcTopRowIdx(rowCounts);
+                var dp = this.dataProvider;
+
+                // 0th is the header dataProvider
+                var viewDPs = this.viewDataProviders = [this.createHeaderDataProvider(this.colMgr)];
+
+                if (viewsV == 2) {
+                    viewDPs[1] = dp;
+                } else {
+                    for (var dpy = 1; dpy < viewsV; ++dpy) {
+                        viewDPs[dpy] = new RangeDataProvider({dataProvider: dp});
+                    }
+                }
 
                 for (var y = 0; y < viewsV; ++y) {
                     views[y] = new Array(viewsH);
-
-                    var getDataFunc = y <= 1 ? origGetData : this.createGetDataForView(origGetData, this.topRowIdx, y-1);
 
                     for (var x = 0; x < viewsH; ++x) {
                         // create div for the view
@@ -253,14 +253,10 @@ define('v3grid/Grid',
                         table.style.position = 'absolute';
                         table.style.overflow = 'hidden';
 
-//                        var container = table;
-
-//                        if (x == scrollViewX || y == scrollViewY) {
-                            var container = document.createElement('div');
-                            container.style.position = 'absolute';
-                            container.style.overflow = 'hidden';
-                            container.appendChild(table);
-//                        }
+                        var container = document.createElement('div');
+                        container.style.position = 'absolute';
+                        container.style.overflow = 'hidden';
+                        container.appendChild(table);
 
                         // add user customizable class and position marker classes:
                         // horizontally: left, center, right
@@ -281,10 +277,7 @@ define('v3grid/Grid',
                                 container: container,
                                 rowHeight: this.headerHeight,
                                 colMgr: ranges[x],
-                                totalRowCount: 1,
-                                getData: function (row, col) { return this.columns[this.colMgr.columnMap[col]].header; },
-                                getDataRowIdx: this.getDataRowIdx,
-                                getVisibleRowIdx: this.getVisibleRowIdx,
+                                dataProvider: viewDPs[0],
                                 availableRenderers: this.availableRenderers,
                                 rowBatchSize: 1,
                                 columnBatchSize: 1,
@@ -302,11 +295,7 @@ define('v3grid/Grid',
                                 container: container,
                                 rowHeight: this.rowHeight,
                                 colMgr: ranges[x],
-                                totalRowCount: rowCounts[y-1],
-                                data: this.data,
-                                getData: getDataFunc,
-                                getDataRowIdx: this.getDataRowIdx,
-                                getVisibleRowIdx: this.getVisibleRowIdx,
+                                dataProvider: viewDPs[y],
                                 cellClicked: this.cellClicked,
                                 getRowStyle: this.getRowStyle,
                                 getCellStyle: this.getCellStyle,
@@ -361,10 +350,13 @@ define('v3grid/Grid',
                 }
             },
 
-            createGetDataForView: function (origGetData, topRowIdx, y) {
-                return function (row, col) {
-                    return origGetData.call(this, row + topRowIdx[y], col);
-                }
+            createHeaderDataProvider: function (colMgr) {
+                return Adapter.merge(new Observable(), {
+                    listeners: {},
+                    getRowCount: function () { return 1; },
+                    getCellData: function (row, col) { return colMgr.columns[colMgr.columnMap[col]].header; },
+                    refresh: function () { this.fireEvent('dataChanged'); }
+                });
             },
 
             ffMouseWheelHandler: function (evt) {
@@ -432,7 +424,17 @@ define('v3grid/Grid',
                 this.scrollTo(-x, -y);
             },
 
-            getRowCounts: function () {
+            setRowCounts: function () {
+                this.totalRowCount = this.dataProvider.getRowCount();
+
+                var dps = this.viewDataProviders;
+                dps[0].refresh();
+
+                if (this.viewsV == 2) {
+                    this.dataProvider.refresh();
+                    return;
+                }
+
                 var topLRC = this.topLockedRowCount,
                     bottLRC = this.bottomLockedRowCount,
                     avail = this.totalRowCount,
@@ -452,17 +454,13 @@ define('v3grid/Grid',
 
                 rowCounts.splice(topLRC ? 1 : 0, 0, avail);
 
-                return rowCounts;
-            },
+                var offs = 0;
 
-            calcTopRowIdx: function(rowCounts) {
-                var len = rowCounts.length,
-                    topIdx = this.topRowIdx,
-                    curr = rowCounts[0];
-
-                for (var i = 1; i < len; ++i) {
-                    topIdx[i] = curr;
-                    curr += rowCounts[i];
+                for (var y = 1; y < this.viewsV; ++y) {
+                    var dp = dps[y];
+                    dp.offset = offs;
+                    offs += (dp.count = rowCounts[y-1]);
+                    dp.refresh();
                 }
             },
 
@@ -713,41 +711,13 @@ define('v3grid/Grid',
                 }
             },
 
-            setTotalRowCount: function (rowCount) {
-                this.totalRowCount = rowCount;
-
-                var views = this.views,
-                    rowCounts = this.getRowCounts(),
-                    yTo = this.viewsV,
-                    xTo = this.viewsH;
-
-                this.calcTopRowIdx(rowCounts);
-
-                for (var y = 1; y < yTo; ++y) {
-                    var viewsY = views[y];
-                    for (var x = 0; x < xTo; ++x) {
-                        viewsY[x].setTotalRowCount(rowCounts[y-1]);
-                    }
-                }
-//                TODO: subtract the locked rows
-//                this.allViews('setTotalRowCount', [rowCount], this.scrollViewY, this.scrollViewY);
-
+            dataChanged: function () {
+                this.setRowCounts();
                 // TODO: figure out what is needed here from setSize (not all I think)
                 this.setSize();
                 this.scrollTo();    // needed because filtering...
 //                if (this.iScroll) this.iScroll.refresh();
             },
-
-            getData: function (row, col) {
-                return this.data[row][col];
-            },
-
-            // visibleRowIdx -> dataRowIdx
-            getDataRowIdx: Utils.identity,
-
-            // dataRowIdx -> visibleRowIdx
-            // may return -1 if the row is not visible (filtered out for example)
-            getVisibleRowIdx: Utils.identity,
 
             setData:function (row, col, data) {
                 var old = this.data[row][col];
