@@ -12,8 +12,8 @@ define('v3grid/GridView',
 
     GridView.prototype = {
         rowHeight: 22,
-        columnBatchSize: 2,
-        rowBatchSize: 4,
+        columnBatchSize: 1,
+        rowBatchSize: 2,
 
         setVisibleBox: function (x, y, width, height) {
             var style = this.container.style;
@@ -71,7 +71,7 @@ define('v3grid/GridView',
                             Adapter.addClass(cell.dom, cls);
                             cell.cls = cls;
                             if (gridView.getCellStyle) {
-                                var cellStyle = gridView.getCellStyle(gridView.getDataRowIdx(row), column);
+                                var cellStyle = gridView.getCellStyle(gridView.dataProvider.getRowId(row), column);
                                 gridView.saveAndApplyStyle(cell, cellStyle);
                             }
                         },
@@ -97,7 +97,7 @@ define('v3grid/GridView',
                     row.length = len;
 
                     if (gridView.getRowStyle) {
-                        var rowStyle = gridView.getRowStyle(gridView.getDataRowIdx(dr));
+                        var rowStyle = gridView.getRowStyle(gridView.dataProvider.getRowId(dr));
                         gridView.saveAndApplyStyle(row, rowStyle);
                     }
 
@@ -132,7 +132,6 @@ define('v3grid/GridView',
             // the ColumnManager does not change the arrays, just their contents, we can cache them
             this.columns = this.colMgr.columns || [];
             this.columnsX = this.colMgr.posX;
-            if (this.totalRowCount === undefined) this.totalRowCount = (this.data ? this.data.length : 0);
 
             this.colMgr.addListener('columnMoved', this.columnMoved, this);
             this.colMgr.addListener('columnResized', this.columnResized, this);
@@ -161,6 +160,9 @@ define('v3grid/GridView',
         attachHandlers: function () {
             if (Adapter.isFunction(this.cellClicked)) {
                 Adapter.addListener(this.table, 'click', this.tableClicked, this);
+            }
+            if (this.dataProvider.addListener) {
+                this.dataProvider.addListener('dataChanged', this.dataChanged, this);
             }
         },
 
@@ -567,7 +569,7 @@ define('v3grid/GridView',
             if (col.visible) {
                 // apply user cell style
                 if (this.getCellStyle) {
-                    this.updateStyle(cell, this.getCellStyle(this.getDataRowIdx(row), col));
+                    this.updateStyle(cell, this.getCellStyle(this.dataProvider.getRowId(row), col));
                 }
                 if (rendererConfig) renderer.setConfig(rendererConfig);
                 renderer.updateData(this, row, col);
@@ -579,8 +581,8 @@ define('v3grid/GridView',
             }
         },
 
-        setTotalRowCount: function (rowCount) {
-            this.totalRowCount = rowCount;
+        dataChanged: function () {
+            this.totalRowCount = this.dataProvider.getRowCount();
             this.setTableSize();
             this.vScrollTo(undefined, true);
             // TODO: update only the part that was not updated by onVerticalScroll()
@@ -646,7 +648,7 @@ define('v3grid/GridView',
             var cells = this.visibleCells;
 
             for (var vr = from, dr = this.firstVisibleRow + from; vr < to; ++dr, ++vr) {
-                this.updateStyle(cells[vr], this.getRowStyle(this.getDataRowIdx(dr)));
+                this.updateStyle(cells[vr], this.getRowStyle(this.dataProvider.getRowId(dr)));
             }
         },
 
@@ -669,7 +671,7 @@ define('v3grid/GridView',
                     cell.renderer.updateData(this, dr, columns[dc]);
                     // apply user cell style
                     if (this.getCellStyle) {
-                        this.updateStyle(cell, this.getCellStyle(this.getDataRowIdx(dr), columns[dc]));
+                        this.updateStyle(cell, this.getCellStyle(this.dataProvider.getRowId(dr), columns[dc]));
                     }
                 }
             }
@@ -683,12 +685,6 @@ define('v3grid/GridView',
 //            y = y || 0;
             this.vScrollTo(y);
             this.hScrollTo(x);
-        },
-
-        // row:Number - rowIndex
-        // col:String - column's dataIndex
-        getData: function (row, col) {
-            return this.data[row][col];
         },
 
         // row:Number - rowIndex
