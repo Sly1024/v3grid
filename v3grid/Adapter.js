@@ -17,7 +17,6 @@ define('v3grid/Adapter', [], function () {
         bindScope: Ext.bind,
         error: Ext.Error.raise,
         arrayMap: Ext.Array.map,
-        ObservableClass: Ext.util.Observable,
 
         getClass: function (cls) { return Ext.isString(cls) ? Ext.ClassManager.get(cls) : cls; },
 

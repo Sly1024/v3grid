@@ -1,6 +1,6 @@
 define('v3grid/Observable', ['v3grid/Adapter'], function (Adapter) {
-    var Observable = function () {
-
+    var Observable = function (config) {
+        if (config) Adapter.merge(this, config);
     };
 
     Adapter.merge(Observable.prototype, {

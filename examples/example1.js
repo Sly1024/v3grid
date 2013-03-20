@@ -57,10 +57,12 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3g
                     };
                 }
 
-                var sorter = new SortDataProvider();
-
                 var filter = new FilterDataProvider({
                     dataProvider: new ArrayDataProvider(cellData)
+                });
+
+                var sorter = new SortDataProvider({
+                    dataProvider: filter
                 });
 
                 var grid = Ext.create('virtualgrid.VirtualGrid', {
@@ -71,9 +73,9 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3g
                         bottomLockedRowCount: 3,
                         rowHeight: 25,
                         headerHeight: 30,
-                        dataProvider: filter,
+                        dataProvider: sorter,
                         columns: columns,
-                        features: [filter, new ColumnDragger()]//[filter, sorter, new ColumnSelector(), new ColumnDragger()]
+                        features: [filter, sorter, new ColumnDragger()]//[filter, sorter, new ColumnSelector(), new ColumnDragger()]
 //                        getRowStyle: function (row) {
 //                            var val = 255 - (row*2.5 >> 0);
 //                            return { backgroundColor: 'rgb(200,'+val+',0)'};
