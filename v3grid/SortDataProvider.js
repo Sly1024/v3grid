@@ -1,35 +1,25 @@
 define('v3grid/SortDataProvider',
-    ['v3grid/Adapter', 'v3grid/SortHeaderRenderer'],
-    function (Adapter, HeaderRenderer) {
+    ['v3grid/Adapter', 'v3grid/SortHeaderRenderer', 'v3grid/Observable'],
+    function (Adapter, HeaderRenderer, Observable) {
 
         var SortDataProvider = function (config) {
             config = config || {};
             config.headerRenderer = config.headerRenderer || HeaderRenderer;
             Adapter.merge(this, config);
+
+            if (this.dataProvider.addListener) {
+                this.dataProvider.addListener('dataChanged', this.refresh, this);
+            }
         };
 
-        SortDataProvider.prototype = {
+        SortDataProvider.prototype = new Observable({
             init: function (grid, config) {
                 this.grid = grid;
-                this.processColumnRenderers(config.columns);
+                this.processColumnRenderers(grid, config.columns);
 
-                var origGetData = this.origGetData = config.getData;
-                var origGetVisibleRowIdx = config.getVisibleRowIdx || grid.getVisibleRowIdx;
-
-                var index = this.index = new Array(config.totalRowCount);
-                var invIndex = this.invIndex = new Array(config.totalRowCount);
+                this.index = [];
+                var invIndex = this.invIndex = [];
                 invIndex[-1] = -1;
-
-                this.totalRowCount = config.totalRowCount;
-
-                config.getData = function (row, col) {
-                    return origGetData.call(grid, index[row], col);
-                };
-
-                config.getVisibleRowIdx = function (row) {
-                    return invIndex[origGetVisibleRowIdx.call(grid, row)];
-                };
-
 
                 // check if a TreeDP is present
                 if (require.defined('v3grid/TreeDataProvider')) {
@@ -47,35 +37,26 @@ define('v3grid/SortDataProvider',
                 this.unSort(true);
             },
 
-            initRev: function (grid, config) {
-                var origSetTotalRowCount = config.setTotalRowCount || grid.setTotalRowCount;
-                var origInvData = config.invalidateData || grid.invalidateData;
-                var origUpdateView = this.origUpdateView = config.updateView || grid.updateView;
-                var origGetDataRowIdx = config.getDataRowIdx || grid.getDataRowIdx;
-                var me = this, index = this.index, invIndex = this.invIndex;
-
-                config.getDataRowIdx = function (row) {
-                    return index[origGetDataRowIdx.call(grid, row)];
-                };
-
-                config.setTotalRowCount = function (rowCount) {
-                    me.totalRowCount = rowCount;
-                    var sortFields = me.sortedBy;
-                    me.unSort(true);
-                    me.sort(sortFields, true);
-                    origSetTotalRowCount.call(grid, rowCount);
-                };
-                config.invalidateData = function (row, col) {
-                    origInvData.call(grid, invIndex[row], col);
-                };
-                config.updateView = function () {
-                    me.sort(me.sortedBy, true);
-                    origUpdateView.call(grid);
-                };
+            /* DataProvider API - start */
+            getRowCount: function () {
+                return this.index.length;
             },
 
-            processColumnRenderers: function (columns) {
-                var grid = this.grid;
+            getRowId: function (row) {
+                return this.dataProvider.getRowId(this.index[row]);
+            },
+
+            getCellData: function (row, col) {
+                return this.dataProvider.getCellData(this.index[row], col);
+            },
+
+            refresh: function () {
+                this.unSort(true);
+                this.sort(this.sortedBy);
+            },
+            /* DataProvider API - end */
+
+            processColumnRenderers: function (grid, columns) {
                 var colMap = this.columnMap = {};
 
                 for (var len = columns.length, i = 0; i < len; ++i) {
@@ -131,6 +112,7 @@ define('v3grid/SortDataProvider',
                 if (flen == 1) colMap[fields[0]].sortIndex = 0;
 
                 this.sortedBy = fields;
+                this.grid.updateHeaders();
             },
 
             sort: function (fields, noUpdate) {
@@ -138,11 +120,10 @@ define('v3grid/SortDataProvider',
 
                 var flen = fields.length >> 1;
 
-                var grid = this.grid;
-                var getData = this.origGetData;
+                var dp = this.dataProvider;
 
                 var i;
-                var len = this.totalRowCount;
+                var len = dp.getRowCount();
                 var cache = new Array(len);
                 for (i = 0; i < len; ++i) cache[i] = [];
 
@@ -155,8 +136,8 @@ define('v3grid/SortDataProvider',
 
                     for (var f = 0; f < flen; ++f) {
                         // fill cache if needed
-                        if (ca.length <= f) ca[f] = getData.call(grid, a, fields[f << 1]);
-                        if (cb.length <= f) cb[f] = getData.call(grid, b, fields[f << 1]);
+                        if (ca.length <= f) ca[f] = dp.getCellData(a, fields[f << 1]);
+                        if (cb.length <= f) cb[f] = dp.getCellData(b, fields[f << 1]);
 
                         if (ca[f] == cb[f]) continue;
                         var asc = (fields[(f << 1) | 1] == 'asc') ? -1 : 1;
@@ -198,22 +179,22 @@ define('v3grid/SortDataProvider',
                 var invIndex = this.invIndex;
                 for (i = 0; i < len; ++i) invIndex[index[i]] = i;
 
-                if (!noUpdate) this.origUpdateView.call(grid);
+                if (!noUpdate) this.fireEvent('dataChanged');
             },
 
             unSort: function (noUpdate) {
                 if (!noUpdate) this.updateIndicators([]);
 
-                var rowCount = this.totalRowCount;
+                var rowCount = this.dataProvider.getRowCount();
                 var index = this.index;
                 var invIndex = this.invIndex;
                 index.length = invIndex.length = rowCount;
                 for (var i = 0; i < rowCount; ++i) invIndex[i] = index[i] = i;
 
-                if (!noUpdate) this.origUpdateView.call(this.grid);
+                if (!noUpdate) this.fireEvent('dataChanged');
             }
 
-        };
+        });
 
         return SortDataProvider;
     }

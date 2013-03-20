@@ -1,8 +1,8 @@
 define('v3grid/Grid',
     ['v3grid/Adapter', 'v3grid/Utils', 'v3grid/GridView', 'v3grid/DragHelper', 'v3grid/DefaultItemRenderer',
-     'v3grid/ColumnManager', 'v3grid/Scrollbar', 'v3grid/RangeDataProvider', 'v3grid/Observable'],
+     'v3grid/ColumnManager', 'v3grid/Scrollbar', 'v3grid/RangeDataProvider', 'v3grid/DataProvider'],
     function (Adapter, Utils, GridView, DragHelper, DefaultItemRenderer,
-              ColumnManager, Scrollbar, RangeDataProvider, Observable) {
+              ColumnManager, Scrollbar, RangeDataProvider, DataProvider) {
 
         var Grid = function (config) {
             this.initProperties(config);
@@ -15,10 +15,9 @@ define('v3grid/Grid',
             this.createColumnManager();
             this.createComponents();
 
-            this.setRowCounts();
-
-            this.setSize(this.width, this.height);
-            this.scrollTo();
+            this.updateHeaders();
+            if (this.viewsV == 2) this.allViews('dataChanged', [], 1, 1);
+            this.dataChanged();
         };
 
         Grid.prototype = {
@@ -348,14 +347,16 @@ define('v3grid/Grid',
                     Adapter.addListener(viewContainer, 'mouseover', this.mouseMoveHandler, this);
                     Adapter.addListener(viewContainer, 'mouseout', this.mouseOutHandler, this);
                 }
+
+                if (dp.addListener) {
+                    dp.addListener('dataChanged', this.dataChanged, this);
+                }
             },
 
             createHeaderDataProvider: function (colMgr) {
-                return Adapter.merge(new Observable(), {
-                    listeners: {},
+                return new DataProvider({
                     getRowCount: function () { return 1; },
-                    getCellData: function (row, col) { return colMgr.columns[colMgr.columnMap[col]].header; },
-                    refresh: function () { this.fireEvent('dataChanged'); }
+                    getCellData: function (row, col) { return colMgr.columns[colMgr.columnMap[col]].header; }
                 });
             },
 
@@ -425,19 +426,9 @@ define('v3grid/Grid',
             },
 
             setRowCounts: function () {
-                this.totalRowCount = this.dataProvider.getRowCount();
-
-                var dps = this.viewDataProviders;
-                dps[0].refresh();
-
-                if (this.viewsV == 2) {
-                    this.dataProvider.refresh();
-                    return;
-                }
-
-                var topLRC = this.topLockedRowCount,
+                var avail = this.totalRowCount,
+                    topLRC = this.topLockedRowCount,
                     bottLRC = this.bottomLockedRowCount,
-                    avail = this.totalRowCount,
                     rowCounts = [];
 
                 if (topLRC) {
@@ -455,6 +446,7 @@ define('v3grid/Grid',
                 rowCounts.splice(topLRC ? 1 : 0, 0, avail);
 
                 var offs = 0;
+                var dps = this.viewDataProviders;
 
                 for (var y = 1; y < this.viewsV; ++y) {
                     var dp = dps[y];
@@ -646,6 +638,10 @@ define('v3grid/Grid',
                 this.colMgr.fireUpdateColumn(idx);
             },
 
+            updateHeaders: function () {
+                this.viewDataProviders[0].refresh();
+            },
+
             updateView: function () {
                 this.allViews('updateView');
             },
@@ -712,7 +708,12 @@ define('v3grid/Grid',
             },
 
             dataChanged: function () {
-                this.setRowCounts();
+                this.totalRowCount = this.dataProvider.getRowCount();
+
+                if (this.viewsV > 2) {
+                    this.setRowCounts();
+                }
+
                 // TODO: figure out what is needed here from setSize (not all I think)
                 this.setSize();
                 this.scrollTo();    // needed because filtering...

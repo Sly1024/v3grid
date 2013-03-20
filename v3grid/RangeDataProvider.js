@@ -1,18 +1,13 @@
 define('v3grid/RangeDataProvider',
-    ['v3grid/Adapter', 'v3grid/Observable'],
-    function (Adapter, Observable) {
+    ['v3grid/Adapter', 'v3grid/DataProvider'],
+    function (Adapter, DataProvider) {
         var RangeDataProvider = function (config) {
             Adapter.merge(this, config);
 
             this.offset = this.offset || 0;
-
-            var dp = this.dataProvider;
-            if (dp && dp.addListener) {
-                dp.addListener('dataChanged', this.refresh, this);
-            }
         };
 
-        RangeDataProvider.prototype = Adapter.merge(new Observable(), {
+        RangeDataProvider.prototype = new DataProvider({
             getRowCount: function () {
                 return this.count;
             },
@@ -21,9 +16,6 @@ define('v3grid/RangeDataProvider',
             },
             getCellData: function (row, colDataIdx) {
                 return this.dataProvider.getCellData(row + this.offset, colDataIdx);
-            },
-            refresh: function () {
-                this.fireEvent('dataChanged');
             }
         });
 
