@@ -16,16 +16,16 @@ define('v3grid/TreeRenderer',
             this.view = temp.firstChild;
             this.rendererContainer = this.view.getElementsByTagName('span')[0];
 
-            this.openIndicator = this.view.getElementsByTagName('img')[0];
+            var indicator = this.openIndicator = this.view.getElementsByTagName('img')[0];
 
             if (Adapter.hasTouch) {
-                this.tapHandler = new Utils.TapHandler(this.openIndicator, this.clickHandler, this);
+                this.tapHandler = new Utils.TapHandler(indicator, this.clickHandler, this);
             } else {
-                Adapter.addListener(this.openIndicator, 'click', this.clickHandler, this);
+                Adapter.addListener(indicator, 'click', this.clickHandler, this);
             }
 
             this.updateRenderer(config);
-            this.tdp = config.treeDataProvider;
+            this.mapper = config.treeMapper;
         };
 
         TreeRenderer.prototype = {
@@ -36,17 +36,20 @@ define('v3grid/TreeRenderer',
             },
 
             updateData: function (grid, row, col) {
-                this.renderer.setData(grid.getData(row, col.dataIndex));
-                this.lastRow = row;
-                var info = this.tdp.getInfo(row);
-                var indicator = this.openIndicator;
-                if (info[0] /*childCount*/ == 0) {
+                this.renderer.updateData(grid, row, col);
+                this.lastRow = grid.dataProvider.getCellData(row, '__treemapper_row');
+
+                var mapper = this.mapper,
+                    info = mapper.nodes[this.lastRow],
+                    indicator = this.openIndicator;
+
+                if (info.childCount == 0) {
                     indicator.style.display = 'none';
                 } else {
                     indicator.style.display = 'block';
-                    indicator.src = info[1] /*isOpen*/ ? minus_img : plus_img;
+                    indicator.src = mapper.openNodes[info.id] ? minus_img : plus_img;
                 }
-                indicator.parentNode.style.width = (16 + info[2] /*level*/ * this.tdp.indentation) + 'px';
+                indicator.parentNode.style.width = (info.depth * mapper.indentation) + 'px';
             },
 
             setConfig: function (config) {
@@ -57,7 +60,7 @@ define('v3grid/TreeRenderer',
             },
 
             clickHandler: function (evt) {
-                this.tdp.rowClicked(this.lastRow, evt);
+                this.mapper.toggleNode(this.lastRow, evt);
             }
         };
 

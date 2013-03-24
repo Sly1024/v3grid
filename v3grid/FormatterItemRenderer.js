@@ -6,7 +6,7 @@ define('v3grid/FormatterItemRenderer', [], function () {
 
     FormatterItemRenderer.prototype = {
         updateData: function (grid, row, col) {
-            var data = grid.getData(row, col.dataIndex);
+            var data = grid.dataProvider.getCellData(row, col.dataIndex);
             this.view.nodeValue = data != null ? col.formatter(data) : '';
         }
     };

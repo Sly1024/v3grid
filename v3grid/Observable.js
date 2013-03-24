@@ -3,7 +3,7 @@ define('v3grid/Observable', ['v3grid/Adapter'], function (Adapter) {
         if (config) Adapter.merge(this, config);
     };
 
-    Adapter.merge(Observable.prototype, {
+    Observable.prototype = {
         addListener: function (event, handler, scope) {
             var listeners = this.listeners || (this.listeners = {});
             var list = listeners[event] || (listeners[event] = []);
@@ -31,7 +31,7 @@ define('v3grid/Observable', ['v3grid/Adapter'], function (Adapter) {
                 list[i].handler.apply(list[i].scope, args);
             }
         }
-    });
+    };
 
     return Observable;
 });

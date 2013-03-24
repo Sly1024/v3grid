@@ -1,5 +1,8 @@
-require(['v3grid/Grid', 'v3grid/Adapter', 'v3grid/SortDataProvider', 'v3grid/TreeDataProvider', 'v3grid/ColumnSelector', 'v3grid/FormatterItemRenderer', 'v3grid/ColumnDragger'],
-    function (V3Grid, V3GridAdapter, SortDataProvider, TreeDataProvider, ColumnSelector, FormatterRenderer, ColumnDragger) {
+require(['v3grid/Grid', 'v3grid/Adapter', 'v3grid/SortDataProvider', 'v3grid/TreeDataProvider', 'v3grid/TreeMapper',
+         'v3grid/TreeFilterDataProvider',
+         'v3grid/ColumnSelector', 'v3grid/FormatterItemRenderer', 'v3grid/ColumnDragger'],
+    function (V3Grid, V3GridAdapter, SortDataProvider, TreeDataProvider, TreeMapper, TreeFilterDataProvider,
+              ColumnSelector, FormatterRenderer, ColumnDragger) {
         Ext.namespace('v3grid');
         v3grid.V3Grid = V3Grid;
 
@@ -36,19 +39,38 @@ require(['v3grid/Grid', 'v3grid/Adapter', 'v3grid/SortDataProvider', 'v3grid/Tre
 
                 // init data
 
-                var sorter = new SortDataProvider();
-                var flatter = new TreeDataProvider({
+//                var sorter = new SortDataProvider();
+                var tdp = new TreeDataProvider({
+                    data: [
+                        {Region:"Southwest", categories: [
+                            {Region:"Arizona", categories: [
+                                {Territory_Rep:"Barbara Jennings", Actual:38865, Estimate:40000},
+                                {Territory_Rep:"Dana Binn", Actual:29885, Estimate:30000}]},
+                            {Region:"Central California", categories: [
+                                {Territory_Rep:"Joe Smith", Actual:29134, Estimate:30000}]},
+                            {Region:"Nevada", categories: [
+                                {Territory_Rep:"Bethany Pittman", Actual:52888, Estimate:45000}]},
+                            {Region:"Northern California", categories: [
+                                {Territory_Rep:"Lauren Ipsum", Actual:38805, Estimate:40000},
+                                {Territory_Rep:"T.R. Smith", Actual:55498, Estimate:40000}]},
+                            {Region:"Southern California", categories: [
+                                {Territory_Rep:"Alice Treu", Actual:44985, Estimate:45000},
+                                {Territory_Rep:"Jane Grove", Actual:44913, Estimate:45000}]}
+                        ]}
+                    ],
                     childrenField: 'categories'
                 });
+
+                var filter = new TreeFilterDataProvider({ dataProvider: tdp });
+                var mapper = new TreeMapper({ dataProvider: filter });
 
                 var grid = Ext.create('virtualgrid.VirtualGrid', {
                     gridConfig: {
                         rowHeight: 25,
                         headerHeight: 30,
-                        columnBatchSize: 1,
-                        rowBatchSize: 2,
-                        features: [flatter, sorter, new ColumnSelector(), new ColumnDragger()],
+                        features: [mapper, filter, /*sorter,*/ new ColumnSelector(), new ColumnDragger()],
                         lockedColumnCount: 0,
+                        dataProvider: mapper,
                         columns: [
                             { dataIndex: 'Region', minWidth: 200, width: '2*', style: { color: 'red'} },
                             { header: 'Territory Rep', dataIndex: 'Territory_Rep', width: '2*', minWidth: 200 },
@@ -56,23 +78,6 @@ require(['v3grid/Grid', 'v3grid/Adapter', 'v3grid/SortDataProvider', 'v3grid/Tre
                                 renderer: FormatterRenderer, formatter: Ext.util.Format.numberRenderer("$0,0") },
                             { dataIndex: 'Estimate', width: '1*', minWidth: 100, cls:'number',
                                 renderer: FormatterRenderer, formatter: Ext.util.Format.numberRenderer("0.0") }
-                        ],
-                        data: [
-                            {Region:"Southwest", categories: [
-                                {Region:"Arizona", categories: [
-                                    {Territory_Rep:"Barbara Jennings", Actual:38865, Estimate:40000},
-                                    {Territory_Rep:"Dana Binn", Actual:29885, Estimate:30000}]},
-                                {Region:"Central California", categories: [
-                                    {Territory_Rep:"Joe Smith", Actual:29134, Estimate:30000}]},
-                                {Region:"Nevada", categories: [
-                                    {Territory_Rep:"Bethany Pittman", Actual:52888, Estimate:45000}]},
-                                {Region:"Northern California", categories: [
-                                    {Territory_Rep:"Lauren Ipsum", Actual:38805, Estimate:40000},
-                                    {Territory_Rep:"T.R. Smith", Actual:55498, Estimate:40000}]},
-                                {Region:"Southern California", categories: [
-                                    {Territory_Rep:"Alice Treu", Actual:44985, Estimate:45000},
-                                    {Territory_Rep:"Jane Grove", Actual:44913, Estimate:45000}]}
-                            ]}
                         ]
                     }
                 });
@@ -112,7 +117,7 @@ require(['v3grid/Grid', 'v3grid/Adapter', 'v3grid/SortDataProvider', 'v3grid/Tre
                                             width: 150,
                                             listeners: {
                                                 change: function (numfield) {
-                                                    flatter.expandToLevel(numfield.getValue());
+                                                    mapper.expandToLevel(numfield.getValue());
                                                 }
                                             }
                                         },
