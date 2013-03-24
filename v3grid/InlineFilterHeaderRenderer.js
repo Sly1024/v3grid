@@ -50,7 +50,7 @@ define('v3grid/InlineFilterHeaderRenderer',
                     filter.filterString = '';
                     filterDP.removeFilter(filter);
                 }
-                filterDP.update();
+                filterDP.refresh();
             }
         }
 
