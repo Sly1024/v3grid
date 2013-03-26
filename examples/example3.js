@@ -1,7 +1,7 @@
-require(['v3grid/Grid', 'v3grid/Adapter', 'v3grid/SortDataProvider', 'v3grid/TreeDataProvider', 'v3grid/TreeMapper',
+require(['v3grid/Grid', 'v3grid/Adapter', 'v3grid/TreeSortDataProvider', 'v3grid/TreeDataProvider', 'v3grid/TreeMapper',
          'v3grid/TreeFilterDataProvider',
          'v3grid/ColumnSelector', 'v3grid/FormatterItemRenderer', 'v3grid/ColumnDragger'],
-    function (V3Grid, V3GridAdapter, SortDataProvider, TreeDataProvider, TreeMapper, TreeFilterDataProvider,
+    function (V3Grid, V3GridAdapter, TreeSortDataProvider, TreeDataProvider, TreeMapper, TreeFilterDataProvider,
               ColumnSelector, FormatterRenderer, ColumnDragger) {
         Ext.namespace('v3grid');
         v3grid.V3Grid = V3Grid;
@@ -39,7 +39,6 @@ require(['v3grid/Grid', 'v3grid/Adapter', 'v3grid/SortDataProvider', 'v3grid/Tre
 
                 // init data
 
-//                var sorter = new SortDataProvider();
                 var tdp = new TreeDataProvider({
                     data: [
                         {Region:"Southwest", categories: [
@@ -62,13 +61,14 @@ require(['v3grid/Grid', 'v3grid/Adapter', 'v3grid/SortDataProvider', 'v3grid/Tre
                 });
 
                 var filter = new TreeFilterDataProvider({ dataProvider: tdp });
-                var mapper = new TreeMapper({ dataProvider: filter });
+                var sorter = new TreeSortDataProvider({ dataProvider: filter});
+                var mapper = new TreeMapper({ dataProvider: sorter });
 
                 var grid = Ext.create('virtualgrid.VirtualGrid', {
                     gridConfig: {
                         rowHeight: 25,
                         headerHeight: 30,
-                        features: [mapper, filter, /*sorter,*/ new ColumnSelector(), new ColumnDragger()],
+                        features: [mapper, filter, sorter, new ColumnSelector(), new ColumnDragger()],
                         lockedColumnCount: 0,
                         dataProvider: mapper,
                         columns: [

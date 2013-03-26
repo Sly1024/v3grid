@@ -29,13 +29,15 @@ define('v3grid/TreeFilterDataProvider',
 
                 function filterChildren(nodeId) {
                     var filtered = [],
-                        childrenInfo = dataProvider.getChildrenInfo(nodeId),
+                        childrenInfo = dataProvider.getChildrenInfo(nodeId).slice(0),
                         rowCount = childrenInfo ? childrenInfo.length : 0,
                         idx = 0;
 
                     for (var i = 0; i < rowCount; ++i) {
-                        var pass = true;
-                        if (!filterChildren(childrenInfo[i].id)) {
+                        var pass = true,
+                            chCount = filterChildren(childrenInfo[i].id);
+
+                        if (chCount == 0) {
                             for (var len = filters.length, f = 0; f < len; ++f) {
                                 if (!filters[f].filter(dataProvider, childrenInfo[i].id)) {
                                     pass = false;
@@ -44,11 +46,12 @@ define('v3grid/TreeFilterDataProvider',
                             }
                         }
                         if (pass) {
+                            childrenInfo[i].childCount = chCount;
                             filtered[idx++] = childrenInfo[i];
                         }
                     }
                     nodes[nodeId] = filtered;
-                    return filtered.length > 0;
+                    return filtered.length;
                 }
 
                 filterChildren(dataProvider.getRootId());
