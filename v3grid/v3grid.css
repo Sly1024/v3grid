@@ -69,6 +69,8 @@
     background-image: -o-linear-gradient(top, #f9f9f9, #e3e4e6);
     background-image: -ms-linear-gradient(top, #f9f9f9, #e3e4e6);
     background-image: linear-gradient(top, #f9f9f9, #e3e4e6);
+    filter: progid:DXImageTransform.Microsoft.Gradient(startColorStr='#f9f9f9', endColorStr='#e3e4e6', GradientType=0);
+    -ms-filter: progid:DXImageTransform.Microsoft.Gradient(startColorStr='#f9f9f9', endColorStr='#e3e4e6', GradientType=0);
 
     color: black;
     font-weight: bold;
@@ -86,6 +88,8 @@
     background-image: -o-linear-gradient(top, #ebf3fd, #ebf3fd 39%, #d9e8fb 40%, #d9e8fb);
     background-image: -ms-linear-gradient(top, #ebf3fd, #ebf3fd 39%, #d9e8fb 40%, #d9e8fb);
     background-image: linear-gradient(top, #ebf3fd, #ebf3fd 39%, #d9e8fb 40%, #d9e8fb);
+    filter: progid:DXImageTransform.Microsoft.Gradient(startColorStr='#ebf3fd', endColorStr='#d9e8fb', GradientType=0);
+    -ms-filter: progid:DXImageTransform.Microsoft.Gradient(startColorStr='#ebf3fd', endColorStr='#d9e8fb', GradientType=0);
 }
 .v3grid-row.even {
     background-color: #ffffff;

@@ -1,6 +1,6 @@
 function define(name, dependencies, moduleFunc) {
-    var modules = define.modules = define.modules || [];
-    var map = define.modulemap = define.modulemap || {};
+    var modules = define.modules = define.modules || [],
+        map = define.modulemap = define.modulemap || {};
 
     function load(name) {
         if (!name) throw "Module must have a name!";
@@ -9,8 +9,9 @@ function define(name, dependencies, moduleFunc) {
 
         if (name.indexOf('.') < 0) name += '.js';
 
-        var head = document.getElementsByTagName('head')[0];
-        var script = document.createElement('script');
+        var head = document.getElementsByTagName('head')[0],
+            script = document.createElement('script');
+
         script.type = 'text/javascript';
         script.async = 'async';
         script.src = require.baseUrl + name;
@@ -19,9 +20,10 @@ function define(name, dependencies, moduleFunc) {
 
     function exec(modCfg) {
         // check if all dependencies are there
-        var dep = modCfg.dep, values = [], len = dep.length, i = 0;
+        var dep = modCfg.dep, values = [], len = dep.length,
+            depMod, i = 0;
         for (; i < len; ++i) {
-            var depMod = map[dep[i]];
+            depMod = map[dep[i]];
             if (depMod) {
                 if (depMod.value) values.push(depMod.value);
             } else load(dep[i]);
@@ -30,26 +32,22 @@ function define(name, dependencies, moduleFunc) {
         if (values.length == len) {
             modCfg.value = modCfg.exec.apply(this, values);
             delete modCfg.exec;
-            var name = modCfg.name;
-            if (name) {
-                // check if there are other modules depending on this
-                var deps = [];
-                for (len = modules.length, i = 0; i < len; ++i) {
-                    var depMod = modules[i];
-                    if (!depMod.value && (dep = depMod.dep)) {
-                        var j = dep.length-1;
-                        while (j >= 0 && dep[j] != name) --j;
-                        if (j >= 0) deps.push(depMod);
-                    }
-                }
-                for (len = deps.length, i = 0; i < len; ++i) if (!deps[i].value) exec(deps[i]);
+            var name = modCfg.name,
+                deps = [];
+            // check if there are other modules depending on this
+            for (len = modules.length, i = 0; i < len;) if ((depMod = modules[i]) == modCfg) {
+                modules[i] = modules[--len];
+                modules.length = len;
+                if (!name) break;
             } else {
-                // remove from modules
-                for (len = modules.length, i = 0; i < len; ++i) if (modules[i] == modCfg) {
-                    modules.splice(i, 1);
-                    break;
+                if (name && !depMod.value && (dep = depMod.dep)) {
+                    var j = dep.length-1;
+                    while (j >= 0 && dep[j] != name) --j;
+                    if (j >= 0) deps.push(depMod);
                 }
+                ++i;
             }
+            for (len = deps.length, i = 0; i < len; ++i) if (!deps[i].value) exec(deps[i]);
         }
     }
 
@@ -82,5 +80,5 @@ require.config = function (cfg) {
 require.baseUrl = (function () {
     var scripts = document.getElementsByTagName('script'),
         src = scripts[scripts.length-1].src;
-    return src.substr(0, src.lastIndexOf('/v3grid/')+1);
+    return src.substr(0, src.lastIndexOf('/')+1);
 })();
