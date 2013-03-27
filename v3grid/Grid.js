@@ -574,7 +574,7 @@ define('v3grid/Grid',
                 }
 
                 // headerHeight is already subtracted from avail
-                if (availHeight < 0) { headerHeight += availHeight; availHeight = 0; }
+                if (availHeight < 0) { headerHeight = Math.max(0, headerHeight + availHeight); availHeight = 0; }
                 var scrollbarHeight = availHeight;
 
                 var heights = [headerHeight, availHeight];
