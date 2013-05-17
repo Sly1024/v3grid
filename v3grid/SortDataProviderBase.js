@@ -80,11 +80,14 @@ define('v3grid/SortDataProviderBase',
             getCompareFunction: function (sortField) {
                 var dp = this.dataProvider,
                     fields = this.sortedBy,
-                    flen = fields.length,
+                    flen = (fields.length+1) >> 1,
                     cache = {};
 
                 return function (a, b) {
-                    if (sortField) {
+                    if (typeof sortField == 'function') {
+                        a = sortField(a);
+                        b = sortField(b);
+                    } else if (typeof sortField == 'string') {
                         a = a[sortField];
                         b = b[sortField];
                     }

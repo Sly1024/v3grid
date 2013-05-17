@@ -161,3 +161,23 @@
     background-color: #5c6698;
     color: #ffffff;
 }
+
+img.v3grid-sortheader-asc {
+    background: url("../images/up_arrow.png") no-repeat;
+    background-size: 10px 10px;
+}
+
+img.v3grid-sortheader-desc {
+    background: url("../images/down_arrow.png") no-repeat;
+    background-size: 10px 10px;
+}
+
+img.v3grid-treenode-open {
+    background: url("../images/minus.png") no-repeat;
+    background-size: 9px 9px;
+}
+
+img.v3grid-treenode-closed {
+    background: url("../images/plus.png") no-repeat;
+    background-size: 9px 9px;
+}

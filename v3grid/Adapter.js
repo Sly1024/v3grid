@@ -1,3 +1,13 @@
+Ext.require([
+    'Ext.Array',
+    'Ext.Error',
+    'Ext.util.Observable',
+    'Ext.ClassManager',
+    'Ext.util.CSS',
+    'Ext.Function',
+    'Ext.dom.Element'
+], function () {
+
 define('v3grid/Adapter', [], function () {
     var Adapter = {
         // properties
@@ -155,4 +165,6 @@ define('v3grid/Adapter', [], function () {
     if (!Adapter.isIE) Adapter.fixPageCoords = Adapter.emptyFn;
 
     return Adapter;
+});
+
 });

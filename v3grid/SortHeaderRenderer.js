@@ -2,17 +2,15 @@ define('v3grid/SortHeaderRenderer',
     ['v3grid/Adapter', 'v3grid/Utils'],
     function (Adapter, Utils) {
 
-        var asc_img = (require.baseUrl !== undefined ? require.baseUrl : requirejs.s.contexts._.config.baseUrl) + 'v3grid/images/up_arrow.png';
-        var desc_img = (require.baseUrl !== undefined ? require.baseUrl : requirejs.s.contexts._.config.baseUrl) + 'v3grid/images/down_arrow.png';
-
-        Utils.preloadImages([asc_img, desc_img]);
+        var asc_class = 'v3grid-sortheader-asc';
+        var desc_class = 'v3grid-sortheader-desc';
 
         var SortHeaderRenderer = function (config) {
             this.config = config;
 
             var temp = document.createElement('div');
             temp.innerHTML = '<table width="100%" height="100%"><tr><td></td><td valign="middle">' +
-                '<img style="display: none;" width="10" height="10"></td><td style="font-size: 10px">x</td></tr></table>';
+                '<img style="display: none;" width="10" height="10" src="resources/images/s.gif"></td><td style="font-size: 10px">x</td></tr></table>';
             this.view = temp.firstChild;
             this.rendererContainer = this.view.getElementsByTagName('td')[0];
             this.updateRenderer(config);
@@ -48,8 +46,9 @@ define('v3grid/SortHeaderRenderer',
                     this.img.style.display = 'none';
                     this.sortIndexText.nodeValue = '';
                 } else {
-                    this.img.style.display = 'block';
-                    this.img.src = (order == 'asc') ? asc_img : desc_img;
+                    this.img.style.display = '';
+                    Adapter.removeClass(this.img, (order == 'asc') ? desc_class : asc_class);
+                    Adapter.addClass(this.img, (order == 'asc') ? asc_class : desc_class);
                     this.sortIndexText.nodeValue = this.config.sortIndex == 0 ? '' : this.config.sortIndex;
                 }
             },
