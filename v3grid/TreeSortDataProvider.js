@@ -42,8 +42,20 @@ define('v3grid/TreeSortDataProvider',
 
             sortChildren: function (nodeId) {
                 var childrenInfo = this.dataProvider.getChildrenInfo(nodeId).slice(0);
-                childrenInfo.sort(this.getCompareFunction('id'));
+                childrenInfo.sort(this.sortedBy.length ? this.getCompareFunction('id') : this.defaultSortFunc);
                 return this.nodes[nodeId] = childrenInfo;
+            },
+
+            defaultSortFunc: function (a, b) {
+                a = (a.id == '') ? [] : a.id.split(',');
+                b = (b.id == '') ? [] : b.id.split(',');
+
+                for (var i = 0; i < a.length && i < b.length; ++i) {
+                    var na = +a[i], nb = +b[i];
+                    if (na < nb) return -1;
+                    if (na > nb) return 1;
+                }
+                return a.length - b.length;
             }
 
         });
