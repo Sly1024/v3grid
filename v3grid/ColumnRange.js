@@ -23,12 +23,11 @@ define('v3grid/ColumnRange',
                 var columnsX = this.posX;
                 if (!columnsX) return;
 
-                var columns = this.columns;
+                var startX, columns = this.columns;
 
                 fromIdx = fromIdx || 0;
                 if(toIdx === undefined) toIdx = columns.length;
 
-                var startX;
                 if (fromIdx == 0) {
                     columnsX[0] = startX = 0;
                 } else {
@@ -58,6 +57,7 @@ define('v3grid/ColumnRange',
             // public
             moveColumn: function (fromIdx, toIdx, suppressEvent) {
                 // TODO: validate indices
+                if (!suppressEvent) this.fireEvent('beforeColumnMove', fromIdx, toIdx);
 
                 var map = this.columnMap,
                     columns = this.columns,

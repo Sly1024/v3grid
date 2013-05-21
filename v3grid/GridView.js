@@ -133,22 +133,48 @@ define('v3grid/GridView',
             this.columns = this.colMgr.columns || [];
             this.columnsX = this.colMgr.posX;
 
+            this.colMgr.addListener('beforeColumnMove', this.beforeColumnMove, this);
             this.colMgr.addListener('columnMoved', this.columnMoved, this);
             this.colMgr.addListener('columnResized', this.columnResized, this);
             this.colMgr.addListener('updateColumn', this.updateColumn, this);
         },
 
-        columnMoved: function (from, to) {
-            from -= this.firstVisibleColumn;
-            to -= this.firstVisibleColumn;
+        beforeColumnMove: function (fromIdx, toIdx) {
+            var from = fromIdx > toIdx ? toIdx : fromIdx,
+                to = fromIdx ^ toIdx ^ from,    // the other one
+                first = this.prevFirstVisibleColumn = this.firstVisibleColumn,
+                count = this.prevVisibleColumnCount = this.visibleColumnCount,
+                needUpdate = false;
 
-            var dir = from < to ? 1 : -1;
+            if (from < first) {
+                first = this.firstVisibleColumn = fromIdx;
+                needUpdate = true;
+            }
 
-            this.copyVisibleColumn(from, -1);
-            for (var i = from; i != to; i += dir) {
+            if (to >= first + count) {
+                // TODO: adjust to batch size!
+                this.visibleColumnCount = to - first + 1;
+                needUpdate = true;
+            }
+
+            if (needUpdate) this.updateColumns();
+        },
+
+        columnMoved: function (fromIdx, toIdx) {
+//            console.log('[view: '+this.name+'] columnMoved('+fromIdx+','+toIdx+') visible:['+
+//                this.firstVisibleColumn+','+(this.firstVisibleColumn+this.visibleColumnCount)+']');
+
+            var dir = fromIdx < toIdx ? 1 : -1;
+            fromIdx -= this.firstVisibleColumn;
+            toIdx -= this.firstVisibleColumn;
+
+//            if (fromIdx < 0 || toIdx < 0 || fromIdx >= this.visibleColumnCount || toIdx >= this.visibleColumnCount) return;
+
+            this.copyVisibleColumn(fromIdx, -1);
+            for (var i = fromIdx; i != toIdx; i += dir) {
                 this.copyVisibleColumn(i + dir, i);
             }
-            this.copyVisibleColumn(-1, to);
+            this.copyVisibleColumn(-1, toIdx);
         },
 
         columnResized: function (idx, oldW, newW) {

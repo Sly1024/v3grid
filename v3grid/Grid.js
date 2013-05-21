@@ -261,14 +261,15 @@ define('v3grid/Grid',
                         // horizontally: left, center, right
                         // vertically: header, top, middle, bottom
 
-                        Adapter.addClass(container, this.CLS_TABLE + ' ' +
-                            (x < scrollViewX ? 'left' : x == scrollViewX ? 'center' : 'right') + ' ' +
-                            (y == 0 ? 'header' : y < scrollViewY ? 'top' : y == scrollViewY ? 'middle' : 'bottom')
-                        );
+                        var viewClass = (x < scrollViewX ? 'left' : x == scrollViewX ? 'center' : 'right') + ' ' +
+                            (y == 0 ? 'header' : y < scrollViewY ? 'top' : y == scrollViewY ? 'middle' : 'bottom');
+
+                        Adapter.addClass(container, this.CLS_TABLE + ' ' + viewClass);
 
                         if (y == 0) {
                             // header view
                             views[0][x] = new GridView({
+                                name: viewClass,    // for debugging
                                 isHeader: true,
                                 isLocked: x != scrollViewX,
                                 grid: this,
@@ -289,6 +290,7 @@ define('v3grid/Grid',
                             headerContainer.appendChild(container);
                         } else {
                             views[y][x] = new GridView({
+                                name: viewClass,    // for debugging
                                 grid: this,
                                 table: table,
                                 container: container,
@@ -474,6 +476,7 @@ define('v3grid/Grid',
                 }
             },
 
+            // TODO: need this?
             getHeaderViewUnder: function (headerX) {
                 var views = this.views[0], vx = 0;
 
@@ -484,11 +487,13 @@ define('v3grid/Grid',
                 return views[vx];
             },
 
+            // TODO: need this?
             copyVisibleColumn: function (fromIdx, toIdx) {
                 this.tableView.copyVisibleColumn(fromIdx, toIdx);
                 this.headerView.copyVisibleColumn(fromIdx, toIdx);
             },
 
+            // TODO: fix this
             moveColumn: function (fromIdx, toIdx) {
                 this.headerView.moveColumn(fromIdx, toIdx);
 //                this.tableView.moveColumn(fromIdx, toIdx);
