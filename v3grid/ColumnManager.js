@@ -167,12 +167,13 @@ define('v3grid/ColumnManager',
                     ranges = this.ranges = new Array(len),
                     rangeStart = this.rangeStart = new Array(len+1),
                     columns = this.columns,
-                    idx = 0, end;
+                    idx = 0, end, i;
 
-                for (var i = 0; i < len; ++i) {
+                for (i = 0; i < len; ++i) {
                     rangeStart[i] = idx;
                     end = idx + counts[i];
                     ranges[i] = new Range(columns.slice(idx, end));
+//                    ranges[i].addListener('beforeColumnMove', this.createBeforeColumnMoveHandler(i), this);
                     ranges[i].addListener('columnMoved', this.createColumnMovedHandler(i), this);
                     ranges[i].addListener('columnResized', this.createColumnResizedHandler(i), this);
                     idx = end;
@@ -184,6 +185,13 @@ define('v3grid/ColumnManager',
 
                 return ranges;
             },
+
+//            createBeforeColumnMoveHandler: function (rangeIdx) {
+//                return function (fromIdx, toIdx) {
+//                    var offset = this.rangeStart[rangeIdx];
+//                    this.fireEvent('beforeColumnMove', fromIdx + offset, toIdx + offset);
+//                }
+//            },
 
             createColumnMovedHandler: function (rangeIdx) {
                 return function (fromIdx, toIdx) {
@@ -266,6 +274,8 @@ define('v3grid/ColumnManager',
             },
 
             moveColumn: function (fromIdx, toIdx, suppressEvent, calledFromRange) {
+                if (!suppressEvent) this.fireEvent('beforeColumnMove', fromIdx, toIdx);
+
                 base.moveColumn.call(this, fromIdx, toIdx, true);
 
                 if (!calledFromRange) {

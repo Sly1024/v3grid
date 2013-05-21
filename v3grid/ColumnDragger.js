@@ -172,32 +172,33 @@ define('v3grid/ColumnDragger',
 //                console.log('draggin', pos, colIdx, targetIdx, columnsX[colIdx], columnsX[targetIdx]);
 
                 if (colIdx !== targetIdx) {
+                    console.log('dragcol', colIdx, targetIdx, first, this.visibleColumnCount);
                     this.colMgr.moveColumn(colIdx, targetIdx);
                 }
                 Adapter.setXCSS(columns[targetIdx].layoutRule, pos);
 
                 // autoscroll the grid if the dragged column is at one of the ends
-                if (!this.isLocked) {
-                    if (this.autoScroll !== undefined) {
-                        Utils.cancelFrame.call(window, this.autoScroll);
-                        this.autoScroll = undefined;
-                    }
-
-                    var target;
-
-                    if ((target = pos) < this.lastHScrollPos ||
-                        (target = pos + columns[targetIdx].actWidth - this.visibleWidth) > this.lastHScrollPos) {
-                        var me = this;
-
-                        this.autoScroll = Utils.nextFrame.call(window, function () {
-                            var delta = me.lastHScrollPos;
-                            me.grid.hScrollTo(me.correctTargetPos(target, me.dragColIdx));
-                            delta = me.lastHScrollPos - delta;
-                            me.dragColOffset += delta;
-                            me.dragColIdx = me.dragColumn(me.dragColIdx, me.dragColOffset);
-                        });
-                    }
-                }
+//                if (!this.isLocked) {
+//                    if (this.autoScroll !== undefined) {
+//                        Utils.cancelFrame.call(window, this.autoScroll);
+//                        this.autoScroll = undefined;
+//                    }
+//
+//                    var target;
+//
+//                    if ((target = pos) < this.lastHScrollPos ||
+//                        (target = pos + columns[targetIdx].actWidth - this.visibleWidth) > this.lastHScrollPos) {
+//                        var me = this;
+//
+//                        this.autoScroll = Utils.nextFrame.call(window, function () {
+//                            var delta = me.lastHScrollPos;
+//                            me.grid.hScrollTo(me.correctTargetPos(target, me.dragColIdx));
+//                            delta = me.lastHScrollPos - delta;
+//                            me.dragColOffset += delta;
+//                            me.dragColIdx = me.dragColumn(me.dragColIdx, me.dragColOffset);
+//                        });
+//                    }
+//                }
 
                 return targetIdx;
             },
