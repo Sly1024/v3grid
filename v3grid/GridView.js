@@ -161,14 +161,9 @@ define('v3grid/GridView',
         },
 
         columnMoved: function (fromIdx, toIdx) {
-//            console.log('[view: '+this.name+'] columnMoved('+fromIdx+','+toIdx+') visible:['+
-//                this.firstVisibleColumn+','+(this.firstVisibleColumn+this.visibleColumnCount)+']');
-
             var dir = fromIdx < toIdx ? 1 : -1;
             fromIdx -= this.firstVisibleColumn;
             toIdx -= this.firstVisibleColumn;
-
-//            if (fromIdx < 0 || toIdx < 0 || fromIdx >= this.visibleColumnCount || toIdx >= this.visibleColumnCount) return;
 
             this.copyVisibleColumn(fromIdx, -1);
             for (var i = fromIdx; i != toIdx; i += dir) {
