@@ -34,6 +34,71 @@ define('v3grid/GridView',
             this.table.style.width = this.tableWidth + 'px';
         },
 
+        cache_getCell: function () {
+            var cell = { dom: document.createElement('div') };
+            Adapter.addClass(cell.dom, this.CLS_CELL);
+            this.makeUnSelectable(cell.dom);
+            return cell;
+        },
+
+        cache_initCell: function (cell, row, column) {
+            var cls = column[this.columnProperties.finalCls];
+            Adapter.addClass(cell.dom, cls);
+            cell.cls = cls;
+            if (this.getCellStyle) {
+                var cellStyle = this.getCellStyle(this.dataProvider.getRowId(row), column);
+                this.saveAndApplyStyle(cell, cellStyle);
+            }
+        },
+
+        cache_cellReleased: function (cell) {
+            Adapter.removeClass(cell.dom, cell.cls);
+            cell.cls = undefined;
+            this.revertStyle(cell);
+        },
+
+        cache_getRow: function (cache) {
+            var row = [];
+
+            Adapter.addClass(row.dom = document.createElement('div'), cache.rowCls);
+            row.cache = new DOMCache({
+                parentDom: row.dom,
+                create: Adapter.bindScope(this.cache_getCell, this),
+                initializeItem: Adapter.bindScope(this.cache_initCell, this),
+                itemReleased: Adapter.bindScope(this.cache_cellReleased, this)
+            });
+            return row;
+        },
+
+        cache_initRow: function (row, dr) {
+            var columns = this.columns,
+                firstCol = this.firstVisibleColumn,
+                cache = row.cache,
+                columnCount = this.visibleColumnCount,
+                len = row.length;
+
+            while (len < columnCount) {
+                row[len] = cache.get(dr, columns[len + firstCol]);
+                ++len;
+            }
+            row.length = len;
+
+            if (this.getRowStyle) {
+                var rowStyle = this.getRowStyle(this.dataProvider.getRowId(dr));
+                this.saveAndApplyStyle(row, rowStyle);
+            }
+
+            cache.validate();
+        },
+
+        cache_rowRemoved: function (row) {
+            var cache = row.cache;
+            for (var len = row.length, i = 0; i < len; ++i) {
+                cache.release(row[i]);
+            }
+            row.length = 0;
+        },
+
         initProperties: function () {
             // viewPort
             this.firstVisibleRow = 0;
@@ -49,70 +114,15 @@ define('v3grid/GridView',
 
             // DOM elements
 
-            var gridView = this,
-                colCls = this.columnProperties.finalCls;
+            var me = this;
 
             var rowCacheConfig = {
                 parentDom: this.table,
                 rowCls: this.CLS_ROW + ' even',
-                create: function () {
-                    var row = [];
-                    Adapter.addClass(row.dom = document.createElement('div'), this.rowCls);
-                    row.cache = new DOMCache({
-                        parentDom: row.dom,
-                        create: function () {
-                            var cell = { dom: document.createElement('div') };
-                            Adapter.addClass(cell.dom, gridView.CLS_CELL);
-                            gridView.makeUnSelectable(cell.dom);
-                            return cell;
-                        },
-                        initializeItem: function(cell, row, column) {
-                            var cls = column[colCls];
-                            Adapter.addClass(cell.dom, cls);
-                            cell.cls = cls;
-                            if (gridView.getCellStyle) {
-                                var cellStyle = gridView.getCellStyle(gridView.dataProvider.getRowId(row), column);
-                                gridView.saveAndApplyStyle(cell, cellStyle);
-                            }
-                        },
-                        itemReleased: function (cell) {
-                            Adapter.removeClass(cell.dom, cell.cls);
-                            cell.cls = undefined;
-                            gridView.revertStyle(cell);
-                        }
-                    });
-                    return row;
-                },
-                initializeItem: function (row, dr) {
-                    var columns = gridView.columns,
-                        firstCol = gridView.firstVisibleColumn,
-                        cache = row.cache,
-                        columnCount = gridView.visibleColumnCount,
-                        len = row.length;
-
-                    while (len < columnCount) {
-                        row[len] = cache.get(dr, columns[len + firstCol]);
-                        ++len;
-                    }
-                    row.length = len;
-
-                    if (gridView.getRowStyle) {
-                        var rowStyle = gridView.getRowStyle(gridView.dataProvider.getRowId(dr));
-                        gridView.saveAndApplyStyle(row, rowStyle);
-                    }
-
-                    cache.validate();
-                },
-                itemReleased: function (row) {
-                    gridView.revertStyle(row);
-                },
-                itemRemoved: function (row) {
-                    var cache = row.cache;
-                    for (var len = row.length, i = 0; i < len; ++i) {
-                        cache.release(row[i]);
-                    }
-                    row.length = 0;
-                }
+                create: function() { return me.cache_getRow(this); },   // this func is called on the cache instance
+                initializeItem: Adapter.bindScope(this.cache_initRow, this),
+                itemReleased: this.revertStyle, // doesn't use 'this' -> no need to bind
+                itemRemoved: this.cache_rowRemoved
             };
 
             // [vrow] = { dom: <div>, cache: DOMCache }
@@ -130,15 +140,17 @@ define('v3grid/GridView',
             this.xPos = this.yPos = 0;
 
             // the ColumnManager does not change the arrays, just their contents, we can cache them
-            this.columns = this.colMgr.columns || [];
-            this.columnsX = this.colMgr.posX;
+            var colMgr = this.colMgr;
+            this.columns = colMgr.columns || [];
+            this.columnsX = colMgr.posX;
 
-            this.colMgr.addListener('beforeColumnMove', this.beforeColumnMove, this);
-            this.colMgr.addListener('columnMoved', this.columnMoved, this);
-            this.colMgr.addListener('columnResized', this.columnResized, this);
-            this.colMgr.addListener('updateColumn', this.updateColumn, this);
+            colMgr.addListener('beforeColumnMove', this.beforeColumnMove, this);
+            colMgr.addListener('columnMoved', this.columnMoved, this);
+            colMgr.addListener('columnResized', this.columnResized, this);
+            colMgr.addListener('updateColumn', this.updateColumn, this);
         },
 
+        // we need to expand the viewport to include the range [fromIdx, toIdx]
         beforeColumnMove: function (fromIdx, toIdx) {
             var from = fromIdx > toIdx ? toIdx : fromIdx,
                 to = fromIdx ^ toIdx ^ from,    // the other one
@@ -161,9 +173,11 @@ define('v3grid/GridView',
         },
 
         columnMoved: function (fromIdx, toIdx) {
-            var dir = fromIdx < toIdx ? 1 : -1;
-            fromIdx -= this.firstVisibleColumn;
-            toIdx -= this.firstVisibleColumn;
+            var dir = fromIdx < toIdx ? 1 : -1,
+                first = this.firstVisibleColumn;
+
+            fromIdx -= first;
+            toIdx -= first;
 
             this.copyVisibleColumn(fromIdx, -1);
             for (var i = fromIdx; i != toIdx; i += dir) {
