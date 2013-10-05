@@ -8,7 +8,7 @@ define('v3grid/GridView',
         this.initProperties();
         this.attachHandlers();
         this.throttledUpdateDirtyCells = Adapter.createThrottled(this.updateDirtyCells, 200, this);
-    }
+    };
 
     GridView.prototype = {
         rowHeight: 22,
@@ -198,6 +198,7 @@ define('v3grid/GridView',
             }
             if (this.dataProvider.addListener) {
                 this.dataProvider.addListener('dataChanged', this.dataChanged, this);
+                this.dataProvider.addListener('cellChanged', this.invalidateData, this);
             }
         },
 
@@ -624,6 +625,27 @@ define('v3grid/GridView',
             this.updateView();
         },
 
+
+        // row:Number - rowIndex
+        // col:String - column's Name
+        invalidateData: function (row, col) {
+            var colIdx = this.colMgr.columnMap[col];
+            if (colIdx === undefined) return;
+
+            var vrow = row - this.firstVisibleRow,
+                vcol = colIdx - this.firstVisibleColumn,
+                key = row * this.columns.length + colIdx;
+
+            if (vrow >= 0 && vrow < this.visibleRowCount &&
+                vcol >= 0 && vcol < this.visibleColumnCount &&
+                !this.dirtyCells.hasOwnProperty(key))
+            {
+                this.dirtyCells[key] = true;
+                ++this.dirtyCellCount;
+                this.throttledUpdateDirtyCells();
+            }
+        },
+
         // TODO : change key
         updateDirtyCells: function () {
             var firstRow = this.firstVisibleRow,
@@ -711,8 +733,10 @@ define('v3grid/GridView',
                 }
             }
 
-            this.dirtyCells = { };
-            this.dirtyCellCount = 0;
+            if (this.dirtyCellCount > 0) {
+                this.dirtyCellCount = 0;
+                this.dirtyCells = { };
+            }
         },
 
         scrollTo: function (x, y) {
@@ -720,26 +744,6 @@ define('v3grid/GridView',
 //            y = y || 0;
             this.vScrollTo(y);
             this.hScrollTo(x);
-        },
-
-        // row:Number - rowIndex
-        // colIdx:Number - column's Index
-        invalidateData:function (row, col) {
-            var colIdx = this.colMgr.columnMap[col];
-            if (colIdx === undefined) return;
-
-            var vrow = row - this.firstVisibleRow,
-                vcol = colIdx - this.firstVisibleColumn,
-                key = row * this.columns.length + colIdx;
-
-            if (vrow >= 0 && vrow < this.visibleRowCount &&
-                vcol >= 0 && vcol < this.visibleColumnCount &&
-                !this.dirtyCells.hasOwnProperty(key))
-            {
-                this.dirtyCells[key] = true;
-                ++this.dirtyCellCount;
-                this.throttledUpdateDirtyCells();
-            }
         },
 
         mouseIsOver: function (x, y) {
@@ -767,7 +771,7 @@ define('v3grid/GridView',
 
             this.highlightedRow = hlRow;
 
-            if (hlRow) Adapter. addClass(hlRow, 'hover');
+            if (hlRow) Adapter.addClass(hlRow, 'hover');
         }
 
 

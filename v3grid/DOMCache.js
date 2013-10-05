@@ -12,7 +12,7 @@ define('v3grid/DOMCache',
             Adapter.merge(this, config);
             this.available = [];
             this.addToDom = [];
-        }
+        };
 
         DOMCache.prototype = {
 
@@ -67,7 +67,7 @@ define('v3grid/DOMCache',
                 }
                 addToDom.length = 0;
             }
-        }
+        };
 
         return DOMCache;
     }

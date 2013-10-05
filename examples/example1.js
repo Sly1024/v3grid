@@ -57,8 +57,9 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3g
                     };
                 }
 
+                var arrayDataProvider = new ArrayDataProvider(cellData);
                 var filter = new FilterDataProvider({
-                    dataProvider: new ArrayDataProvider(cellData)
+                    dataProvider: arrayDataProvider
                 });
 
                 var sorter = new SortDataProvider({
@@ -115,7 +116,7 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3g
                                         {
                                             xtype: 'button',
                                             text:'Unfilter',
-                                            handler: function () { filter.filters.length = 0; filter.update();}
+                                            handler: function () { filter.filters.length = 0; filter.refresh();}
                                         },
                                         {
                                             xtype:'label',
@@ -154,14 +155,14 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3g
                 var colNum = grid.grid.totalColumnCount;
                 var crows = colNum * grid.grid.totalRowCount;
                 var updateBatch = crows / 1000;
-                var vgrid = grid.grid;
 
                 function update() {
                     for (var i=0; i<updateBatch; ++i)  {
                         var idx = Math.floor(Math.random() * crows);
                         var cidx = idx % colNum;
                         var ridx = idx / colNum >> 0;
-                        vgrid.setData(ridx, cidx, Math.floor((Math.random() - 0.5)*10000));
+                        cellData[ridx][cidx] = Math.floor((Math.random() - 0.5)*10000);
+                        arrayDataProvider.invalidateCell(ridx, cidx);
                     }
                     var t = +new Date();
                     var elaps = t - lastUpdate;

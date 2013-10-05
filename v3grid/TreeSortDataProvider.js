@@ -4,7 +4,6 @@ define('v3grid/TreeSortDataProvider',
 
         var TreeSortDataProvider = function (config) {
             SortDataProviderBase.call(this, config);
-            this.sortedBy = [];
             this.nodes = {};
         };
 

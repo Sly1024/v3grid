@@ -7,8 +7,11 @@ define('v3grid/SortDataProviderBase',
             Adapter.merge(this, config);
             this.headerRenderer = this.headerRenderer || HeaderRenderer;
 
+            this.sortedBy = [];
+
             if (this.dataProvider && this.dataProvider.addListener) {
                 this.dataProvider.addListener('dataChanged', this.refresh, this);
+                this.dataProvider.addListener('cellChanged', this.invalidateCell, this);
             }
         };
 
@@ -64,7 +67,7 @@ define('v3grid/SortDataProviderBase',
 
                 var flen = (fields.length+1) >> 1;
                 // set new indicators
-                for (var i = 0; i < flen; ++i) {
+                for (i = 0; i < flen; ++i) {
                     var colConf = colMap[fields[i << 1]];
                     colConf.sortOrder = fields[(i << 1) | 1] = fields[(i << 1) | 1] || 'asc';
                     colConf.sortIndex = i + 1;  // sortindex starts from 1
@@ -103,7 +106,7 @@ define('v3grid/SortDataProviderBase',
                         if (ca[f] == cb[f]) continue;
                         var asc = (fields[(f << 1) | 1] == 'asc') ? -1 : 1;
 
-                        // undef is nor less neither greater than any number: undef < 5 === false; undef > 5 === false
+                        // undef is neither less nor greater than any number: undef < 5 === false; undef > 5 === false
                         // if cb[f] === undef -> it's ok, because the comparison (ca[f] < undef) returns false,
                         // which means undef is less than the other (non-undef) value, and this is how I want it to work
                         if (ca[f] === undefined) return asc;

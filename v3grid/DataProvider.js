@@ -11,6 +11,9 @@ define('v3grid/DataProvider',
             },
             refresh: function () {
                 this.fireEvent('dataChanged');
+            },
+            invalidateCell: function (row, column) {
+                this.fireEvent('cellChanged', row, column);
             }
         });
 

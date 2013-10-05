@@ -10,6 +10,7 @@ define('v3grid/FilterDataProviderBase',
 
             if (this.dataProvider && this.dataProvider.addListener) {
                 this.dataProvider.addListener('dataChanged', this.refresh, this);
+                this.dataProvider.addListener('cellChanged', this.invalidateCell, this);
             }
         };
 

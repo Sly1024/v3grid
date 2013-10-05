@@ -33,7 +33,7 @@ define('v3grid/TreeMapper',
                 column.rendererConfig = rendererConfig;
             },
 
-                // DataProvider API - start
+            // DataProvider API - start
             getRowCount: function () {
                 return this.nodes.length;
             },
@@ -59,7 +59,7 @@ define('v3grid/TreeMapper',
                 }
                 this.fireEvent('dataChanged');
             },
-            // DataProvider API - start
+            // DataProvider API - end
 
             expandNode: function(linearIdx, suppressEvent) {
                 var node = this.nodes[linearIdx],

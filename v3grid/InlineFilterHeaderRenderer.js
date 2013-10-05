@@ -18,7 +18,7 @@ define('v3grid/InlineFilterHeaderRenderer',
 
             this.rendererContainer = this.view.getElementsByTagName('td')[0];
             this.updateRenderer(config);
-        }
+        };
 
         InlineFilterHeaderRenderer.prototype = {
             updateRenderer: function (config) {
@@ -52,7 +52,7 @@ define('v3grid/InlineFilterHeaderRenderer',
                 }
                 filterDP.refresh();
             }
-        }
+        };
 
         return InlineFilterHeaderRenderer;
     }
