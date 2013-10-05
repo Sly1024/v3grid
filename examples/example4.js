@@ -1,7 +1,8 @@
 require(['v3grid/Grid', 'v3grid/Adapter', 'v3grid/TreeSortDataProvider', 'v3grid/TreeDataProvider', 'v3grid/TreeMapper',
-    'v3grid/TreeFilterDataProvider',
+    'v3grid/TreeFilterDataProvider', 'v3grid/FilterHeaderRendererInjector', 'v3grid/SortHeaderRendererInjector',
     'v3grid/ColumnSelector', 'v3grid/FormatterItemRenderer', 'v3grid/ColumnDragger', 'v3grid/Observable'],
-    function (V3Grid, V3GridAdapter, TreeSortDataProvider, TreeDoataProvider, TreeMapper, TreeFilterDataProvider,
+    function (V3Grid, V3GridAdapter, TreeSortDataProvider, TreeDoataProvider, TreeMapper,
+              TreeFilterDataProvider, FilterHeaderRendererInjector, SortHeaderRendererInjector,
               ColumnSelector, FormatterRenderer, ColumnDragger, Observable) {
         Ext.namespace('v3grid');
         v3grid.V3Grid = V3Grid;
@@ -82,15 +83,18 @@ require(['v3grid/Grid', 'v3grid/Adapter', 'v3grid/TreeSortDataProvider', 'v3grid
                     // TreeDataProvider API - end
                 });
 
-                var filter = new TreeFilterDataProvider({ dataProvider: tdp });
-                var sorter = new TreeSortDataProvider({ dataProvider: filter});
+                var filterer = new TreeFilterDataProvider({ dataProvider: tdp });
+                var sorter = new TreeSortDataProvider({ dataProvider: filterer});
                 var mapper = new TreeMapper({ dataProvider: sorter });
 
                 var grid = Ext.create('virtualgrid.VirtualGrid', {
                     gridConfig: {
                         rowHeight: 25,
                         headerHeight: 30,
-                        features: [mapper, filter, sorter, new ColumnSelector(), new ColumnDragger()],
+                        features: [mapper,
+                                   new FilterHeaderRendererInjector(filterer),
+                                   new SortHeaderRendererInjector(sorter),
+                                   new ColumnSelector(), new ColumnDragger()],
                         lockedColumnCount: 0,
                         dataProvider: mapper,
                         columns: [

@@ -1,5 +1,7 @@
-require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/FilterDataProvider', 'v3grid/DataProvider'],
-    function (V3Grid, SortDataProvider, FilterDataProvider, DataProvider) {
+require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/FilterDataProvider', 'v3grid/DataProvider',
+         'v3grid/FilterHeaderRendererInjector', 'v3grid/SortHeaderRendererInjector'],
+    function (V3Grid, SortDataProvider, FilterDataProvider, DataProvider,
+              FilterHeaderRendererInjector, SortHeaderRendererInjector) {
         Ext.namespace('v3grid');
         v3grid.V3Grid = V3Grid;
 
@@ -34,15 +36,16 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/FilterDataProvider', 
                     getCellData: function (row, col) { return col+', '+row; }
                 });
 
-                var filter = new FilterDataProvider({dataProvider:dp});
-                var sorter = new SortDataProvider({dataProvider:filter});
+                var filterer = new FilterDataProvider({dataProvider:dp});
+                var sorter = new SortDataProvider({dataProvider:filterer});
 
                 var grid = Ext.create('virtualgrid.VirtualGrid', {
                     gridConfig: {
                         headerHeight: 30,
                         verticalSeparatorThickness: 0,
                         columns: columns,
-                        features: [filter, sorter],
+                        features: [new FilterHeaderRendererInjector(filterer),
+                                   new SortHeaderRendererInjector(sorter)],
                         dataProvider: sorter
 //        itemRenderer: 'virtualgrid.TextItemRenderer'
                     }

@@ -1,11 +1,10 @@
 define('v3grid/SortDataProviderBase',
-    ['v3grid/Adapter', 'v3grid/SortHeaderRenderer', 'v3grid/Observable'],
-    function (Adapter, HeaderRenderer, Observable) {
+    ['v3grid/Adapter', 'v3grid/Observable'],
+    function (Adapter, Observable) {
 
         var SortDataProviderBase = function (config) {
             config = config || {};
             Adapter.merge(this, config);
-            this.headerRenderer = this.headerRenderer || HeaderRenderer;
 
             this.sortedBy = [];
 
@@ -16,68 +15,10 @@ define('v3grid/SortDataProviderBase',
         };
 
         SortDataProviderBase.prototype = new Observable({
-            init: function (grid, config) {
-                this.grid = grid;
-                this.processColumnRenderers(grid, config.columns);
-            },
-
-            processColumnRenderers: function (grid, columns) {
-                var colMap = this.columnMap = {};
-
-                for (var len = columns.length, i = 0; i < len; ++i) {
-                    var col = columns[i];
-                    var rendererConfig = {
-                        renderer: grid.getRenderer(col.headerRenderer || grid.headerRenderer),
-                        rendererConfig: col.headerRendererConfig,
-                        sortDataProvider: this,
-                        dataIdx: col.dataIndex == null ? i : col.dataIndex,
-                        column: col,
-                        sortOrder: null
-                    };
-                    col.headerRenderer = this.headerRenderer;
-                    col.headerRendererConfig = rendererConfig;
-                    colMap[rendererConfig.dataIdx] = rendererConfig;
-                }
-            },
-
-            columnClicked: function(dataIdx, evt) {
-                var fields = this.sortedBy.concat();
-                var idx = Adapter.indexOf(fields, dataIdx);
-                if (evt.ctrlKey) {
-                    if (idx < 0) {
-                        fields.push(dataIdx, 'asc');
-                    } else {
-                        fields[idx+1] = fields[idx+1] == 'asc' ? 'desc' : 'asc';
-                    }
-                    this.sort(fields);
-                } else {
-                    var dir = fields[idx+1] == 'asc' ? 'desc' : 'asc';
-                    this.sort([dataIdx, dir]);
-                }
-            },
-
-            updateIndicators: function (fields) {
-                var colMap = this.columnMap;
-
-                // clear sorted indicators
+            setFields: function (fields, noUpdate) {
                 var oldFields = this.sortedBy;
-                for (var len = oldFields.length, i = 0; i < len; i += 2) {
-                    colMap[oldFields[i]].sortOrder = null;
-                }
-
-                var flen = (fields.length+1) >> 1;
-                // set new indicators
-                for (i = 0; i < flen; ++i) {
-                    var colConf = colMap[fields[i << 1]];
-                    colConf.sortOrder = fields[(i << 1) | 1] = fields[(i << 1) | 1] || 'asc';
-                    colConf.sortIndex = i + 1;  // sortindex starts from 1
-                }
-
-                // if it's a single column -> sortIndex =0 indicates no need to display sortIndex
-                if (flen == 1) colMap[fields[0]].sortIndex = 0;
-
                 this.sortedBy = fields;
-                this.grid.updateHeaders();
+                if (!noUpdate) this.fireEvent('sortChanged', fields, oldFields);
             },
 
             getCompareFunction: function (sortField) {

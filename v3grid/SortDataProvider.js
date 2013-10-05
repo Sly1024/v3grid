@@ -25,8 +25,9 @@ define('v3grid/SortDataProvider',
             },
 
             refresh: function () {
+                var oldFields = this.sortedBy;
                 this.unSort(true);
-                this.sort(this.sortedBy);
+                this.sort(oldFields);
             },
 
             invalidateCell: function (row, column) {
@@ -44,7 +45,7 @@ define('v3grid/SortDataProvider',
             /* DataProvider API - end */
 
             sort: function (fields, noUpdate) {
-                if (!noUpdate) this.updateIndicators(fields);
+                this.setFields(fields, noUpdate);
 
                 var index = this.index, invIdx = this.invIndex;
                 index.sort(this.getCompareFunction());
@@ -55,7 +56,7 @@ define('v3grid/SortDataProvider',
             },
 
             unSort: function (noUpdate) {
-                if (!noUpdate) this.updateIndicators([]);
+                this.setFields([], noUpdate);
 
                 var rowCount = this.dataProvider.getRowCount();
                 var index = this.index,
