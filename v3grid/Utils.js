@@ -96,7 +96,7 @@ define('v3grid/Utils', ['v3grid/Adapter'], function (Adapter) {
             removeListener(element, 'touchmove', this);
             removeListener(element, 'touchend', this);
         }
-    }
+    };
 
 
     return Utils;

@@ -118,12 +118,11 @@ define('v3grid/Adapter', [], function () {
         getPageX: function (element) { return Ext.fly(element).getX(); },
         getPageY: function (element) { return Ext.fly(element).getY(); },
 
-        fixPageCoords: function (evt) {
-            if (typeof evt.pageX != 'number') {
-                var node = evt.srcElement;
-
-                evt.pageX = Adapter.getPageX(node) + evt.offsetX;
-                evt.pageY = Adapter.getPageY(node) + evt.offsetY;
+        fixPageCoords: function (event) {
+            if ( event.pageX == null && event.clientX != null ) {
+                var doc = document.documentElement, body = document.body;
+                event.pageX = event.clientX + (doc && doc.scrollLeft || body && body.scrollLeft || 0) - (doc && doc.clientLeft || body && body.clientLeft || 0);
+                event.pageY = event.clientY + (doc && doc.scrollTop  || body && body.scrollTop  || 0) - (doc && doc.clientTop  || body && body.clientTop  || 0);
             }
         },
 

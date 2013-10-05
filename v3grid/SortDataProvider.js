@@ -5,7 +5,7 @@ define('v3grid/SortDataProvider',
         var SortDataProvider = function (config) {
             SortDataProviderBase.call(this, config);
             this.index = [];
-            this.sortedBy = [];
+            this.invIndex = [];
             this.unSort(true);
         };
 
@@ -28,12 +28,28 @@ define('v3grid/SortDataProvider',
                 this.unSort(true);
                 this.sort(this.sortedBy);
             },
+
+            invalidateCell: function (row, column) {
+                var sortedColIdx = Adapter.indexOf(this.sortedBy, column);
+
+                // if index is even (0, 2, ... and not -1)
+                // we found 'column' in 'sortedBy', so we need to re-sort.
+                if ((sortedColIdx & 1) == 0) {
+                    this.refresh();
+                    return;
+                }
+
+                this.fireEvent('cellChanged', this.invIndex[row], column);
+            },
             /* DataProvider API - end */
 
             sort: function (fields, noUpdate) {
                 if (!noUpdate) this.updateIndicators(fields);
 
-                this.index.sort(this.getCompareFunction());
+                var index = this.index, invIdx = this.invIndex;
+                index.sort(this.getCompareFunction());
+
+                for (var rowCount = index.length, i = 0; i < rowCount; ++i) invIdx[index[i]] = i;
 
                 if (!noUpdate) this.fireEvent('dataChanged');
             },
@@ -42,9 +58,12 @@ define('v3grid/SortDataProvider',
                 if (!noUpdate) this.updateIndicators([]);
 
                 var rowCount = this.dataProvider.getRowCount();
-                var index = this.index;
-                index.length = rowCount;
-                for (var i = 0; i < rowCount; ++i) index[i] = i;
+                var index = this.index,
+                    invIdx = this.invIndex;
+
+                index.length = invIdx.length = rowCount;
+
+                for (var i = 0; i < rowCount; ++i) invIdx[i] = index[i] = i;
 
                 if (!noUpdate) this.fireEvent('dataChanged');
             }

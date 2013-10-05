@@ -6,13 +6,7 @@ define('v3grid/TreeDataProvider',
             Adapter.merge(this, config);
 
             this.childrenField = this.childrenField || 'children';
-
-            var root = this.data;
-            if (Adapter.isArray(root)) {
-                root = {};
-                root[this.childrenField] = this.data;
-            }
-            this.root = root;
+            this.setData(this.data, true);
         };
 
         function getTreeIdx(nodeId) {
@@ -20,6 +14,16 @@ define('v3grid/TreeDataProvider',
         }
 
         TreeDataProvider.prototype = new Observable({
+
+            setData: function (data, noUpdate) {
+                if (Adapter.isArray(data)) {
+                    this.root = {};
+                    this.root[this.childrenField] = data;
+                } else {
+                    this.root = data;
+                }
+                if (!noUpdate) this.fireEvent('dataChanged');
+            },
 
             // TreeDataProvider API - start
             getRootId: function () {

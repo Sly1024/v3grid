@@ -142,7 +142,7 @@ define('v3grid/DragHelper', ['v3grid/Adapter'], function (Adapter) {
             return false;
         }
 
-    }
+    };
 
     return DragHelper;
 });

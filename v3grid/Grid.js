@@ -328,11 +328,11 @@ define('v3grid/Grid',
                     Adapter.addClass(hScrollbar, this.CLS_SCROLLBAR + ' horizontal');
                     Adapter.addClass(vScrollbar, this.CLS_SCROLLBAR + ' vertical');
 
-                    Adapter.addListener(hScrollbar, 'scroll', function (evt) {
+                    Adapter.addListener(hScrollbar, 'scroll', function () {
                         this.hScrollTo(hScrollbar.scrollLeft);
                     }, this);
 
-                    Adapter.addListener(vScrollbar, 'scroll', function (evt) {
+                    Adapter.addListener(vScrollbar, 'scroll', function () {
                         this.vScrollTo(vScrollbar.scrollTop);
                     }, this);
 
@@ -477,34 +477,34 @@ define('v3grid/Grid',
             },
 
             // TODO: need this?
-            getHeaderViewUnder: function (headerX) {
-                var views = this.views[0], vx = 0;
-
-                while (vx < this.viewsH && headerX >= views[vx].visibleWidth) {
-                    headerX -= views[vx].visibleWidth;
-                    ++vx;
-                }
-                return views[vx];
-            },
+//            getHeaderViewUnder: function (headerX) {
+//                var views = this.views[0], vx = 0;
+//
+//                while (vx < this.viewsH && headerX >= views[vx].visibleWidth) {
+//                    headerX -= views[vx].visibleWidth;
+//                    ++vx;
+//                }
+//                return views[vx];
+//            },
 
             // TODO: need this?
-            copyVisibleColumn: function (fromIdx, toIdx) {
-                this.tableView.copyVisibleColumn(fromIdx, toIdx);
-                this.headerView.copyVisibleColumn(fromIdx, toIdx);
-            },
+//            copyVisibleColumn: function (fromIdx, toIdx) {
+//                this.tableView.copyVisibleColumn(fromIdx, toIdx);
+//                this.headerView.copyVisibleColumn(fromIdx, toIdx);
+//            },
 
             // TODO: fix this
-            moveColumn: function (fromIdx, toIdx) {
-                this.headerView.moveColumn(fromIdx, toIdx);
-//                this.tableView.moveColumn(fromIdx, toIdx);
-
-                if (toIdx < fromIdx) {
-                    fromIdx ^= toIdx ^= fromIdx ^= toIdx;
-                }
-
-                this.calcColumnPosX(this.headerView.columns, this.headerView.columnPosX, fromIdx, toIdx);
-                this.applyColumnStyles(this.headerView.columns, this.headerView.columnPosX, fromIdx, toIdx);
-            },
+//            moveColumn: function (fromIdx, toIdx) {
+//                this.headerView.moveColumn(fromIdx, toIdx);
+////                this.tableView.moveColumn(fromIdx, toIdx);
+//
+//                if (toIdx < fromIdx) {
+//                    fromIdx ^= toIdx ^= fromIdx ^= toIdx;
+//                }
+//
+//                this.calcColumnPosX(this.headerView.columns, this.headerView.columnPosX, fromIdx, toIdx);
+//                this.applyColumnStyles(this.headerView.columns, this.headerView.columnPosX, fromIdx, toIdx);
+//            },
 
             setTableSize: function () {
                 this.allViews('setTableSize');
@@ -725,17 +725,6 @@ define('v3grid/Grid',
 //                if (this.iScroll) this.iScroll.refresh();
             },
 
-            setData:function (row, col, data) {
-                var old = this.data[row][col];
-                if (old !== data)  {
-                    this.data[row][col] = data;
-                    this.invalidateData(row, col);
-                }
-            },
-
-            invalidateData:function (row, col) {
-                this.allViews('invalidateData', [row, col], 1);
-            },
 
             mouseMoveHandler: function (evt) {
                 Adapter.fixPageCoords(evt);
