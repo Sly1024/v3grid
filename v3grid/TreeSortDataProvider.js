@@ -27,9 +27,7 @@ define('v3grid/TreeSortDataProvider',
             /* TreeDataProvider API - end */
 
             sort: function (fields, noUpdate) {
-                if (!noUpdate) this.updateIndicators(fields);
-
-                this.sortedBy = fields;
+                this.setFields(fields, noUpdate);
                 this.nodes = {};
 
                 if (!noUpdate) this.fireEvent('dataChanged');
@@ -42,7 +40,7 @@ define('v3grid/TreeSortDataProvider',
             sortChildren: function (nodeId) {
                 var childrenInfo = this.dataProvider.getChildrenInfo(nodeId).slice(0);
                 childrenInfo.sort(this.sortedBy.length ? this.getCompareFunction('id') : this.defaultSortFunc);
-                return this.nodes[nodeId] = childrenInfo;
+                return (this.nodes[nodeId] = childrenInfo);
             },
 
             defaultSortFunc: function (a, b) {

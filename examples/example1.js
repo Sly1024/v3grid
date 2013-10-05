@@ -1,5 +1,10 @@
-require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3grid/FilterDataProvider', 'v3grid/ColumnDragger', 'v3grid/ArrayDataProvider'],
-    function (V3Grid, SortDataProvider, ColumnSelector, FilterDataProvider, ColumnDragger, ArrayDataProvider) {
+require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3grid/FilterDataProvider',
+         'v3grid/ColumnDragger', 'v3grid/ArrayDataProvider', 'v3grid/FilterHeaderRendererInjector',
+         'v3grid/SortHeaderRendererInjector'],
+    function (V3Grid, SortDataProvider, ColumnSelector, FilterDataProvider,
+              ColumnDragger, ArrayDataProvider, FilterHeaderRendererInjector,
+              SortHeaderRendererInjector) {
+
         Ext.namespace('v3grid');
         v3grid.V3Grid = V3Grid;
 
@@ -58,12 +63,12 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3g
                 }
 
                 var arrayDataProvider = new ArrayDataProvider(cellData);
-                var filter = new FilterDataProvider({
+                var filterer = new FilterDataProvider({
                     dataProvider: arrayDataProvider
                 });
 
                 var sorter = new SortDataProvider({
-                    dataProvider: filter
+                    dataProvider: filterer
                 });
 
                 var grid = Ext.create('virtualgrid.VirtualGrid', {
@@ -76,7 +81,9 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3g
                         headerHeight: 30,
                         dataProvider: sorter,
                         columns: columns,
-                        features: [filter, sorter, new ColumnDragger()]//[filter, sorter, new ColumnSelector(), new ColumnDragger()]
+                        features: [new FilterHeaderRendererInjector(filterer),
+                                   new SortHeaderRendererInjector(sorter),
+                                   new ColumnDragger()]//[filterer, sorter, new ColumnSelector(), new ColumnDragger()]
 //                        getRowStyle: function (row) {
 //                            var val = 255 - (row*2.5 >> 0);
 //                            return { backgroundColor: 'rgb(200,'+val+',0)'};
@@ -116,7 +123,7 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3g
                                         {
                                             xtype: 'button',
                                             text:'Unfilter',
-                                            handler: function () { filter.filters.length = 0; filter.refresh();}
+                                            handler: function () { filterer.filters.length = 0; filterer.refresh();}
                                         },
                                         {
                                             xtype:'label',

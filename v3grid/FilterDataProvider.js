@@ -28,7 +28,6 @@ define('v3grid/FilterDataProvider',
                     this.fireEvent('cellChanged', this.invIndex[row], column);
                 }
             },
-
             /* DataProvider API - end */
 
             rowUpdated: function (row) {
