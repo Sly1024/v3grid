@@ -9,31 +9,28 @@ define('v3grid/SortHeaderRendererInjector',
             if (sortDataProvider && sortDataProvider.addListener) {
                 sortDataProvider.addListener('sortChanged', this.updateIndicators, this);
             }
+
+            this.columnMap = {};
         };
 
         SortHeaderRendererInjector.prototype = {
             init: function (grid, config) {
                 this.grid = grid;
-                this.processColumnRenderers(grid, config.columns);
+                grid.registerColumnConfigPreprocessor(Adapter.bindScope(this.processColumnRenderer, this), 0);
             },
 
-            processColumnRenderers: function (grid, columns) {
-                var colMap = this.columnMap = {};
-
-                for (var len = columns.length, i = 0; i < len; ++i) {
-                    var col = columns[i];
-                    var rendererConfig = {
-                        renderer: grid.getRenderer(col.headerRenderer || grid.headerRenderer),
-                        rendererConfig: col.headerRendererConfig,
-                        sortHeaderRendererInjector: this,
-                        dataIdx: col.dataIndex == null ? i : col.dataIndex,
-                        column: col,
-                        sortOrder: null
-                    };
-                    col.headerRenderer = this.headerRenderer;
-                    col.headerRendererConfig = rendererConfig;
-                    colMap[rendererConfig.dataIdx] = rendererConfig;
-                }
+            processColumnRenderer: function (column) {
+                var rendererConfig = {
+                    renderer: this.grid.getRenderer(column.headerRenderer || this.grid.headerRenderer),
+                    rendererConfig: column.headerRendererConfig,
+                    sortHeaderRendererInjector: this,
+                    column: column,
+                    sortOrder: null
+                };
+                column.headerRenderer = this.headerRenderer;
+                column.headerRendererConfig = rendererConfig;
+                this.columnMap[column.dataIndex] = rendererConfig;
+                return column;
             },
 
             columnClicked: function(dataIdx, evt) {
@@ -55,6 +52,8 @@ define('v3grid/SortHeaderRendererInjector',
 
             updateIndicators: function (fields, oldFields) {
                 var colMap = this.columnMap;
+
+                if (!colMap || !this.grid) return;
 
                 // clear sorted indicators
                 for (var len = oldFields.length, i = 0; i < len; i += 2) {

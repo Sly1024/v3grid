@@ -8,22 +8,21 @@ define('v3grid/FilterHeaderRendererInjector',
         };
 
         FilterHeaderRendererInjector.prototype = {
-            initRev: function (grid, config) {
-                this.processColumnRenderers(grid, config.columns);
+            init: function (grid, config) {
+                this.grid = grid;
                 config.headerHeight = (config.headerHeight || grid.headerHeight) + 20;
+                grid.registerColumnConfigPreprocessor(Adapter.bindScope(this.processColumnRenderer, this));
             },
-            processColumnRenderers: function (grid, columns) {
-                for (var len = columns.length, i = 0; i < len; ++i) {
-                    var col = columns[i];
-                    var rendererConfig = {
-                        renderer: grid.getRenderer(col.headerRenderer || grid.headerRenderer),
-                        rendererConfig: col.headerRendererConfig,
-                        filterDataProvider: this.filterDataProvider,
-                        filter: new TextFilter(col.dataIndex == null ? i : col.dataIndex)
-                    };
-                    col.headerRenderer = this.headerRenderer;
-                    col.headerRendererConfig = rendererConfig;
-                }
+            processColumnRenderer: function (column) {
+                var rendererConfig = {
+                    renderer: this.grid.getRenderer(column.headerRenderer || this.grid.headerRenderer),
+                    rendererConfig: column.headerRendererConfig,
+                    filterDataProvider: this.filterDataProvider,
+                    filter: new TextFilter(column.dataIndex)
+                };
+                column.headerRenderer = this.headerRenderer;
+                column.headerRendererConfig = rendererConfig;
+                return column;
             }
 
         };

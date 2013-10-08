@@ -99,6 +99,13 @@ define('v3grid/GridView',
             row.length = 0;
         },
 
+        validateCellCaches: function () {
+            var cells = this.visibleCells;
+            for (var rowCnt = this.visibleRowCount, vr = 0; vr < rowCnt; ++vr) {
+                cells[vr].cache.validate();
+            }
+        },
+
         initProperties: function () {
             // viewPort
             this.firstVisibleRow = 0;
@@ -145,6 +152,8 @@ define('v3grid/GridView',
             this.columnsX = colMgr.posX;
 
             colMgr.addListener('beforeColumnMove', this.beforeColumnMove, this);
+            colMgr.addListener('columnAdded', this.columnAdded, this);
+            colMgr.addListener('columnRemoved', this.columnRemoved, this);
             colMgr.addListener('columnMoved', this.columnMoved, this);
             colMgr.addListener('columnResized', this.columnResized, this);
             colMgr.addListener('updateColumn', this.updateColumn, this);
@@ -192,6 +201,26 @@ define('v3grid/GridView',
             this.hScrollTo();
         },
 
+        columnAdded: function (idx, config) {
+            if (idx <= this.firstVisibleColumn) {
+                ++this.firstVisibleColumn;
+                this.hScrollTo();
+            } else if (idx < this.firstVisibleColumn + this.visibleColumnCount) {
+                this.insertColumn(idx - this.firstVisibleColumn, config);
+                if (!this.hScrollTo()) this.validateCellCaches();
+            }
+        },
+
+        columnRemoved: function (idx, col) {
+            if (idx <= this.firstVisibleColumn) {
+                --this.firstVisibleColumn;
+                this.hScrollTo();
+            } else if (idx < this.firstVisibleColumn + this.visibleColumnCount) {
+                this.removeColumn(idx - this.firstVisibleColumn);
+                if (!this.hScrollTo()) this.validateCellCaches();
+            }
+        },
+
         attachHandlers: function () {
             if (Adapter.isFunction(this.cellClicked)) {
                 Adapter.addListener(this.table, 'click', this.tableClicked, this);
@@ -237,7 +266,9 @@ define('v3grid/GridView',
         hScrollTo: function (leftPos, forceUpdate) {
             if (this.updateViewPortH(leftPos, forceUpdate)) {
                 this.updateColumns();
+                return true;
             }
+            return false;
         },
 
         updateViewPortH: function (scrollPos, forceUpdate) {
@@ -371,7 +402,6 @@ define('v3grid/GridView',
         updateColumns: function () {
             var prevCount = this.prevVisibleColumnCount,
                 count = this.visibleColumnCount,
-                cells = this.visibleCells,
                 recycleColumn = this.recycleColumn,
                 addColumn = this.addColumn,
                 copyVisibleColumn = this.copyVisibleColumn,
@@ -406,9 +436,7 @@ define('v3grid/GridView',
             for (vc = overlapTo; vc < count; ++vc) addColumn.call(this, vc);
 
             // remove cells from dom
-            for (var rowCnt = this.visibleRowCount, vr = 0; vr < rowCnt; ++vr) {
-                cells[vr].cache.validate();
-            }
+            this.validateCellCaches();
 
 //        function range(from, to) {
 //            return (from == to ? '-' : (to-from)+'('+from+'-'+(to-1)+')');
@@ -477,10 +505,38 @@ define('v3grid/GridView',
 
         columnProperties: { renderer: 'renderer', rendererConfig: 'rendererConfig', finalCls: 'finalCls'},
 
+        insertColumn: function (vc, column) {
+            var cells = this.visibleCells,
+                count = this.visibleRowCount,
+                vr, dr;
+
+            for (vr = 0, dr = this.firstVisibleRow; vr < count; ++vr, ++dr) {
+                cells[vr].splice(vc, 0, cells[vr].cache.get(dr, column));
+            }
+            ++this.visibleColumnCount;
+            this.updateVisibleColumn(vc);
+        },
+
+        removeColumn: function (vc) {
+            var cells = this.visibleCells,
+                count = this.visibleRowCount,
+                vr, dr;
+
+            this.recycleColumn(vc);
+            for (vr = 0, dr = this.firstVisibleRow; vr < count; ++vr, ++dr) {
+                cells[vr].splice(vc, 1);
+            }
+            --this.visibleColumnCount;
+            //this.updateVisibleColumn(vc);
+        },
+
+        /**
+         *
+         * @param vc
+         */
         addColumn: function (vc) {
             var cells = this.visibleCells,
                 column = this.columns[this.firstVisibleColumn + vc],
-//                colCls = column[this.columnProperties.finalCls],
                 count = this.visibleRowCount,
                 vr, dr;
 
