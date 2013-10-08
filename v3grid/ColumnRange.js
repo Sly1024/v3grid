@@ -42,9 +42,13 @@ define('v3grid/ColumnRange',
             },
 
             // both inclusive
-            generateColumnMap: function (fromIdx, toIdx) {
+            generateColumnMap: function (fromIdx, toIdx, removed) {
                 var map = this.columnMap,
                     columns = this.columns;
+
+                if (removed) {
+                    delete map[removed.dataIndex];
+                }
 
                 fromIdx = fromIdx || 0;
                 if(toIdx === undefined) toIdx = columns.length-1;
@@ -59,24 +63,18 @@ define('v3grid/ColumnRange',
                 // TODO: validate indices
                 if (!suppressEvent) this.fireEvent('beforeColumnMove', fromIdx, toIdx);
 
-                var map = this.columnMap,
-                    columns = this.columns,
-                    dir = fromIdx < toIdx ? 1 : -1;
+                var columns = this.columns,
+                    colObj = columns[fromIdx];
 
-                // store 'fromIdx' in temp
-                var colObj = columns[fromIdx], i;
-
-                for (i = fromIdx; i != toIdx; i += dir) {
-                    map[(columns[i] = columns[i + dir]).dataIndex] = i;
-                }
-
-                map[(columns[toIdx] = colObj).dataIndex] = toIdx;
+                columns.splice(fromIdx, 1);
+                columns.splice(toIdx, 0, colObj);
 
 //                update stuff
-                var from = dir < 0 ? toIdx : fromIdx,
+                var from = fromIdx > toIdx ? toIdx : fromIdx,
                     to = fromIdx ^ toIdx ^ from;    // the other one
 
                 this.calcPosX(from, to);
+                this.generateColumnMap(from, to);
                 if (!suppressEvent) this.fireEvent('columnMoved', fromIdx, toIdx);
             },
 
@@ -103,7 +101,7 @@ define('v3grid/ColumnRange',
                 var col = this.columns[idx];
                 this.columns.splice(idx, 1);
                 this.calcPosX(idx);
-                this.generateColumnMap(idx);
+                this.generateColumnMap(idx, undefined, col);
                 if (!suppressEvent) this.fireEvent('columnRemoved', idx, col);
                 return col;
             },

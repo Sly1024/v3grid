@@ -56,7 +56,7 @@ define('v3grid/SortHeaderRenderer',
             clickHandler: function (evt) {
                 var config = this.config;
                 if (!config.column.disableSort) {
-                    config.sortHeaderRendererInjector.columnClicked(config.dataIdx, evt);
+                    config.sortHeaderRendererInjector.columnClicked(config.column.dataIndex, evt);
                 }
             },
 

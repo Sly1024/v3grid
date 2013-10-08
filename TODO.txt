@@ -1,5 +1,7 @@
 Features:
- - option to disable real-time moving of column (dragging) - it's slow on older machines
+ - refactoring: create a GridCell class?
+ - add column_id (UID), because there can be two columns with the same 'dataIndex' - refactor columnMaps
+ - option to disable real-time moving of column (dragging), move only the header - it's slow on older machines
  - rethink column/rowBatchSize
  + change getData() to dataProvider: {}
  + make locked rows work

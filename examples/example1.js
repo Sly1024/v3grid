@@ -159,7 +159,7 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3g
                 }
 
                 var lastUpdate = 0;
-                var colNum = grid.grid.totalColumnCount;
+                var colNum = grid.grid.columns.length;
                 var crows = colNum * grid.grid.totalRowCount;
                 var updateBatch = crows / 1000;
 

@@ -43,21 +43,28 @@ define('v3grid/Adapter', [], function () {
 
         // returns index
         insertCSSRule: function (sheet, selector, ruleText) {
-            var idx = sheet.rules ? sheet.rules.length : sheet.cssRules.length;
+            var idx = (sheet.rules || sheet.cssRules).length;
             if (sheet.insertRule) {
                 sheet.insertRule(selector + '{' + ruleText + '}', idx);
             } else {
                 if (!ruleText) ruleText = ' ';
                 sheet.addRule(selector, ruleText, idx);
             }
-            return idx;
+            return (sheet.rules || sheet.cssRules)[idx];
         },
 
-        removeCSSRule: function (sheet, index) {
+        removeCSSRule: function (sheet, indexOrRule) {
+            var rules = sheet.rules || sheet.cssRules;
+
+            if (typeof indexOrRule != 'number') {
+                // TODO: find a better indexOf that works on CSSRuleList
+                indexOrRule = Adapter.indexOf(Array.prototype.slice.call(rules, 0), indexOrRule);
+            }
+
             if (sheet.removeRule) {
-                sheet.removeRule(index);
+                sheet.removeRule(indexOrRule);
             } else {
-                sheet.deleteRule(index);
+                sheet.deleteRule(indexOrRule);
             }
         },
 

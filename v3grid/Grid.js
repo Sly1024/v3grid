@@ -73,7 +73,6 @@ define('v3grid/Grid',
 
             validateConfig: function (config) {
                 config.columns = config.columns || [];
-                config.totalColumnCount = config.columns.length;
                 if (!config.dataProvider) {
                     Adapter.error('V3Grid needs a dataProvider');
                 }
@@ -132,19 +131,43 @@ define('v3grid/Grid',
                 Adapter.removeStyleSheet('v3grid-' + this.instanceNum + '-style');
             },
 
-            registerRendererType: function (obj, availRenderers) {
+            registerRendererType: function (obj) {
                 var type = obj['-v3grid-type-id'] || (obj['-v3grid-type-id'] = Adapter.generateUID());
-                availRenderers[type] = availRenderers[type] || [];
+                this.availableRenderers[type] = this.availableRenderers[type] || [];
             },
 
-            addColumn: function (idx, config) {
-                this.fixColumnConfig(idx, config);
-                this.colMgr.addColumn(idx, config);
+            addColumn: function (config, idx) {
+                if (idx === undefined) idx = this.colMgr.columns.length;
+                this.colMgr.addColumn(idx, this.fixColumnConfig(idx, config));
+                this.setSize();
+            },
+
+            removeColumn: function (idx) {
+                this.colMgr.removeColumn(idx);
+                this.setSize();
+            },
+
+
+            moveColumn: function (fromIdx, toIdx) {
+                this.colMgr.moveColumn(fromIdx, toIdx);
+                this.setSize();
+            },
+
+            registerColumnConfigPreprocessor: function (processorFn, idx) {
+                var ccps = this.colConfPreprocs || (this.colConfPreprocs = []);
+                if (idx === undefined) idx = ccps.length;
+                ccps.splice(idx, 0, processorFn);
+            },
+
+            applyColumnConfigPreprocessors: function (column) {
+                var ccps = this.colConfPreprocs || [];
+                for (var len = ccps.length, i = 0; i < len; ++i) {
+                    column = ccps[i](column);
+                }
+                return column;
             },
 
             fixColumnConfig: function (idx, col) {
-                var availRenderers = this.availableRenderers; //[name]= []
-
                 col.dataIndex = col.dataIndex == null ? idx : col.dataIndex;
                 col.header = col.header || col.dataIndex;
 
@@ -153,20 +176,23 @@ define('v3grid/Grid',
                 col.renderer = Adapter.getClass(rend);
                 if (!col.renderer) Adapter.error("Could not load renderer '"+rend+"' for column '"+col.dataIndex+"'");
 
-                this.registerRendererType(col.renderer, availRenderers);
-
                 // header renderer
                 rend = col.headerRenderer || this.headerRenderer;
                 col.headerRenderer = Adapter.getClass(rend);
                 if (!col.headerRenderer) Adapter.error("Could not load header renderer '"+rend+"' for column '"+col.dataIndex+"'");
-
-                this.registerRendererType(col.headerRenderer, availRenderers);
 
                 col.width = col.width || this.defaultColumnWidth;
                 col.minWidth = col.minWidth || this.defaultColumnMinWidth;
 
                 col.resizable = col.resizable !== false;
                 col.visible = col.visible !== false;
+
+                col = this.applyColumnConfigPreprocessors(col);
+
+                this.registerRendererType(col.renderer);
+                this.registerRendererType(col.headerRenderer);
+
+                return col;
             },
 
             createColumnManager: function () {
@@ -176,12 +202,10 @@ define('v3grid/Grid',
                 this.availableRenderers = {};
 
                 for (var i = 0; i < len; ++i) {
-                    this.fixColumnConfig(i, columns[i]);
+                    columns[i] = this.fixColumnConfig(i, columns[i]);
                 }
 
                 this.colMgr = new ColumnManager(this, columns);
-
-                this.totalColumnCount = len;
             },
 
 
@@ -411,7 +435,7 @@ define('v3grid/Grid',
                 this.iScroll = new iScroll(this.views[scrollViewY][scrollViewX].container, {
                     eventElements: eventEl,
                     onMoved: function (x, y) {
-                        me.iScrollMove(x, y);
+                        me.scrollTo(-x, -y);
                     },
                     onBeforeScrollStart: null,
                     onBeforeScrollMove: function (e) { e.preventDefault(); },
@@ -421,10 +445,6 @@ define('v3grid/Grid',
                     vLinked: vLinked
                 });
 
-            },
-
-            iScrollMove: function (x, y) {
-                this.scrollTo(-x, -y);
             },
 
             setRowCounts: function () {
@@ -475,36 +495,6 @@ define('v3grid/Grid',
                     }
                 }
             },
-
-            // TODO: need this?
-//            getHeaderViewUnder: function (headerX) {
-//                var views = this.views[0], vx = 0;
-//
-//                while (vx < this.viewsH && headerX >= views[vx].visibleWidth) {
-//                    headerX -= views[vx].visibleWidth;
-//                    ++vx;
-//                }
-//                return views[vx];
-//            },
-
-            // TODO: need this?
-//            copyVisibleColumn: function (fromIdx, toIdx) {
-//                this.tableView.copyVisibleColumn(fromIdx, toIdx);
-//                this.headerView.copyVisibleColumn(fromIdx, toIdx);
-//            },
-
-            // TODO: fix this
-//            moveColumn: function (fromIdx, toIdx) {
-//                this.headerView.moveColumn(fromIdx, toIdx);
-////                this.tableView.moveColumn(fromIdx, toIdx);
-//
-//                if (toIdx < fromIdx) {
-//                    fromIdx ^= toIdx ^= fromIdx ^= toIdx;
-//                }
-//
-//                this.calcColumnPosX(this.headerView.columns, this.headerView.columnPosX, fromIdx, toIdx);
-//                this.applyColumnStyles(this.headerView.columns, this.headerView.columnPosX, fromIdx, toIdx);
-//            },
 
             setTableSize: function () {
                 this.allViews('setTableSize');

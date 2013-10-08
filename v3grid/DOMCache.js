@@ -5,7 +5,11 @@ define('v3grid/DOMCache',
         /**
          * config: {
          *     parentDom : DOMElement
-         *     create: function() -> item: { dom : DOM }
+         *     // template functions
+         *     create: function(get_args...) -> item: { dom : DOM }
+         *     initializeItem: function(item, get_args...)
+         *     itemReleased: function (item)
+         *     itemRemoved: function (item)
          * }
          */
         var DOMCache = function (config) {

@@ -103,12 +103,12 @@
 .v3grid-column-move {
     opacity: 0.6;
     background-color: #ccd5ff;
-    z-index: 1
+    z-index: 4
 }
 .v3grid-header-move {
     opacity: 0.6;
     background-color: #ffffff;
-    z-index: 1
+    z-index: 4
 }
 .v3grid-column-resize {
     background-color: #e3eef9;
