@@ -17,6 +17,11 @@
     <link rel="stylesheet" type="text/css" href="resources/css/v3grid.css" />
 
     <script type="text/javascript" src="../req.js"></script>
+    <script type="text/javascript">
+        if (window.location.href.test(/github\.com/)) {
+            require.config({ baseUrl: require.baseUrl + '../'});
+        }
+    </script>
     <script type="text/javascript" src="example1.js"></script>
 
 </head>
