@@ -20,6 +20,11 @@ define('v3grid/Grid',
             this.dataChanged();
         };
 
+        // util function
+        function def(val, defVal) {
+            return val == null ? defVal : val;
+        }
+
         Grid.prototype = {
             // static instance counter:
             instanceCnt: 0,
@@ -61,7 +66,11 @@ define('v3grid/Grid',
 
                 var container = config.renderTo;
                 if (Adapter.isString(container)) {
-                    container = document.getElementById(container) || document.querySelector(container);
+                    container = document.getElementById(container) || document.querySelector && document.querySelector(container);
+                }
+
+                if (!container || container.nodeType !== 1) {
+                    Adapter.error('[v3grid] Invalid container element: ' + config.renderTo);
                 }
 
                 this.panel = container;
@@ -74,7 +83,7 @@ define('v3grid/Grid',
             validateConfig: function (config) {
                 config.columns = config.columns || [];
                 if (!config.dataProvider) {
-                    Adapter.error('V3Grid needs a dataProvider');
+                    Adapter.error('[v3grid] Invalid dataProvider: ' + config.dataProvider);
                 }
             },
 
@@ -171,24 +180,24 @@ define('v3grid/Grid',
                 // clone column config obj
                 // TODO: think about creating a column class
                 col = Adapter.merge({}, col);
-                col.dataIndex = col.dataIndex == null ? idx : col.dataIndex;
-                col.header = col.header || col.dataIndex;
+                col.dataIndex = def(col.dataIndex, idx);
+                col.header = def(col.header, col.dataIndex);
 
                 // renderer
-                var rend = col.renderer || this.itemRenderer;
+                var rend = def(col.renderer, this.itemRenderer);
                 col.renderer = Adapter.getClass(rend);
                 if (!col.renderer) Adapter.error("Could not load renderer '"+rend+"' for column '"+col.dataIndex+"'");
 
                 // header renderer
-                rend = col.headerRenderer || this.headerRenderer;
+                rend = def(col.headerRenderer, this.headerRenderer);
                 col.headerRenderer = Adapter.getClass(rend);
                 if (!col.headerRenderer) Adapter.error("Could not load header renderer '"+rend+"' for column '"+col.dataIndex+"'");
 
-                col.width = col.width || this.defaultColumnWidth;
-                col.minWidth = col.minWidth || this.defaultColumnMinWidth;
+                col.width = def(col.width, this.defaultColumnWidth);
+                col.minWidth = def(col.minWidth, this.defaultColumnMinWidth);
 
-                col.resizable = col.resizable !== false;
-                col.visible = col.visible !== false;
+                col.resizable = def(col.resizable, true);
+                col.visible = def(col.visible, true);
 
                 col = this.applyColumnConfigPreprocessors(col);
 
