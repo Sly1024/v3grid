@@ -55,6 +55,7 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3g
                 var columns = [];
                 for (var c=0; c<columnCount; ++c) {
                     columns[c] = {
+                        dataIndex: c,
                         header: 'Column '+c,
                         width: (((c*10) % 50)+50),
                         renderer: c % 5 == 0 ? 'virtualgrid.CheckBoxItemRenderer' : c % 5 == 3 ? 'virtualgrid.LinkItemRenderer' : 'virtualgrid.NumberItemRenderer',
@@ -95,7 +96,7 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3g
                     }
                 });
 
-                Ext.create('Ext.container.Viewport',{
+                var view = Ext.create('Ext.container.Viewport',{
                     layout: 'fit',
                     items: [
                         {
@@ -124,6 +125,23 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3g
                                             xtype: 'button',
                                             text:'Unfilter',
                                             handler: function () { filterer.filters.length = 0; filterer.refresh();}
+                                        },
+                                        {
+                                            xtype: 'combo',
+                                            itemId: 'columnSelectorCombo',
+                                            store: {
+                                                fields: ['dataIndex', 'header'],
+                                                data: columns
+                                            },
+                                            displayField: 'header',
+                                            valueField: 'dataIndex',
+                                            autoSelect: true,
+                                            editable: false
+                                        },
+                                        {
+                                            xtype: 'button',
+                                            text: 'Add/Remove',
+                                            handler: addRemoveColumn
                                         },
                                         {
                                             xtype:'label',
@@ -176,6 +194,17 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3g
                     textnode.nodeValue = elaps + ' ms - ' + Math.floor(1000*updateBatch/elaps) + ' upd/sec';
                     lastUpdate = t;
                     if (running) updater_id = setTimeout(update, 10);
+                }
+
+                function addRemoveColumn() {
+                    var value = view.down('#columnSelectorCombo').getValue();
+                    var idx = grid.grid.colMgr.columnMap[value];
+
+                    if (idx != null) {
+                        grid.grid.removeColumn(idx);
+                    } else {
+                        grid.grid.addColumn(columns[value], 4);
+                    }
                 }
 
             }

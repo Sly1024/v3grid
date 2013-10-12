@@ -168,6 +168,9 @@ define('v3grid/Grid',
             },
 
             fixColumnConfig: function (idx, col) {
+                // clone column config obj
+                // TODO: think about creating a column class
+                col = Adapter.merge({}, col);
                 col.dataIndex = col.dataIndex == null ? idx : col.dataIndex;
                 col.header = col.header || col.dataIndex;
 
@@ -196,7 +199,7 @@ define('v3grid/Grid',
             },
 
             createColumnManager: function () {
-                var columns = this.columns,
+                var columns = this.columns.slice(0),    // clone the array
                     len = columns.length;
 
                 this.availableRenderers = {};

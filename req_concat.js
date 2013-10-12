@@ -54,10 +54,10 @@ function require(dependencies, execute) {
     define(null, dependencies, execute);
 }
 
-require.defined = function (module) { return !!define.modulemap[module]; }
+require.defined = function (module) { return !!define.modulemap[module]; };
 require.config = function (cfg) {
     require.baseUrl = cfg.baseUrl;
-}
+};
 
 require.baseUrl = (function () {
     var scripts = document.getElementsByTagName('script'),
