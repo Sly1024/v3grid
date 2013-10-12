@@ -139,6 +139,8 @@ define('v3grid/ColumnManager',
                 from = from || 0;
                 if (to === undefined) to = this.columns.length-1;
 
+                if (from > to) return;
+
                 var ranges = this.ranges;
                 if (ranges.length) {
                     var fromRng = this.getRangeIdx(from),
