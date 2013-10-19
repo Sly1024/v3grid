@@ -38,10 +38,11 @@ define('v3grid/SortHeaderRenderer',
                 this.config = config;
             },
 
-            updateData: function (grid, row, col) {
-                this.renderer.updateData(grid, row, col);
+            updateData: function (grid, row, column) {
+                this.renderer.updateData(grid, row, column);
+                this.renderedColumn = column;
 
-                var order = this.config.sortOrder;
+                var order = column.sortOrder;
                 if (order == null) {
                     this.img.style.display = 'none';
                     this.sortIndexText.nodeValue = '';
@@ -49,14 +50,14 @@ define('v3grid/SortHeaderRenderer',
                     this.img.style.display = '';
                     Adapter.removeClass(this.img, (order == 'asc') ? desc_class : asc_class);
                     Adapter.addClass(this.img, (order == 'asc') ? asc_class : desc_class);
-                    this.sortIndexText.nodeValue = this.config.sortIndex == 0 ? '' : this.config.sortIndex;
+                    this.sortIndexText.nodeValue = column.sortIndex == 0 ? '' : column.sortIndex;
                 }
             },
 
             clickHandler: function (evt) {
                 var config = this.config;
-                if (!config.column.disableSort) {
-                    config.sortHeaderRendererInjector.columnClicked(config.column.dataIndex, evt);
+                if (!this.renderedColumn.disableSort) {
+                    config.sortHeaderRendererInjector.columnClicked(this.renderedColumn.dataIndex, evt);
                 }
             },
 

@@ -685,21 +685,25 @@ define('v3grid/GridView',
         // row:Number - rowIndex
         // col:String - column's Name
         invalidateData: function (row, col) {
-            var colIdx = this.colMgr.columnMap[col];
-            if (colIdx === undefined) return;
+            var colIdxs = this.colMgr.colDataIdx2Idxs[col];
+            if (colIdxs === undefined) return;
 
-            var vrow = row - this.firstVisibleRow,
-                vcol = colIdx - this.firstVisibleColumn,
-                key = row * this.columns.length + colIdx;
+            for (var i = 0; i < colIdxs.length; ++i) {
+                var colIdx = colIdxs[i];
+                var vrow = row - this.firstVisibleRow,
+                    vcol = colIdx - this.firstVisibleColumn,
+                    key = row * this.columns.length + colIdx;
 
-            if (vrow >= 0 && vrow < this.visibleRowCount &&
-                vcol >= 0 && vcol < this.visibleColumnCount &&
-                !this.dirtyCells.hasOwnProperty(key))
-            {
-                this.dirtyCells[key] = true;
-                ++this.dirtyCellCount;
-                this.throttledUpdateDirtyCells();
+                if (vrow >= 0 && vrow < this.visibleRowCount &&
+                    vcol >= 0 && vcol < this.visibleColumnCount &&
+                    !this.dirtyCells[key])
+                {
+                    this.dirtyCells[key] = true;
+                    ++this.dirtyCellCount;
+                }
             }
+
+            if (this.dirtyCellCount) this.throttledUpdateDirtyCells();
         },
 
         // TODO : change key

@@ -82,9 +82,12 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3g
                         headerHeight: 30,
                         dataProvider: sorter,
                         columns: columns,
-                        features: [new FilterHeaderRendererInjector(filterer),
-                                   new SortHeaderRendererInjector(sorter),
-                                   new ColumnDragger()]//[filterer, sorter, new ColumnSelector(), new ColumnDragger()]
+                        features: [
+                            new FilterHeaderRendererInjector(filterer),
+                            new SortHeaderRendererInjector(sorter),
+                            new ColumnDragger(),
+                            new ColumnSelector()
+                        ]
 //                        getRowStyle: function (row) {
 //                            var val = 255 - (row*2.5 >> 0);
 //                            return { backgroundColor: 'rgb(200,'+val+',0)'};
@@ -130,18 +133,23 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3g
                                             xtype: 'combo',
                                             itemId: 'columnSelectorCombo',
                                             store: {
-                                                fields: ['dataIndex', 'header'],
-                                                data: columns
+                                                fields: ['dataIndex', 'header']
                                             },
                                             displayField: 'header',
                                             valueField: 'dataIndex',
                                             autoSelect: true,
-                                            editable: false
+                                            editable: false,
+                                            queryMode: 'local'
                                         },
                                         {
                                             xtype: 'button',
-                                            text: 'Add/Remove',
-                                            handler: addRemoveColumn
+                                            text: 'Add',
+                                            handler: addColumn
+                                        },
+                                        {
+                                            xtype: 'button',
+                                            text: 'Remove',
+                                            handler: removeColumn
                                         },
                                         {
                                             xtype:'label',
@@ -161,6 +169,11 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3g
                             ]
                         }
                     ]
+                });
+
+                grid.afterGridCreated(function () {
+                    window.vgrid = grid.grid;
+                    view.down('#columnSelectorCombo').getStore().loadData(grid.grid.colMgr.columns);
                 });
 
                 var textnode = Ext.ComponentQuery.query("#textlabel")[0].el.dom.firstChild;
@@ -196,14 +209,17 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3g
                     if (running) updater_id = setTimeout(update, 10);
                 }
 
-                function addRemoveColumn() {
-                    var value = view.down('#columnSelectorCombo').getValue();
-                    var idx = grid.grid.colMgr.columnMap[value];
+                function addColumn() {
+                    var dataIdx = view.down('#columnSelectorCombo').getValue();
+                    var col = grid.grid.addColumn(columns[dataIdx], 4);
+                }
 
-                    if (idx != null) {
-                        grid.grid.removeColumn(idx);
-                    } else {
-                        grid.grid.addColumn(columns[value], 4);
+                function removeColumn() {
+                    var dataIdx = view.down('#columnSelectorCombo').getValue();
+                    var idxs = grid.grid.colMgr.colDataIdx2Idxs[dataIdx];
+
+                    if (idxs && idxs.length) {
+                        grid.grid.removeColumn(idxs[0]);
                     }
                 }
 

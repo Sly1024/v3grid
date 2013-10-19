@@ -42,7 +42,7 @@ define('v3grid/ColumnSelector', ['v3grid/Adapter'], function (Adapter) {
                 len = columns.length;
 
             for (var i = 0; i < len; ++i) {
-                chboxes[i] = '<div class="' + this.CLS_ITEM + '"><input colidx="' + columns[i].dataIndex + '" type="checkbox" ' +
+                chboxes[i] = '<div class="' + this.CLS_ITEM + '"><input colid="' + columns[i].id + '" type="checkbox" ' +
                     (columns[i].visible ? 'checked' : '') + '>' + columns[i].header + '</div>';
             }
 
@@ -82,7 +82,7 @@ define('v3grid/ColumnSelector', ['v3grid/Adapter'], function (Adapter) {
         clickHandler: function (evt) {
             var src = evt.target || evt.srcElement;
             if (src instanceof HTMLInputElement) {
-                this.grid.setColumnVisible(src.attributes.colidx.value, src.checked);
+                this.grid.setColumnVisible(src.attributes.colid.value, src.checked);
             } else if (src.className == 'closebutton') {
                 this.close();
             }

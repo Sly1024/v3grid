@@ -37,7 +37,7 @@ define('v3grid/ColumnManager',
 
                 // user specified style/headerStyle
                 if (col.style) {
-                    clsName = 'v3grid-'+num+'-column'+idx+'-user';
+                    clsName = 'v3grid-'+num+'-column-'+idx+'-user';
                     rules.push(Adapter.insertCSSRule(sheet, '.'+clsName, Utils.styleEncode(col.style)));
                     finalCls.push(clsName);
                 }
@@ -49,7 +49,7 @@ define('v3grid/ColumnManager',
                 }
 
                 // generated layout classes
-                clsName = 'v3grid-'+num+'-column'+idx+'-layout';
+                clsName = 'v3grid-'+num+'-column-'+idx+'-layout';
                 finalCls.push(col.layoutCls = clsName);
                 finalHeaderCls.push(clsName);
                 rules.push(col.layoutRule = Adapter.insertCSSRule(sheet, '.'+clsName, ''));
@@ -76,20 +76,22 @@ define('v3grid/ColumnManager',
             },
 
             calcColumnWidths: function (avail) {
-                if (this.flexColumnCount == 0) return false;
+//                if (this.flexColumnCount == 0) return false;
 
                 var columns = this.columns,
                     fixTotal = 0, fixMin = 0,
                     flexTotal = 0, flexMin = 0,
                     count = columns.length,
-                    flexCols = [], i,
+                    flexCols = [], i, width,
                     changed = this.flexColumnCount == -1;
 
                 for (i = 0; i < count; ++i) {
                     var col = columns[i];
                     if (!col.visible) {
-                        if (col.actWidth != 0) changed = true;
-                        col.actWidth = 0;
+                        if (col.actWidth !== 0) {
+                            changed = true;
+                            col.actWidth = 0;
+                        }
                         continue;
                     }
                     if (col.flex) {
@@ -98,7 +100,11 @@ define('v3grid/ColumnManager',
                         flexCols.push(col);
                     } else {
                         fixMin += col.minWidth;
-                        fixTotal += col.actWidth;
+                        fixTotal += (width = col.width);
+                        if (col.actWidth !== width) {
+                            changed = true;
+                            col.actWidth = width;
+                        }
                     }
                 }
 
@@ -118,7 +124,7 @@ define('v3grid/ColumnManager',
                             act = w;
                         }
 
-                        if (col.actWidth != act) {
+                        if (col.actWidth !== act) {
                             col.actWidth = act;
                             changed = true;
                         }
@@ -127,6 +133,7 @@ define('v3grid/ColumnManager',
 
                 // TODO: fire event instead ?
                 if (changed) {
+                    console.log('changed');
                     this.calcPosX();
                     this.applyColumnStyles();
                 }
@@ -135,31 +142,41 @@ define('v3grid/ColumnManager',
             },
 
             // both inclusive (normal: 0, total-1)
-            applyColumnStyles: function (from, to) {
+            callOnRange: function (funcName, from, to) {
                 from = from || 0;
-                if (to === undefined) to = this.columns.length-1;
+                var to2 = to;
+                if (to2 === undefined) to2 = this.columns.length-1;
 
-                if (from > to) return;
+                if (from > to2) return;
 
                 var ranges = this.ranges;
                 if (ranges.length) {
                     var fromRng = this.getRangeIdx(from),
-                        toRng = this.getRangeIdx(to),
+                        toRng = this.getRangeIdx(to2),
                         rangeStart = this.rangeStart;
 
                     if (fromRng == toRng) {
                         var offset = rangeStart[toRng];
-                        ranges[toRng].applyColumnStyles(from - offset, to - offset);
+                        ranges[toRng][funcName](from - offset, to != undefined ? to - offset : undefined);
                     } else {
-                        ranges[fromRng].applyColumnStyles(from - rangeStart[fromRng]);
+                        ranges[fromRng][funcName](from - rangeStart[fromRng]);
                         for (++fromRng; fromRng < toRng; ++fromRng) {
-                            ranges[fromRng].applyColumnStyles();
+                            ranges[fromRng][funcName]();
                         }
-                        ranges[toRng].applyColumnStyles(0, to - rangeStart[toRng]);
+                        ranges[toRng][funcName](0, to != undefined ? to - rangeStart[toRng] : undefined);
                     }
                 } else {
-                    base.applyColumnStyles.call(this, from, to);
+                    base[funcName].call(this, from, to);
                 }
+            },
+
+            // both inclusive (normal: 0, total-1)
+            applyColumnStyles: function (from, to) {
+                this.callOnRange('applyColumnStyles', from, to);
+            },
+
+            calcPosX: function(from, to) {
+                this.callOnRange('calcPosX', from, to);
             },
 
             // public
