@@ -10,7 +10,6 @@ define('v3grid/SortHeaderRendererInjector',
                 sortDataProvider.addListener('sortChanged', this.updateIndicators, this);
             }
 
-            this.columnMap = {};
         };
 
         SortHeaderRendererInjector.prototype = {
@@ -23,13 +22,10 @@ define('v3grid/SortHeaderRendererInjector',
                 var rendererConfig = {
                     renderer: this.grid.getRenderer(column.headerRenderer || this.grid.headerRenderer),
                     rendererConfig: column.headerRendererConfig,
-                    sortHeaderRendererInjector: this,
-                    column: column,
-                    sortOrder: null
+                    sortHeaderRendererInjector: this
                 };
                 column.headerRenderer = this.headerRenderer;
                 column.headerRendererConfig = rendererConfig;
-                this.columnMap[column.dataIndex] = rendererConfig;
                 return column;
             },
 
@@ -50,26 +46,35 @@ define('v3grid/SortHeaderRendererInjector',
                 }
             },
 
-            updateIndicators: function (fields, oldFields) {
-                var colMap = this.columnMap;
+            setSortInfoOnColumns: function (indices, sortOrder, sortIndex) {
+                if (indices) {
+                    var columns = this.grid.colMgr.columns;
+                    Adapter.arrayEach(indices, function (idx) {
+                        columns[idx].sortOrder = sortOrder;
+                        columns[idx].sortIndex = sortIndex;
+                    });
+                }
+            },
 
-                if (!colMap || !this.grid) return;
+            updateIndicators: function (fields, oldFields) {
+                if (!this.grid) return;
+
+                var colMap = this.grid.colMgr.colDataIdx2Idxs;
 
                 // clear sorted indicators
                 for (var len = oldFields.length, i = 0; i < len; i += 2) {
-                    colMap[oldFields[i]].sortOrder = null;
+                    this.setSortInfoOnColumns(colMap[oldFields[i]], null, 0);
                 }
 
                 var flen = (fields.length+1) >> 1;
                 // set new indicators
                 for (i = 0; i < flen; ++i) {
-                    var colConf = colMap[fields[i << 1]];
-                    colConf.sortOrder = fields[(i << 1) | 1] = fields[(i << 1) | 1] || 'asc';
-                    colConf.sortIndex = i + 1;  // sortindex starts from 1
+                    this.setSortInfoOnColumns(colMap[fields[i << 1]],
+                        fields[(i << 1) | 1] = fields[(i << 1) | 1] || 'asc',
+                        // sortindex starts from 1
+                        // if it's a single column -> sortIndex =0 indicates no need to display sortIndex
+                        flen == 1 ? 0 : i + 1);
                 }
-
-                // if it's a single column -> sortIndex =0 indicates no need to display sortIndex
-                if (flen == 1) colMap[fields[0]].sortIndex = 0;
 
                 this.grid.updateHeaders();
             }

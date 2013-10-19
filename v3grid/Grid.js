@@ -1,8 +1,8 @@
 define('v3grid/Grid',
     ['v3grid/Adapter', 'v3grid/Utils', 'v3grid/GridView', 'v3grid/DragHelper', 'v3grid/DefaultItemRenderer',
-     'v3grid/ColumnManager', 'v3grid/Scrollbar', 'v3grid/RangeDataProvider', 'v3grid/DataProvider'],
+     'v3grid/DefaultHeaderRenderer', 'v3grid/ColumnManager', 'v3grid/Scrollbar', 'v3grid/RangeDataProvider', 'v3grid/DataProvider'],
     function (Adapter, Utils, GridView, DragHelper, DefaultItemRenderer,
-              ColumnManager, Scrollbar, RangeDataProvider, DataProvider) {
+              DefaultHeaderRenderer, ColumnManager, Scrollbar, RangeDataProvider, DataProvider) {
 
         var Grid = function (config) {
             this.initProperties(config);
@@ -35,7 +35,7 @@ define('v3grid/Grid',
             defaultColumnMinWidth: 20,
 
             itemRenderer: DefaultItemRenderer,
-            headerRenderer: DefaultItemRenderer,
+            headerRenderer: DefaultHeaderRenderer,
 
             columnBatchSize: 1,
             rowBatchSize: 2,
@@ -147,8 +147,9 @@ define('v3grid/Grid',
 
             addColumn: function (config, idx) {
                 if (idx === undefined) idx = this.colMgr.columns.length;
-                this.colMgr.addColumn(idx, this.fixColumnConfig(idx, config));
+                var col = this.colMgr.addColumn(idx, this.fixColumnConfig(idx, config));
                 this.setSize();
+                return col;
             },
 
             removeColumn: function (idx) {
@@ -199,6 +200,10 @@ define('v3grid/Grid',
                 col.resizable = def(col.resizable, true);
                 col.visible = def(col.visible, true);
 
+                // Note: this must be before applyColumnConfigPreprocessors,
+                // so the preprocessors can access the column ID
+                col.id = this.getUniqColId(col.id);
+
                 col = this.applyColumnConfigPreprocessors(col);
 
                 this.registerRendererType(col.renderer);
@@ -207,17 +212,32 @@ define('v3grid/Grid',
                 return col;
             },
 
+            getUniqColId: function (id) {
+                var uniqIds = this.columnUniqIds || this.colMgr.colId2Idx;
+
+                while (id == null || uniqIds[id] !== undefined) {
+                    id = Adapter.generateUID();
+                }
+                if (this.columnUniqIds) this.columnUniqIds[id] = true;
+                return id;
+            },
+
             createColumnManager: function () {
                 var columns = this.columns.slice(0),    // clone the array
                     len = columns.length;
 
                 this.availableRenderers = {};
 
+                // this is only temporary, until we create the column manager
+                this.columnUniqIds = {};
+
                 for (var i = 0; i < len; ++i) {
                     columns[i] = this.fixColumnConfig(i, columns[i]);
                 }
 
                 this.colMgr = new ColumnManager(this, columns);
+                this.columns = this.colMgr.columns;
+                delete this.columnUniqIds;
             },
 
 
@@ -269,7 +289,7 @@ define('v3grid/Grid',
                 var dp = this.dataProvider;
 
                 // 0th is the header dataProvider
-                var viewDPs = this.viewDataProviders = [this.createHeaderDataProvider(this.colMgr)];
+                var viewDPs = this.viewDataProviders = [this.createHeaderDataProvider()];
 
                 if (viewsV == 2) {
                     viewDPs[1] = dp;
@@ -391,10 +411,9 @@ define('v3grid/Grid',
                 }
             },
 
-            createHeaderDataProvider: function (colMgr) {
+            createHeaderDataProvider: function () {
                 return new DataProvider({
-                    getRowCount: function () { return 1; },
-                    getCellData: function (row, col) { return colMgr.columns[colMgr.columnMap[col]].header; }
+                    getRowCount: function () { return 1; }
                 });
             },
 
@@ -635,8 +654,8 @@ define('v3grid/Grid',
 //                console.log('size', this.tableWidth, this.tableHeight, visibleWidth, visibleHeight);
             },
 
-            setColumnVisible: function (colDataIdx, visible) {
-                var idx = this.colMgr.columnMap[colDataIdx];
+            setColumnVisible: function (colId, visible) {
+                var idx = this.colMgr.colId2Idx[colId];
 
                 if (idx === undefined || this.colMgr.columns[idx].visible == visible) return;
 

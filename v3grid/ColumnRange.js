@@ -8,7 +8,17 @@ define('v3grid/ColumnRange',
             this.posX = new Array(columns.length+1);
             this.calcPosX();
 
-            this.columnMap = {};
+            /**
+             * [dataIdx] = array of indices of columns
+             * @type {Object}
+             */
+            this.colDataIdx2Idxs = {};
+
+            /**
+             * [colId] = index in columns
+             * @type {Object}
+             */
+            this.colId2Idx = {};
             this.generateColumnMap();
         };
 
@@ -35,7 +45,7 @@ define('v3grid/ColumnRange',
                 }
 
                 for (var i = fromIdx; i < toIdx;) {
-                    startX += columns[i].visible ? columns[i].actWidth : 0;
+                    startX += columns[i].actWidth;
                     ++i;
                     columnsX[i] = startX;
                 }
@@ -43,18 +53,32 @@ define('v3grid/ColumnRange',
 
             // both inclusive
             generateColumnMap: function (fromIdx, toIdx, removed) {
-                var map = this.columnMap,
-                    columns = this.columns;
+                var id2Idx = this.colId2Idx,
+                    di2Idxs = this.colDataIdx2Idxs,
+                    columns = this.columns,
+                    idx, arr;
 
                 if (removed) {
-                    delete map[removed.dataIndex];
+                    idx = id2Idx[removed.id];
+                    delete id2Idx[removed.id];
+                    arr = di2Idxs[removed.dataIndex];
+                    if (arr) Adapter.arrayRemove(arr, idx);
                 }
 
                 fromIdx = fromIdx || 0;
                 if(toIdx === undefined) toIdx = columns.length-1;
 
                 for (var i = fromIdx; i <= toIdx; ++i) {
-                    map[columns[i].dataIndex] = i;
+                    var id = columns[i].id;
+                    var dataIndex = columns[i].dataIndex;
+
+                    if (arr = di2Idxs[dataIndex]) {
+                        idx = Adapter.indexOf(arr, id2Idx[id]);
+                        if (idx >= 0) arr[idx] = i; else arr.push(i);
+                    } else {
+                        di2Idxs[dataIndex] = [i];
+                    }
+                    id2Idx[id] = i;
                 }
             },
 
