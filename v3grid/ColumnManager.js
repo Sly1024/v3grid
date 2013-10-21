@@ -1,18 +1,25 @@
-define('v3grid/ColumnManager',
+define('v3grid/ColumnManagerx',
     ['v3grid/Adapter', 'v3grid/Utils', 'v3grid/ColumnRange'],
     function (Adapter, Utils, Range) {
 
-        var ColumnManager = function (grid, configs) {
+        var ColumnManager = function (grid, columns, useTopColumns) {
             this.grid = grid;
             this.sheet = grid.styleSheet;
             this.lastColId = 0;
             this.ranges = [];
             this.rangeStart = [0];
 
-            for (var len = configs.length, i = 0; i < len; ++i) configs[i] = this.processConfig(configs[i]);
+            if (!useTopColumns) Utils.walkTree(columns, function (col, idx, arr) {
+                arr[idx] = grid.fixColumnConfig(col);
+            });
 
             // call super ctor
-            Range.call(this, configs);
+            Range.call(this, columns, useTopColumns);
+
+            var me = this;
+            if (!useTopColumns) Utils.walkTree(columns, function (col, idx, arr) {
+                arr[idx] = me.processConfig(col);
+            });
 
             // this forces calcColumnWidths to update the first time
             this.flexColumnCount = -1;
@@ -21,9 +28,8 @@ define('v3grid/ColumnManager',
         var base = Range.prototype;
 
         ColumnManager.prototype = Adapter.merge(Adapter.merge({}, base), {
-            processConfig: function (config) {
-                var col = Adapter.merge({}, config),  //clone col
-                    idx = this.lastColId++,
+            processConfig: function (col) {
+                var idx = this.lastColId++,
                     num = this.grid.instanceNum,
                     sheet = this.sheet,
                     rules = col.cssRules = [],
@@ -72,7 +78,26 @@ define('v3grid/ColumnManager',
                 col.flex = flex;
                 if (!isNaN(width)) col.actWidth = width;
 
+                col.isProcessed = true;
+
                 return col;
+            },
+
+            setWidthFromChildren: function setWidthFromChildren(col) {
+                if (!col.children) return false;
+
+                var sum = 0, changed = false;
+                Adapter.arrayEach(col.children, function (child) {
+                    if (setWidthFromChildren(child)) changed = true;
+                    child.left = sum;
+                    sum += child.actWidth;
+                });
+
+                if (col.actWidth !== sum) {
+                    col.actWidth = sum;
+                    return true;
+                }
+                return changed;
             },
 
             calcColumnWidths: function (avail) {
@@ -87,6 +112,12 @@ define('v3grid/ColumnManager',
 
                 for (i = 0; i < count; ++i) {
                     var col = columns[i];
+
+                    if (col.children) {
+                        if (this.setWidthFromChildren(col)) changed = true;
+                        continue;
+                    }
+
                     if (!col.visible) {
                         if (col.actWidth !== 0) {
                             changed = true;
@@ -131,11 +162,10 @@ define('v3grid/ColumnManager',
                     }
                 }
 
-                // TODO: fire event instead ?
                 if (changed) {
-                    console.log('changed');
                     this.calcPosX();
                     this.applyColumnStyles();
+                    this.fireEvent('columnPositionsChanged', avail, this);
                 }
 
                 return changed;

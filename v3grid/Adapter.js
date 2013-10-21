@@ -1,5 +1,6 @@
 Ext.require([
     'Ext.Array',
+    'Ext.Object',
     'Ext.Error',
     'Ext.util.Observable',
     'Ext.ClassManager',
@@ -29,6 +30,7 @@ define('v3grid/Adapter', [], function () {
         arrayMap: Ext.Array.map,
         arrayRemove: Ext.Array.remove,
         arrayEach: Ext.Array.forEach,
+        objEach: Ext.Object.each,
 
         getClass: function (cls) { return Ext.isString(cls) ? Ext.ClassManager.get(cls) : cls; },
 

@@ -1,13 +1,13 @@
 Features:
  - refactoring: create a GridCell class?
- - add column_id (UID), because there can be two columns with the same 'dataIndex' - refactor columnMaps
+ + add column_id (UID), because there can be two columns with the same 'dataIndex' - refactor columnMaps
  - option to disable real-time moving of column (dragging), move only the header - it's slow on older machines
  - rethink column/rowBatchSize
  + change getData() to dataProvider: {}
  + make locked rows work
  - column autosize - to content
  + column drag - scroll when reached the first/last visible pos.
- - colspan/rowspan
+ x colspan/rowspan - can't be done with current dom structure (colspan could be done, but not worth it)
  - column groups
  - context menu on columns!
  + getRowStyle(row) / getCellStyle(row, column) ??

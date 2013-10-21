@@ -53,7 +53,7 @@
 .v3grid-scrollbar {
     z-index: 3;
 }
-.v3grid-header-row > div {
+.v3grid-header-row div.v3grid-header-cell {
     padding: 0;
     border-right: 1px solid #c5c5c5;
     border-left: 0 none;
@@ -77,7 +77,7 @@
     text-align: center;
     vertical-align: middle;
 }
-.v3grid-header-row > div:hover {
+.v3grid-header-row div.v3grid-header-cell:hover {
     border-left-color: #aaccf6;
     border-right-color: #aaccf6;
     background-image: none;

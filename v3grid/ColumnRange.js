@@ -1,12 +1,12 @@
 define('v3grid/ColumnRange',
-    ['v3grid/Adapter', 'v3grid/Observable'],
-    function (Adapter, Observable) {
+    ['v3grid/Adapter', 'v3grid/Observable', 'v3grid/Utils'],
+    function (Adapter, Observable, Utils) {
 
-        var ColumnRange = function (columns) {
-            this.columns = columns;
+        var ColumnRange = function (columns, useTopColumns) {
+            this.maxDepth = 0;
+            this.columns = useTopColumns ? columns : this.getLeafColumns(columns);
 
-            this.posX = new Array(columns.length+1);
-            this.calcPosX();
+            this.posX = new Array(this.columns.length+1);
 
             /**
              * [dataIdx] = array of indices of columns
@@ -26,6 +26,21 @@ define('v3grid/ColumnRange',
 
             getTotalWidth: function () {
                 return this.posX[this.columns.length];
+            },
+
+            getLeafColumns: function (columns) {
+                var result = [], maxDepth = 0;
+
+                Utils.walkTree(columns, function (col, idx, arr, parent, depth) {
+                    col.parent = parent;
+                    col.depth = depth;
+                    if (depth > maxDepth) maxDepth = depth;
+                    if (!col.children) result.push(col);
+                });
+
+                this.maxDepth = maxDepth;
+
+                return result;
             },
 
             // both inclusive (normal: 0, total)
@@ -134,15 +149,35 @@ define('v3grid/ColumnRange',
             applyColumnStyles: function (from, to) {
                 var columns = this.columns,
                     columnsX = this.posX;
+//                    parents = {}, hasParent = false;
 
                 from = from || 0;
                 if (to === undefined) to = columns.length-1;
 
                 for (var dc = from; dc <= to; ++dc) {
                     var col = columns[dc];
-                    Adapter.setXCSS(col.layoutRule, columnsX[dc]);
-                    col.layoutRule.style.width = col.actWidth + 'px';
+                    this.applyStyleToColumn(col, columnsX[dc]);
+
+//                    var parent = col.parent;
+//                    if (parent) {
+//                        parents[parent.id] = parent;
+//                        hasParent = true;
+//                    }
                 }
+//
+//                while (hasParent) {
+//                    var tempParents = parents;
+//                    parents = {};
+//                    hasParent = false;
+//                    Adapter.objEach(tempParents, function (id, col) {
+//
+//                    });
+//                }
+            },
+
+            applyStyleToColumn: function (col, xPos) {
+                Adapter.setXCSS(col.layoutRule, xPos);
+                col.layoutRule.style.width = col.actWidth + 'px';
             }
         });
 

@@ -147,7 +147,7 @@ define('v3grid/Grid',
 
             addColumn: function (config, idx) {
                 if (idx === undefined) idx = this.colMgr.columns.length;
-                var col = this.colMgr.addColumn(idx, this.fixColumnConfig(idx, config));
+                var col = this.colMgr.addColumn(idx, config);
                 this.setSize();
                 return col;
             },
@@ -177,11 +177,11 @@ define('v3grid/Grid',
                 return column;
             },
 
-            fixColumnConfig: function (idx, col) {
+            fixColumnConfig: function (col) {
                 // clone column config obj
                 // TODO: think about creating a column class
                 col = Adapter.merge({}, col);
-                col.dataIndex = def(col.dataIndex, idx);
+                col.dataIndex = '' + col.dataIndex;
                 col.header = def(col.header, col.dataIndex);
 
                 // renderer
@@ -223,20 +223,21 @@ define('v3grid/Grid',
             },
 
             createColumnManager: function () {
-                var columns = this.columns.slice(0),    // clone the array
-                    len = columns.length;
+                var columns = this.columns;   // clone the array?
 
                 this.availableRenderers = {};
 
                 // this is only temporary, until we create the column manager
                 this.columnUniqIds = {};
 
-                for (var i = 0; i < len; ++i) {
-                    columns[i] = this.fixColumnConfig(i, columns[i]);
-                }
+                var colMgr = this.colMgr = new ColumnManager(this, columns);
+                this.columns = colMgr.columns;
+                this.headerColMgr = new ColumnManager(this, columns, true);
+                colMgr.addListener('columnPositionsChanged', this.headerColMgr.calcColumnWidths, this.headerColMgr);
 
-                this.colMgr = new ColumnManager(this, columns);
-                this.columns = this.colMgr.columns;
+                this.headerHeight = (this.headerRowHeight = this.headerHeight) * (colMgr.maxDepth + 1);
+                this.headerCSSRule.style.height = this.headerHeight + 'px';
+
                 delete this.columnUniqIds;
             },
 
@@ -269,13 +270,15 @@ define('v3grid/Grid',
                     scrollViewY = this.scrollViewY = 1 + (topLRC > 0),
                     views = this.views = new Array(viewsV);    // views[y][x] = GridView
 
-                var colMgr = this.colMgr;
-                var ranges = [colMgr];
+                var colMgr = this.colMgr, hColMgr = this.headerColMgr;
+                var ranges = [colMgr], hRanges = [hColMgr];
                 if (viewsH > 1) {
+                    // TODO: fix this: only header (top) columns can be locked
                     var colCounts = [colMgr.columns.length];
                     if (rightLCC) { colCounts[0] -= rightLCC; colCounts.push(rightLCC); }
                     if (leftLCC) { colCounts[0] -= leftLCC; colCounts.unshift(leftLCC); }
                     ranges = colMgr.getRanges(colCounts);
+                    hRanges = hColMgr.getRanges(colCounts);
                 }
 
                 var headerContainer = this.headerContainer = document.createElement('div');
@@ -332,7 +335,7 @@ define('v3grid/Grid',
                                 table: table,
                                 container: container,
                                 rowHeight: this.headerHeight,
-                                colMgr: ranges[x],
+                                colMgr: hRanges[x],
                                 dataProvider: viewDPs[0],
                                 availableRenderers: this.availableRenderers,
                                 rowBatchSize: 1,
@@ -558,6 +561,10 @@ define('v3grid/Grid',
 
                 var colMgr = this.colMgr;
                 colMgr.calcColumnWidths(availWidth);
+//                this.headerColMgr.calcColumnWidths(availWidth);
+//                this.headerColMgr.calcPosX();
+//                this.headerColMgr.applyColumnStyles();
+
                 var totalWidth = colMgr.getTotalWidth(),
                     isHscroll = totalWidth > availWidth;
 

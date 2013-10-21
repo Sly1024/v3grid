@@ -3,16 +3,6 @@ define('v3grid/Utils', ['v3grid/Adapter'], function (Adapter) {
         removeListener = Adapter.removeListener;
 
     var Utils = {
-        preloadImages: function (images) {
-            var img = Utils.img = Utils.img || new Image();
-            if (!Adapter.isArray(images)) images = [images];
-
-            for (var len = images.length, i = 0; i < len; ++i) {
-                img.src = images[i];
-            }
-
-            img.src = null;
-        },
 
         minMax: function (num, min, max) {
             if (num < min) return min;
@@ -35,15 +25,17 @@ define('v3grid/Utils', ['v3grid/Adapter'], function (Adapter) {
             return '.' + cssClass + '{' + Utils.styleEncode(obj) + '}';
         },
 
-        getProperties: function (obj, props) {
-            var result = {};
-            for (var len = props.length, i = 0; i < len; ++i) {
-                result[props[i]] = obj[props[i]];
-            }
-            return result;
-        },
-
         identity: function (x) { return x; },
+
+        walkTree: function walk(roots, fn, depth, parent) {
+            depth = depth || 0;
+            Adapter.arrayEach(roots, function (item, idx, arr) {
+                fn(item, idx, arr, parent, depth);
+                if (Adapter.isArray(item.children)) {
+                    walk(item.children, fn, depth + 1, item);
+                }
+            });
+        },
 
         nextFrame: (function() {
             return window.requestAnimationFrame

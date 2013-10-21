@@ -1,6 +1,6 @@
 function define(name, dependencies, moduleFunc) {
-    var modules = define.modules = define.modules || [],
-        map = define.modulemap = define.modulemap || {};
+    var modules = define.modules || (define.modules = []),
+        map = define.modulemap || (define.modulemap = {});
 
     function load(name) {
         if (!name) throw "Module must have a name!";
