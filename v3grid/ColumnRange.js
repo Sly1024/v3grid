@@ -66,6 +66,17 @@ define('v3grid/ColumnRange',
                 }
             },
 
+            // binary search to find the column index under X position 'pos'
+            searchColumn: function (pos, low, high) {
+                var mid, posX = this.posX;
+
+                low = low || 0;
+                if (high == null) high = this.columns.length;
+
+                while (low+1 < high) if (posX[mid = (low+high) >> 1] > pos) high = mid-1; else low = mid;
+                return (low+1 == high && high < this.columns.length && posX[high] < pos) ? high : low;
+            },
+
             // both inclusive
             generateColumnMap: function (fromIdx, toIdx, removed) {
                 var id2Idx = this.colId2Idx,

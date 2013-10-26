@@ -237,7 +237,7 @@ define('v3grid/GridView',
             var x = evt.pageX - Adapter.getPageX(this.table),
                 y = evt.pageY - Adapter.getPageY(this.table),
                 first = this.firstVisibleColumn,
-                colIdx = this.searchColumn(x, first, first + this.visibleColumnCount),
+                colIdx = this.colMgr.searchColumn(x, first, first + this.visibleColumnCount),
                 rowIdx = (y / this.rowHeight) >> 0;
 
             if (rowIdx >= 0 && rowIdx < this.totalRowCount &&
@@ -289,7 +289,7 @@ define('v3grid/GridView',
             var batch = this.columnBatchSize,
                 totalCount = this.columns.length;
 
-            first = this.searchColumn(scrollPos, 0, totalCount);
+            first = this.colMgr.searchColumn(scrollPos, 0, totalCount);
             // jump batch columns
             first = (first / batch >> 0)*batch;
 
@@ -306,7 +306,7 @@ define('v3grid/GridView',
                 }
                 count = last - first;
             } else {
-                count = this.searchColumn(endPos, 0, totalCount) - first;
+                count = this.colMgr.searchColumn(endPos, 0, totalCount) - first;
 
                 // a little rounding up
                 count += (batch - count % batch);
@@ -387,16 +387,9 @@ define('v3grid/GridView',
             return first != this.prevFirstVisibleRow || prevCount != count;
         },
 
-        // binary search to find the column index under X position 'pos'
-        searchColumn: function (pos, low, high) {
-            var mid, columnX = this.columnsX;
-            while (low+1 < high) if (columnX[mid = (low+high) >> 1] > pos) high = mid-1; else low = mid;
-            return (low+1 == high && high < this.columns.length && columnX[high] < pos) ? high : low;
-        },
-
         getColumnIdx: function (posX) {
             var firstCol = this.firstVisibleColumn;
-            return this.searchColumn(posX, firstCol, firstCol + this.visibleColumnCount);
+            return this.colMgr.searchColumn(posX, firstCol, firstCol + this.visibleColumnCount);
         },
 
         updateColumns: function () {

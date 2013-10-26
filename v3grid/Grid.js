@@ -1,7 +1,7 @@
 define('v3grid/Grid',
-    ['v3grid/Adapter', 'v3grid/Utils', 'v3grid/GridView', 'v3grid/DragHelper', 'v3grid/DefaultItemRenderer',
+    ['v3grid/Adapter', 'v3grid/Utils', 'v3grid/Observable', 'v3grid/GridView', 'v3grid/DragHelper', 'v3grid/DefaultItemRenderer',
      'v3grid/DefaultHeaderRenderer', 'v3grid/ColumnManager', 'v3grid/Scrollbar', 'v3grid/RangeDataProvider', 'v3grid/DataProvider'],
-    function (Adapter, Utils, GridView, DragHelper, DefaultItemRenderer,
+    function (Adapter, Utils, Observable, GridView, DragHelper, DefaultItemRenderer,
               DefaultHeaderRenderer, ColumnManager, Scrollbar, RangeDataProvider, DataProvider) {
 
         var Grid = function (config) {
@@ -18,6 +18,7 @@ define('v3grid/Grid',
             this.updateHeaders();
             if (this.viewsV == 2) this.allViews('dataChanged', [], 1, 1);
             this.dataChanged();
+            this.fireEvent('initialized', this);
         };
 
         // util function
@@ -25,7 +26,7 @@ define('v3grid/Grid',
             return val == null ? defVal : val;
         }
 
-        Grid.prototype = {
+        Grid.prototype = new Observable({
             // static instance counter:
             instanceCnt: 0,
 
@@ -336,6 +337,7 @@ define('v3grid/Grid',
                                 container: container,
                                 rowHeight: this.headerHeight,
                                 colMgr: hRanges[x],
+                                leafColMgr: ranges[x],
                                 dataProvider: viewDPs[0],
                                 availableRenderers: this.availableRenderers,
                                 rowBatchSize: 1,
@@ -762,7 +764,7 @@ define('v3grid/Grid',
             mouseOutHandler: function () {
                 this.allViews('mouseIsOver', [-1, -1], 1);
             }
-        };
+        });
 
         return Grid;
     }

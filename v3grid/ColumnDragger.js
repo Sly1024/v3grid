@@ -8,20 +8,12 @@ define('v3grid/ColumnDragger',
 
         ColumnDragger.prototype = {
             init: function (grid, config) {
-                var origCreateComp = grid.createComponents,
-                    dragger = this;
-
                 this.grid = grid;
-
-                grid.createComponents = function () {
-                    origCreateComp.call(this);
-                    dragger.attachHandlers();
-                }
+                grid.addListener('initialized', this.attachHandlers, this);
             },
 
-            attachHandlers: function () {
-                var grid = this.grid,
-                    views = grid.views,
+            attachHandlers: function (grid) {
+                var views = grid.views,
                     header = views[0],
                     viewsH = grid.viewsH,
                     viewsV = grid.viewsV;
@@ -74,13 +66,14 @@ define('v3grid/ColumnDragger',
             // called on the view
             colResizeCursorHandler: function (evt) {
                 Adapter.fixPageCoords(evt);
+                var lColMgr = this.leafColMgr;
                 var posx = evt.pageX - Adapter.getPageX(this.table),
-                    colIdx = this.getColumnIdx(posx),
+                    colIdx = lColMgr.searchColumn(posx),
                     curVal = '';
 
-                posx -= this.columnsX[colIdx];
-                if (posx < 5 ? --colIdx >= 0 : posx > this.columns[colIdx].actWidth - 5) {
-                    if (this.columns[colIdx].resizable) curVal = 'col-resize';
+                posx -= lColMgr.posX[colIdx];
+                if (posx < 5 ? --colIdx >= 0 : posx > lColMgr.columns[colIdx].actWidth - 5) {
+                    if (lColMgr.columns[colIdx].resizable) curVal = 'col-resize';
                     else curVal = 'not-allowed';
                 }
 
@@ -159,12 +152,12 @@ define('v3grid/ColumnDragger',
                 // figure out if it is being moved to left or right
                 // then the target column index
                 if (pos < columnsX[colIdx]) {
-                    targetIdx = this.searchColumn(pos, first, colIdx/*-1 ?*/);
+                    targetIdx = this.colMgr.searchColumn(pos, first, colIdx/*-1 ?*/);
                     if (targetIdx < columns.length-1 &&
                         pos > columnsX[targetIdx] + (columns[targetIdx].actWidth >> 1)) ++targetIdx;
                 } else {
                     var rightPos = pos + columns[colIdx].actWidth;
-                    targetIdx = this.searchColumn(rightPos, colIdx /*+1 ?*/, first + this.visibleColumnCount);
+                    targetIdx = this.colMgr.searchColumn(rightPos, colIdx /*+1 ?*/, first + this.visibleColumnCount);
                     if (targetIdx > 0 &&
                         rightPos < columnsX[targetIdx] + (columns[targetIdx].actWidth >> 1)) --targetIdx;
                 }
