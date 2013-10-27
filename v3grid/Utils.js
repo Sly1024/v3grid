@@ -1,9 +1,6 @@
-define('v3grid/Utils', ['v3grid/Adapter'], function (Adapter) {
-    var addListener = Adapter.addListener,
-        removeListener = Adapter.removeListener;
-
-    var Utils = {
-
+ClassDefReq('v3grid.Utils', ['v3grid.Adapter'], function (Adapter) {
+    return {
+        singleton: true,
         minMax: function (num, min, max) {
             if (num < min) return min;
             if (num > max) return max;
@@ -22,7 +19,7 @@ define('v3grid/Utils', ['v3grid/Adapter'], function (Adapter) {
         },
 
         cssEncode: function (cssClass, obj) {
-            return '.' + cssClass + '{' + Utils.styleEncode(obj) + '}';
+            return '.' + cssClass + '{' + this.styleEncode(obj) + '}';
         },
 
         identity: function (x) { return x; },
@@ -55,41 +52,39 @@ define('v3grid/Utils', ['v3grid/Adapter'], function (Adapter) {
                 || clearTimeout
         })(),
 
-        TapHandler: function (element, handler, scope, tolerance) {
-            this.t = tolerance || 10;
-            this.element = element;
-            this.handler = handler;
-            this.scope = scope;
-            addListener(element, 'touchstart', this);
-            addListener(element, 'touchmove', this);
-            addListener(element, 'touchend', this);
-        }
-
-    };
-
-    Utils.TapHandler.prototype = {
-        handleEvent: function (evt) {
-            switch (evt.type) {
-                case 'touchstart':
-                    this.x = evt.pageX; this.y = evt.pageY; this.cancel = false;
-                    break;
-                case 'touchmove':
-                    var px = evt.pageX, py = evt.pageY, x = this.x, y = this.y, t = this.t;
-                    if (px - x > t || x - px > t || py - y > t || y - py > t) this.cancel = true;
-                    break;
-                case 'touchend':
-                    if (!this.cancel) this.handler.call(this.scope, evt);
-                    break;
+        TapHandler: ClassDef('v3grid.Utils.TapHandler', {
+            ctor: function (element, handler, scope, tolerance) {
+                this.t = tolerance || 10;
+                this.element = element;
+                this.handler = handler;
+                this.scope = scope;
+                Adapter.addListener(element, 'touchstart', this);
+                Adapter.addListener(element, 'touchmove', this);
+                Adapter.addListener(element, 'touchend', this);
+            },
+            handleEvent: function (evt) {
+                switch (evt.type) {
+                    case 'touchstart':
+                        this.x = evt.pageX; this.y = evt.pageY; this.cancel = false;
+                        break;
+                    case 'touchmove':
+                        var px = evt.pageX, py = evt.pageY, x = this.x, y = this.y, t = this.t;
+                        if (px - x > t || x - px > t || py - y > t || y - py > t) this.cancel = true;
+                        break;
+                    case 'touchend':
+                        if (!this.cancel) this.handler.call(this.scope, evt);
+                        break;
+                }
+            },
+            destroy: function () {
+                var element = this.element;
+                Adapter.removeListener(element, 'touchstart', this);
+                Adapter.removeListener(element, 'touchmove', this);
+                Adapter.removeListener(element, 'touchend', this);
             }
-        },
-        destroy: function () {
-            var element = this.element;
-            removeListener(element, 'touchstart', this);
-            removeListener(element, 'touchmove', this);
-            removeListener(element, 'touchend', this);
-        }
+        })
+
+
     };
 
-
-    return Utils;
 });

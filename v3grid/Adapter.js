@@ -9,8 +9,9 @@ Ext.require([
     'Ext.dom.Element'
 ], function () {
 
-define('v3grid/Adapter', [], function () {
-    var Adapter = {
+    ClassDefReq('v3grid.Adapter', {
+        singleton: true,
+
         // properties
         hasTouch: !!('ontouchstart' in Ext.global),
         isWebKit: Ext.isWebKit,
@@ -31,6 +32,10 @@ define('v3grid/Adapter', [], function () {
         arrayRemove: Ext.Array.remove,
         arrayEach: Ext.Array.forEach,
         objEach: Ext.Object.each,
+
+        ctor: function () {
+            this.setTransformFunction();
+        },
 
         getClass: function (cls) { return Ext.isString(cls) ? Ext.ClassManager.get(cls) : cls; },
 
@@ -62,7 +67,7 @@ define('v3grid/Adapter', [], function () {
 
             if (typeof indexOrRule != 'number') {
                 // TODO: find a better indexOf that works on CSSRuleList
-                indexOrRule = Adapter.indexOf(Array.prototype.slice.call(rules, 0), indexOrRule);
+                indexOrRule = this.indexOf(Array.prototype.slice.call(rules, 0), indexOrRule);
             }
 
             if (sheet.removeRule) {
@@ -81,17 +86,17 @@ define('v3grid/Adapter', [], function () {
         listeners: [],
 
         addListener: function (element, event, handler, scope, useCapture) {
-            var wrapper = scope ? Adapter.bindScope(handler, scope) : handler;
+            var wrapper = scope ? this.bindScope(handler, scope) : handler;
             if (element.attachEvent) {
                 element.attachEvent('on' + event, wrapper);
             } else {
                 element.addEventListener(event, wrapper, useCapture || false);
             }
-            Adapter.listeners.push({ element:element, event:event, handler: handler, scope: scope, capture: useCapture, wrapper:wrapper });
+            this.listeners.push({ element:element, event:event, handler: handler, scope: scope, capture: useCapture, wrapper:wrapper });
         },
 
         removeListener: function (element, event, handler, scope, useCapture) {
-            var listeners =  Adapter.listeners;
+            var listeners =  this.listeners;
             var wrapper = null;
             for (var len = listeners.length, i = 0; i < len; ++i) {
                 var listener = listeners[i];
@@ -129,31 +134,31 @@ define('v3grid/Adapter', [], function () {
         getPageX: function (element) { return Ext.fly(element).getX(); },
         getPageY: function (element) { return Ext.fly(element).getY(); },
 
-        fixPageCoords: function (event) {
+        fixPageCoords: (Ext.isIE ? function (event) {
             if ( event.pageX == null && event.clientX != null ) {
                 var doc = document.documentElement, body = document.body;
                 event.pageX = event.clientX + (doc && doc.scrollLeft || body && body.scrollLeft || 0) - (doc && doc.clientLeft || body && body.clientLeft || 0);
                 event.pageY = event.clientY + (doc && doc.scrollTop  || body && body.scrollTop  || 0) - (doc && doc.clientTop  || body && body.clientTop  || 0);
             }
-        },
+        } : Ext.emptyFn),
 
         setTransformFunction: function () {
             this.transXPre = 'translateX(';
             this.transXPost = ')';
 
-            if (Adapter.isWebKit) {
+            if (this.isWebKit) {
                 this.setY = function (el, val) { el.style['-webkit-transform'] = 'translate3d(0,'+ val + 'px,0)'; };
                 this.setPos = function (el, x, y) {el.style['-webkit-transform'] = 'translate3d('+x+'px,'+y+'px,0)'; };
                 this.transXProp = '-webkit-transform';
 
                 // In FireFox I use top/left, because it seems to be faster
 
-//            } else if (Adapter.isFireFox) {
+//            } else if (this.isFireFox) {
 //                this.setY = function (el, val) { el.style['MozTransform'] = 'translate3d(0,'+ val + 'px,0)'; };
 //                this.transXProp = 'MozTransform';
 //                this.transXPre = 'translate3d(';
 //                this.transXPost = ',0,0)';
-            } else if (Adapter.ieVersion >= 9) {
+            } else if (this.ieVersion >= 9) {
                 this.setY = function (el, val) { el.style['msTransform'] = 'translateY('+ val + 'px)'; };
                 this.setPos = function (el, x, y) {el.style['msTransform'] = 'translate('+x+'px,'+y+'px)'; };
                 this.transXProp = 'msTransform';
@@ -167,14 +172,8 @@ define('v3grid/Adapter', [], function () {
         },
 
         setXCSS: function (rule, x) {
-            rule.style[Adapter.transXProp] = Adapter.transXPre + (x + 'px') + Adapter.transXPost;
+            rule.style[this.transXProp] = this.transXPre + (x + 'px') + this.transXPost;
         }
-    };
-
-    Adapter.setTransformFunction();
-    if (!Adapter.isIE) Adapter.fixPageCoords = Adapter.emptyFn;
-
-    return Adapter;
-});
+    });
 
 });

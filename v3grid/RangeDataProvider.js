@@ -1,31 +1,27 @@
-define('v3grid/RangeDataProvider',
-    ['v3grid/Adapter', 'v3grid/DataProvider'],
-    function (Adapter, DataProvider) {
-        var RangeDataProvider = function (config) {
-            Adapter.merge(this, config);
+ClassDefReq('v3grid.RangeDataProvider', {
+    extends: 'v3grid.DataProvider',
+    requires: ['v3grid.Adapter'],
 
-            this.offset = this.offset || 0;
-            if (this.dataProvider && this.dataProvider.addListener) {
-                this.dataProvider.addListener('cellChanged', this.invalidateCell, this);
-            }
-        };
+    ctor: function RangeDataProvider(config) {
+        v3grid.Adapter.merge(this, config);
 
-        RangeDataProvider.prototype = new DataProvider({
-            getRowCount: function () {
-                return this.count;
-            },
-            getRowId: function (row) {
-                return this.dataProvider.getRowId(row + this.offset);
-            },
-            getCellData: function (row, colDataIdx) {
-                return this.dataProvider.getCellData(row + this.offset, colDataIdx);
-            },
-            invalidateCell: function (row, column) {
-                var rrow = row - this.offset;
-                if (rrow >= 0 && rrow < this.count) this.fireEvent('cellChanged', rrow, column);
-            }
-        });
+        this.offset = this.offset || 0;
+        if (this.dataProvider && this.dataProvider.addListener) {
+            this.dataProvider.addListener('cellChanged', this.invalidateCell, this);
+        }
+    },
 
-        return RangeDataProvider;
+    getRowCount: function () {
+        return this.count;
+    },
+    getRowId: function (row) {
+        return this.dataProvider.getRowId(row + this.offset);
+    },
+    getCellData: function (row, colDataIdx) {
+        return this.dataProvider.getCellData(row + this.offset, colDataIdx);
+    },
+    invalidateCell: function (row, column) {
+        var rrow = row - this.offset;
+        if (rrow >= 0 && rrow < this.count) this.fireEvent('cellChanged', rrow, column);
     }
-);
+});

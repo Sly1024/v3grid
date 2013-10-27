@@ -1,20 +1,13 @@
-define('v3grid/TextFilter',
-    [],
-    function () {
-        var TextFilter = function (columnName) {
-            this.columnName = columnName;
-        };
+ClassDefReq('v3grid.TextFilter', {
+    filterString: '',
 
-        TextFilter.prototype = {
-            filterString: '',
+    ctor: function TextFilter(columnName) {
+        this.columnName = columnName;
+    },
 
-            filter: function (dataProvider, row) {
-                var value = dataProvider.getCellData(row, this.columnName);
-                if (typeof value !== 'string') value = value ? value.toString() : '';
-                return value.indexOf(this.filterString) >= 0;
-            }
-        };
-
-        return TextFilter;
+    filter: function (dataProvider, row) {
+        var value = dataProvider.getCellData(row, this.columnName);
+        if (typeof value !== 'string') value = value ? value.toString() : '';
+        return value.indexOf(this.filterString) >= 0;
     }
-);
+});

@@ -1,18 +1,15 @@
-define('v3grid/ArrayDataProvider', ['v3grid/Adapter', 'v3grid/DataProvider'],
-    function (Adapter, DataProvider) {
-        var ArrayDataProvider = function (data) {
-            this.data = data;
-        };
+ClassDefReq('v3grid.ArrayDataProvider', {
+    extends: 'v3grid.DataProvider',
+    requires: ['v3grid.Adapter'],
 
-        ArrayDataProvider.prototype = new DataProvider({
-            getRowCount: function () {
-                return this.data.length;
-            },
-            getCellData: function (row, colDataIdx) {
-                return this.data[row][colDataIdx];
-            }
-        });
+    ctor: function ArrayDataProvider(data) {
+        this.data = data;
+    },
 
-        return ArrayDataProvider;
+    getRowCount: function () {
+        return this.data.length;
+    },
+    getCellData: function (row, colDataIdx) {
+        return this.data[row][colDataIdx];
     }
-);
+});

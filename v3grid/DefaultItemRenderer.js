@@ -1,14 +1,9 @@
-define('v3grid/DefaultItemRenderer', [], function () {
-
-    var DefaultItemRenderer = function () {
+ClassDefReq('v3grid.DefaultItemRenderer', {
+    ctor: function DefaultItemRenderer() {
         this.view = document.createTextNode('');
-    };
+    },
 
-    DefaultItemRenderer.prototype = {
-        setData: function (data) {
-            this.view.nodeValue = data != null ? data.toString() : '';
-        }
-    };
-
-    return DefaultItemRenderer;
+    setData: function (data) {
+        this.view.nodeValue = data != null ? data.toString() : '';
+    }
 });

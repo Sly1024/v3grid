@@ -1,17 +1,7 @@
-define('v3grid/DefaultHeaderRenderer',
-    ['v3grid/Adapter', 'v3grid/DefaultItemRenderer'],
-    function (Adapter, DefaultItemRenderer) {
+ClassDefReq('v3grid.DefaultHeaderRenderer', {
+    extends: 'v3grid.DefaultItemRenderer',
 
-        var DefaultHeaderRenderer = function () {
-            DefaultItemRenderer.call(this);
-        };
-
-        DefaultHeaderRenderer.prototype = Adapter.merge({
-            updateData: function (grid, row, column) {
-                this.setData(column.header);
-            }
-        }, DefaultItemRenderer.prototype);
-
-        return DefaultHeaderRenderer;
+    updateData: function (grid, row, column) {
+        this.setData(column.header);
     }
-);
+});

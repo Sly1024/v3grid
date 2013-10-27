@@ -1,41 +1,28 @@
-define('v3grid/Grid',
-    ['v3grid/Adapter', 'v3grid/Utils', 'v3grid/GridView', 'v3grid/DragHelper', 'v3grid/DefaultItemRenderer',
-     'v3grid/DefaultHeaderRenderer', 'v3grid/ColumnManager', 'v3grid/Scrollbar', 'v3grid/RangeDataProvider', 'v3grid/DataProvider'],
-    function (Adapter, Utils, GridView, DragHelper, DefaultItemRenderer,
-              DefaultHeaderRenderer, ColumnManager, Scrollbar, RangeDataProvider, DataProvider) {
+ClassDefReq('v3grid.Grid',
+    ['v3grid.Adapter', 'v3grid.Utils', 'v3grid.ColumnManager', 'v3grid.Scrollbar'],
+    function (Adapter, Utils, ColumnManager, Scrollbar) {
 
-        var Grid = function (config) {
-            this.initProperties(config);
-            this.validateConfig(config);
-            this.initFeatures(config);
+        return {
+            extends: 'v3grid.Observable',
 
-            Adapter.merge(this, config);
+            requires: [
+                'v3grid.DataProvider', 'v3grid.RangeDataProvider',
+                'v3grid.DefaultItemRenderer', 'v3grid.DefaultHeaderRenderer',
+                'v3grid.GridView'
+            ],
 
-            this.createStyles();
-            this.createColumnManager();
-            this.createComponents();
-
-            this.updateHeaders();
-            if (this.viewsV == 2) this.allViews('dataChanged', [], 1, 1);
-            this.dataChanged();
-        };
-
-        // util function
-        function def(val, defVal) {
-            return val == null ? defVal : val;
-        }
-
-        Grid.prototype = {
             // static instance counter:
-            instanceCnt: 0,
+            statics: {
+                instanceCnt: 0
+            },
 
             rowHeight: 22,
             headerHeight: 22,
             defaultColumnWidth: 100,
             defaultColumnMinWidth: 20,
 
-            itemRenderer: DefaultItemRenderer,
-            headerRenderer: DefaultHeaderRenderer,
+            itemRenderer: 'v3grid.DefaultItemRenderer',
+            headerRenderer: 'v3grid.DefaultHeaderRenderer',
 
             columnBatchSize: 1,
             rowBatchSize: 2,
@@ -56,8 +43,25 @@ define('v3grid/Grid',
             CLS_HEADER_RES : 'v3grid-header-resize',
             CLS_SCROLLBAR  : 'v3grid-scrollbar',
 
+            ctor: function Grid(config) {
+                this.initProperties(config);
+                this.validateConfig(config);
+                this.initFeatures(config);
+
+                Adapter.merge(this, config);
+
+                this.createStyles();
+                this.createColumnManager();
+                this.createComponents();
+
+                this.updateHeaders();
+                if (this.viewsV == 2) this.allViews('dataChanged', [], 1, 1);
+                this.dataChanged();
+                this.fireEvent('initialized', this);
+            },
+
             initProperties: function (config) {
-                var num = this.instanceNum = ++Grid.prototype.instanceCnt;
+                var num = this.instanceNum = ++this.constructor.instanceCnt;
 
                 // generated CSS classes
                 this.CLS_CELL        = 'v3grid-' + num + '-cell';
@@ -178,6 +182,11 @@ define('v3grid/Grid',
             },
 
             fixColumnConfig: function (col) {
+                // util function
+                function def(val, defVal) {
+                    return val == null ? defVal : val;
+                }
+
                 // clone column config obj
                 // TODO: think about creating a column class
                 col = Adapter.merge({}, col);
@@ -298,7 +307,7 @@ define('v3grid/Grid',
                     viewDPs[1] = dp;
                 } else {
                     for (var dpy = 1; dpy < viewsV; ++dpy) {
-                        viewDPs[dpy] = new RangeDataProvider({dataProvider: dp});
+                        viewDPs[dpy] = new v3grid.RangeDataProvider({dataProvider: dp});
                     }
                 }
 
@@ -327,7 +336,7 @@ define('v3grid/Grid',
 
                         if (y == 0) {
                             // header view
-                            views[0][x] = new GridView({
+                            views[0][x] = new v3grid.GridView({
                                 name: viewClass,    // for debugging
                                 isHeader: true,
                                 isLocked: x != scrollViewX,
@@ -336,11 +345,12 @@ define('v3grid/Grid',
                                 container: container,
                                 rowHeight: this.headerHeight,
                                 colMgr: hRanges[x],
+                                leafColMgr: ranges[x],
                                 dataProvider: viewDPs[0],
                                 availableRenderers: this.availableRenderers,
                                 rowBatchSize: 1,
                                 columnBatchSize: 1,
-                                CLS_CELL       : this.CLS_CELL,
+                                CLS_CELL       : this.CLS_CELL + ' v3grid-header-cell',
                                 CLS_ROW        : this.CLS_HEADER_ROW + ' ' + this.CLS_HEADER_SIZE, // + (x == scrollViewX ? '' : ' locked'),
                                 CLS_COLUMN_MOVE: this.CLS_HEADER_MOVE,
                                 CLS_COLUMN_RES : this.CLS_HEADER_RES,
@@ -348,7 +358,7 @@ define('v3grid/Grid',
                             });
                             headerContainer.appendChild(container);
                         } else {
-                            views[y][x] = new GridView({
+                            views[y][x] = new v3grid.GridView({
                                 name: viewClass,    // for debugging
                                 grid: this,
                                 table: table,
@@ -415,7 +425,7 @@ define('v3grid/Grid',
             },
 
             createHeaderDataProvider: function () {
-                return new DataProvider({
+                return new v3grid.DataProvider({
                     getRowCount: function () { return 1; }
                 });
             },
@@ -763,7 +773,5 @@ define('v3grid/Grid',
                 this.allViews('mouseIsOver', [-1, -1], 1);
             }
         };
-
-        return Grid;
     }
 );

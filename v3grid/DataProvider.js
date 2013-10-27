@@ -1,22 +1,18 @@
-define('v3grid/DataProvider',
-    ['v3grid/Adapter', 'v3grid/Observable'],
-    function (Adapter, Observable) {
-        var DataProvider = function (config) {
-            if (config) Adapter.merge(this, config);
-        };
+ClassDefReq('v3grid.DataProvider', {
+    extends: 'v3grid.Observable',
+    requires: ['v3grid.Adapter'],
 
-        DataProvider.prototype = new Observable({
-            getRowId: function (row) {
-                return row;
-            },
-            refresh: function () {
-                this.fireEvent('dataChanged');
-            },
-            invalidateCell: function (row, column) {
-                this.fireEvent('cellChanged', row, column);
-            }
-        });
+    ctor: function DataProvider(config) {
+        if (config) v3grid.Adapter.merge(this, config);
+    },
 
-        return DataProvider;
+    getRowId: function (row) {
+        return row;
+    },
+    refresh: function () {
+        this.fireEvent('dataChanged');
+    },
+    invalidateCell: function (row, column) {
+        this.fireEvent('cellChanged', row, column);
     }
-);
+});

@@ -1,4 +1,4 @@
-define('v3grid/ColumnManagerx',
+define('v3grid/ColumnManager',
     ['v3grid/Adapter', 'v3grid/Utils', 'v3grid/ColumnRange'],
     function (Adapter, Utils, Range) {
 

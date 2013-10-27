@@ -1,19 +1,17 @@
 define('v3grid/DragHelper', ['v3grid/Adapter'], function (Adapter) {
-    var emptyFn = Adapter.emptyFn,
-        addListener = Adapter.addListener,
-        removeListener = Adapter.removeListener;
+    var emptyFn = Adapter.emptyFn;
 
     var DragHelper = function (config) {
         Adapter.merge(this, config);
 
         if (Adapter.hasTouch) {
-            addListener(this.element, 'touchstart', this.onMouseDown, this);
+            Adapter.addListener(this.element, 'touchstart', this.onMouseDown, this);
         } else {
-            addListener(this.element, 'mousedown', this.onMouseDown, this);
+            Adapter.addListener(this.element, 'mousedown', this.onMouseDown, this);
         }
 
         this.eventElement = this.captureMouse ? document.body : this.element;
-        addListener(this.element, 'click', this.preventClick, this, true);
+        Adapter.addListener(this.element, 'click', this.preventClick, this, true);
     };
 
     DragHelper.prototype = {
@@ -43,12 +41,12 @@ define('v3grid/DragHelper', ['v3grid/Adapter'], function (Adapter) {
             var evtEl = this.eventElement;
 
             if (Adapter.hasTouch) {
-                addListener(evtEl, 'touchend', this.onMouseUp, this);
-                addListener(evtEl, 'touchmove', this.onMouseMove, this);
+                Adapter.addListener(evtEl, 'touchend', this.onMouseUp, this);
+                Adapter.addListener(evtEl, 'touchmove', this.onMouseMove, this);
             } else {
-                addListener(evtEl, 'mouseup', this.onMouseUp, this);
-                addListener(evtEl, 'mousemove', this.onMouseMove, this);
-                addListener(evtEl, 'mouseleave', this.onMouseLeave, this);
+                Adapter.addListener(evtEl, 'mouseup', this.onMouseUp, this);
+                Adapter.addListener(evtEl, 'mousemove', this.onMouseMove, this);
+                Adapter.addListener(evtEl, 'mouseleave', this.onMouseLeave, this);
             }
 
             if (this.startDragOnDown) {
@@ -78,12 +76,12 @@ define('v3grid/DragHelper', ['v3grid/Adapter'], function (Adapter) {
 
             var evtEl = this.eventElement;
             if (Adapter.hasTouch) {
-                removeListener(evtEl, 'touchend', this.onMouseUp, this);
-                removeListener(evtEl, 'touchmove', this.onMouseMove, this);
+                Adapter.removeListener(evtEl, 'touchend', this.onMouseUp, this);
+                Adapter.removeListener(evtEl, 'touchmove', this.onMouseMove, this);
             } else {
-                removeListener(evtEl, 'mouseup', this.onMouseUp, this);
-                removeListener(evtEl, 'mousemove', this.onMouseMove, this);
-                removeListener(evtEl, 'mouseleave', this.onMouseLeave, this);
+                Adapter.removeListener(evtEl, 'mouseup', this.onMouseUp, this);
+                Adapter.removeListener(evtEl, 'mousemove', this.onMouseMove, this);
+                Adapter.removeListener(evtEl, 'mouseleave', this.onMouseLeave, this);
             }
 
             this.wasDragging = this.isDragging;
