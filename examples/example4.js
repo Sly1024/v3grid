@@ -1,7 +1,7 @@
 require(['v3grid/Grid', 'v3grid/Adapter', 'v3grid/TreeSortDataProvider', 'v3grid/TreeDataProvider', 'v3grid/TreeMapper',
     'v3grid/TreeFilterDataProvider', 'v3grid/FilterHeaderRendererInjector', 'v3grid/SortHeaderRendererInjector',
     'v3grid/ColumnSelector', 'v3grid/FormatterItemRenderer', 'v3grid/ColumnDragger', 'v3grid/Observable'],
-    function (V3Grid, V3GridAdapter, TreeSortDataProvider, TreeDoataProvider, TreeMapper,
+    function (V3Grid, V3GridAdapter, TreeSortDataProvider, TreeDataProvider, TreeMapper,
               TreeFilterDataProvider, FilterHeaderRendererInjector, SortHeaderRendererInjector,
               ColumnSelector, FormatterRenderer, ColumnDragger, Observable) {
         Ext.namespace('v3grid');
@@ -44,7 +44,7 @@ require(['v3grid/Grid', 'v3grid/Adapter', 'v3grid/TreeSortDataProvider', 'v3grid
                     return (nodeId == '') ? [] : nodeId.split(',');
                 }
 
-                var tdp = new Observable({
+                var tdp = new TreeDataProvider({
 
                     // TreeDataProvider API - start
                     getRootId: function () {

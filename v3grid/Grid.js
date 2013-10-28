@@ -61,7 +61,7 @@ ClassDefReq('v3grid.Grid',
             },
 
             initProperties: function (config) {
-                var num = this.instanceNum = ++this.constructor.instanceCnt;
+                var num = this.instanceNum = ++this.ctor.instanceCnt;
 
                 // generated CSS classes
                 this.CLS_CELL        = 'v3grid-' + num + '-cell';
