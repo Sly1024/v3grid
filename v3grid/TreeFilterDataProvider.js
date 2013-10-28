@@ -1,63 +1,57 @@
-define('v3grid/TreeFilterDataProvider',
-    ['v3grid/Adapter', 'v3grid/FilterDataProviderBase'],
-    function (Adapter, FilterDataProviderBase) {
+ClassDefReq('v3grid.TreeFilterDataProvider', {
+    extends: 'v3grid.FilterDataProviderBase',
 
-        var TreeFilterDataProvider = function (config) {
-            FilterDataProviderBase.call(this, config);
-            this.update();
-        };
+    ctor: function TreeFilterDataProvider(config) {
+        this.super.ctor.call(this, config);
+        this.update();
+    },
 
-        TreeFilterDataProvider.prototype = new FilterDataProviderBase({
-            // TreeDataProvider API - start
-            getRootId: function () {
-                return this.dataProvider.getRootId();
-            },
+    // TreeDataProvider API - start
+    getRootId: function () {
+        return this.dataProvider.getRootId();
+    },
 
-            getChildrenInfo: function (nodeId) {
-                return this.nodes[nodeId];
-            },
+    getChildrenInfo: function (nodeId) {
+        return this.nodes[nodeId];
+    },
 
-            getCellData: function (nodeId, colDataIdx) {
-                return this.dataProvider.getCellData(nodeId, colDataIdx);
-            },
-            // TreeDataProvider API - end
+    getCellData: function (nodeId, colDataIdx) {
+        return this.dataProvider.getCellData(nodeId, colDataIdx);
+    },
+    // TreeDataProvider API - end
 
-            update: function () {
-                var nodes = this.nodes = {},
-                    filters = this.filters,
-                    dataProvider = this.dataProvider;
+    update: function () {
+        var nodes = this.nodes = {},
+            filters = this.filters,
+            dataProvider = this.dataProvider;
 
-                function filterChildren(nodeId) {
-                    var filtered = [],
-                        childrenInfo = dataProvider.getChildrenInfo(nodeId).slice(0),
-                        rowCount = childrenInfo ? childrenInfo.length : 0,
-                        idx = 0;
+        function filterChildren(nodeId) {
+            var filtered = [],
+                childrenInfo = dataProvider.getChildrenInfo(nodeId).slice(0),
+                rowCount = childrenInfo ? childrenInfo.length : 0,
+                idx = 0;
 
-                    for (var i = 0; i < rowCount; ++i) {
-                        var pass = true,
-                            chCount = filterChildren(childrenInfo[i].id);
+            for (var i = 0; i < rowCount; ++i) {
+                var pass = true,
+                    chCount = filterChildren(childrenInfo[i].id);
 
-                        if (chCount == 0) {
-                            for (var len = filters.length, f = 0; f < len; ++f) {
-                                if (!filters[f].filter(dataProvider, childrenInfo[i].id)) {
-                                    pass = false;
-                                    break;
-                                }
-                            }
-                        }
-                        if (pass) {
-                            childrenInfo[i].childCount = chCount;
-                            filtered[idx++] = childrenInfo[i];
+                if (chCount == 0) {
+                    for (var len = filters.length, f = 0; f < len; ++f) {
+                        if (!filters[f].filter(dataProvider, childrenInfo[i].id)) {
+                            pass = false;
+                            break;
                         }
                     }
-                    nodes[nodeId] = filtered;
-                    return filtered.length;
                 }
-
-                filterChildren(dataProvider.getRootId());
+                if (pass) {
+                    childrenInfo[i].childCount = chCount;
+                    filtered[idx++] = childrenInfo[i];
+                }
             }
-        });
+            nodes[nodeId] = filtered;
+            return filtered.length;
+        }
 
-        return TreeFilterDataProvider;
+        filterChildren(dataProvider.getRootId());
     }
-);
+});

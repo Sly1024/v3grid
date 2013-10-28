@@ -1,19 +1,18 @@
-define('v3grid/TreeDataProvider',
-    ['v3grid/Adapter', 'v3grid/Observable'],
-    function (Adapter, Observable) {
-
-        var TreeDataProvider = function (config) {
-            Adapter.merge(this, config);
-
-            this.childrenField = this.childrenField || 'children';
-            this.setData(this.data, true);
-        };
-
+ClassDefReq('v3grid.TreeDataProvider', ['v3grid.Adapter'],
+    function (Adapter) {
         function getTreeIdx(nodeId) {
             return (nodeId == '') ? [] : nodeId.split(',');
         }
 
-        TreeDataProvider.prototype = new Observable({
+        return {
+            extends: 'v3grid.Observable',
+
+            ctor: function TreeDataProvider(config) {
+                Adapter.merge(this, config);
+
+                this.childrenField = this.childrenField || 'children';
+                this.setData(this.data, true);
+            },
 
             setData: function (data, noUpdate) {
                 if (Adapter.isArray(data)) {
@@ -64,8 +63,6 @@ define('v3grid/TreeDataProvider',
 
                 return node;
             }
-        });
-
-        return TreeDataProvider;
+        };
     }
 );

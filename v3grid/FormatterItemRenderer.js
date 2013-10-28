@@ -1,15 +1,8 @@
-define('v3grid/FormatterItemRenderer', [], function () {
+ClassDefReq('v3grid.FormatterItemRenderer', {
+    extends: 'v3grid.DefaultItemRenderer',
 
-    var FormatterItemRenderer = function () {
-        this.view = document.createTextNode('');
-    };
-
-    FormatterItemRenderer.prototype = {
-        updateData: function (grid, row, col) {
-            var data = grid.dataProvider.getCellData(row, col.dataIndex);
-            this.view.nodeValue = data != null ? col.formatter(data) : '';
-        }
-    };
-
-    return FormatterItemRenderer;
+    updateData: function (grid, row, col) {
+        var data = grid.dataProvider.getCellData(row, col.dataIndex);
+        this.view.nodeValue = data != null ? col.formatter(data) : '';
+    }
 });

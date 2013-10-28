@@ -1,32 +1,32 @@
-define('v3grid/TreeRenderer',
-    ['v3grid/Adapter', 'v3grid/Utils'],
+ClassDefReq('v3grid.TreeRenderer',
+    ['v3grid.Adapter', 'v3grid.Utils'],
     function (Adapter, Utils) {
 
         var open_class = 'v3grid-treenode-open';
         var closed_class = 'v3grid-treenode-closed';
+        return {
 
-        var TreeRenderer = function (config) {
-            this.config = config;
+            ctor: function TreeRenderer(config) {
+                this.config = config;
 
-            var temp = document.createElement('div');
-            temp.innerHTML = '<table width="100%" height="100%"><tr><td align="right" valign="middle" style="width: 16px">' +
-                '<img width="9" height="9" style="padding: 2px 10px 2px 2px;" src="resources/images/s.gif"></td><td style="height:100%"><span></span></td></tr></table>';
-            this.view = temp.firstChild;
-            this.rendererContainer = this.view.getElementsByTagName('span')[0];
+                var temp = document.createElement('div');
+                temp.innerHTML = '<table width="100%" height="100%"><tr><td align="right" valign="middle" style="width: 16px">' +
+                    '<img width="9" height="9" style="padding: 2px 10px 2px 2px;" src="resources/images/s.gif"></td><td style="height:100%"><span></span></td></tr></table>';
+                this.view = temp.firstChild;
+                this.rendererContainer = this.view.getElementsByTagName('span')[0];
 
-            var indicator = this.openIndicator = this.view.getElementsByTagName('img')[0];
+                var indicator = this.openIndicator = this.view.getElementsByTagName('img')[0];
 
-            if (Adapter.hasTouch) {
-                this.tapHandler = new Utils.TapHandler(indicator, this.clickHandler, this);
-            } else {
-                Adapter.addListener(indicator, 'click', this.clickHandler, this);
-            }
+                if (Adapter.hasTouch) {
+                    this.tapHandler = new Utils.TapHandler(indicator, this.clickHandler, this);
+                } else {
+                    Adapter.addListener(indicator, 'click', this.clickHandler, this);
+                }
 
-            this.updateRenderer(config);
-            this.mapper = config.treeMapper;
-        };
+                this.updateRenderer(config);
+                this.mapper = config.treeMapper;
+            },
 
-        TreeRenderer.prototype = {
             updateRenderer: function (config) {
                 while (this.rendererContainer.firstChild) this.rendererContainer.removeChild(this.rendererContainer.firstChild);
                 this.renderer = new config.renderer(config.rendererConfig);
@@ -64,6 +64,5 @@ define('v3grid/TreeRenderer',
             }
         };
 
-        return TreeRenderer;
     }
 );

@@ -1,20 +1,6 @@
-define('v3grid/DragHelper', ['v3grid/Adapter'], function (Adapter) {
+ClassDefReq('v3grid.DragHelper', ['v3grid.Adapter'], function (Adapter) {
     var emptyFn = Adapter.emptyFn;
-
-    var DragHelper = function (config) {
-        Adapter.merge(this, config);
-
-        if (Adapter.hasTouch) {
-            Adapter.addListener(this.element, 'touchstart', this.onMouseDown, this);
-        } else {
-            Adapter.addListener(this.element, 'mousedown', this.onMouseDown, this);
-        }
-
-        this.eventElement = this.captureMouse ? document.body : this.element;
-        Adapter.addListener(this.element, 'click', this.preventClick, this, true);
-    };
-
-    DragHelper.prototype = {
+    return {
         // public properties
         endDragOnLeave: true,
         startDragOnDown: false,
@@ -27,6 +13,19 @@ define('v3grid/DragHelper', ['v3grid/Adapter'], function (Adapter) {
 
         isDragging: false,
 //        tangent:    Math.tan(22.5/180*Math.PI),
+
+        ctor: function DragHelper(config) {
+            Adapter.merge(this, config);
+
+            if (Adapter.hasTouch) {
+                Adapter.addListener(this.element, 'touchstart', this.onMouseDown, this);
+            } else {
+                Adapter.addListener(this.element, 'mousedown', this.onMouseDown, this);
+            }
+
+            this.eventElement = this.captureMouse ? document.body : this.element;
+            Adapter.addListener(this.element, 'click', this.preventClick, this, true);
+        },
 
         // destroy() ??
 
@@ -139,8 +138,5 @@ define('v3grid/DragHelper', ['v3grid/Adapter'], function (Adapter) {
             if (evt.preventDefault) evt.preventDefault();
             return false;
         }
-
     };
-
-    return DragHelper;
 });

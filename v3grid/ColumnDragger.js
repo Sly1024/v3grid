@@ -1,22 +1,10 @@
-define('v3grid/ColumnDragger',
-    ['v3grid/Adapter', 'v3grid/Utils', 'v3grid/DragHelper'],
-    function (Adapter, Utils, DragHelper) {
-
-        var ColumnDragger = function () {
-
-        };
-
-        ColumnDragger.prototype = {
+ClassDefReq('v3grid.ColumnDragger',
+    ['v3grid.Adapter', 'v3grid.Utils', 'v3grid.DragHelper'],
+    function (Adapter, Utils) {
+        return {
             init: function (grid, config) {
-                var origCreateComp = grid.createComponents,
-                    dragger = this;
-
                 this.grid = grid;
-
-                grid.createComponents = function () {
-                    origCreateComp.call(this);
-                    dragger.attachHandlers();
-                }
+                grid.addListener('initialized', this.attachHandlers, this);
             },
 
             attachHandlers: function () {
@@ -33,7 +21,7 @@ define('v3grid/ColumnDragger',
                     view.dragColumn = this.dragColumn;
                     view.correctTargetPos = this.correctTargetPos;
 
-                    view.dragHelper = new DragHelper({
+                    view.dragHelper = new v3grid.DragHelper({
                         element: view.table,
                         scope: view,
                         dragStart: this.onHeaderDragStart,
@@ -215,7 +203,5 @@ define('v3grid/ColumnDragger',
                 return pos;
             }
         };
-
-        return ColumnDragger;
     }
 );

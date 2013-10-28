@@ -1,7 +1,5 @@
-define('v3grid/ColumnSelector', ['v3grid/Adapter'], function (Adapter) {
-    var ColumnSelector = function () {};
-
-    ColumnSelector.prototype = {
+ClassDefReq('v3grid.ColumnSelector', ['v3grid.Adapter'], function (Adapter) {
+    return {
         CLS: 'v3grid-column-selector',
         CLS_ITEM: 'v3grid-column-selector-item',
 
@@ -88,6 +86,4 @@ define('v3grid/ColumnSelector', ['v3grid/Adapter'], function (Adapter) {
             }
         }
     };
-
-    return ColumnSelector;
 });

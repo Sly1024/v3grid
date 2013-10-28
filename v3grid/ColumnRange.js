@@ -1,28 +1,28 @@
-define('v3grid/ColumnRange',
-    ['v3grid/Adapter', 'v3grid/Observable', 'v3grid/Utils'],
-    function (Adapter, Observable, Utils) {
+ClassDefReq('v3grid.ColumnRange',
+    ['v3grid.Adapter', 'v3grid.Utils'],
+    function (Adapter, Utils) {
+        return {
+            extends: 'v3grid.Observable',
 
-        var ColumnRange = function (columns, useTopColumns) {
-            this.maxDepth = 0;
-            this.columns = useTopColumns ? columns : this.getLeafColumns(columns);
+            ctor: function ColumnRange(columns, useTopColumns) {
+                this.maxDepth = 0;
+                this.columns = useTopColumns ? columns : this.getLeafColumns(columns);
 
-            this.posX = new Array(this.columns.length+1);
+                this.posX = new Array(this.columns.length+1);
 
-            /**
-             * [dataIdx] = array of indices of columns
-             * @type {Object}
-             */
-            this.colDataIdx2Idxs = {};
+                /**
+                 * [dataIdx] = array of indices of columns
+                 * @type {Object}
+                 */
+                this.colDataIdx2Idxs = {};
 
-            /**
-             * [colId] = index in columns
-             * @type {Object}
-             */
-            this.colId2Idx = {};
-            this.generateColumnMap();
-        };
-
-        ColumnRange.prototype = Adapter.merge(new Observable(), {
+                /**
+                 * [colId] = index in columns
+                 * @type {Object}
+                 */
+                this.colId2Idx = {};
+                this.generateColumnMap();
+            },
 
             getTotalWidth: function () {
                 return this.posX[this.columns.length];
@@ -179,8 +179,6 @@ define('v3grid/ColumnRange',
                 Adapter.setXCSS(col.layoutRule, xPos);
                 col.layoutRule.style.width = col.actWidth + 'px';
             }
-        });
-
-        return ColumnRange;
+        };
     }
 );

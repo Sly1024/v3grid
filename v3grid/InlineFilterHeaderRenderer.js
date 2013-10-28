@@ -1,26 +1,26 @@
-define('v3grid/InlineFilterHeaderRenderer',
+ClassDefReq('v3grid.InlineFilterHeaderRenderer',
     ['v3grid/Adapter'],
     function (Adapter) {
-        var InlineFilterHeaderRenderer = function (config) {
-            this.config = config;
+        return {
+            ctor: function InlineFilterHeaderRenderer(config) {
+                this.config = config;
 
-            var temp = document.createElement('div');
-            temp.innerHTML = '<table width="100%" height="100%"><tr style="height:100%"><td></td></tr><tr><td valign="bottom"><input type="text" style="width: 100%"></td></tr></table>';
-            this.view = temp.firstChild;
-            this.textInput = this.view.getElementsByTagName('input')[0];
+                var temp = document.createElement('div');
+                temp.innerHTML = '<table width="100%" height="100%"><tr style="height:100%"><td></td></tr><tr><td valign="bottom"><input type="text" style="width: 100%"></td></tr></table>';
+                this.view = temp.firstChild;
+                this.textInput = this.view.getElementsByTagName('input')[0];
 
-            this.bufferedInputChanged = Adapter.createBuffered(this.textInputChanged, 200, this);
+                this.bufferedInputChanged = Adapter.createBuffered(this.textInputChanged, 200, this);
 
-            Adapter.addListener(this.textInput, 'change', this.bufferedInputChanged, this);
-            Adapter.addListener(this.textInput, 'keydown', this.bufferedInputChanged, this);
-            Adapter.addListener(this.textInput, 'paste', this.bufferedInputChanged, this);
-            Adapter.addListener(this.textInput, 'input', this.bufferedInputChanged, this);
+                Adapter.addListener(this.textInput, 'change', this.bufferedInputChanged, this);
+                Adapter.addListener(this.textInput, 'keydown', this.bufferedInputChanged, this);
+                Adapter.addListener(this.textInput, 'paste', this.bufferedInputChanged, this);
+                Adapter.addListener(this.textInput, 'input', this.bufferedInputChanged, this);
 
-            this.rendererContainer = this.view.getElementsByTagName('td')[0];
-            this.updateRenderer(config);
-        };
+                this.rendererContainer = this.view.getElementsByTagName('td')[0];
+                this.updateRenderer(config);
+            },
 
-        InlineFilterHeaderRenderer.prototype = {
             updateRenderer: function (config) {
                 while (this.rendererContainer.firstChild) this.rendererContainer.removeChild(this.rendererContainer.firstChild);
                 this.renderer = new config.renderer(config.rendererConfig);
@@ -53,7 +53,5 @@ define('v3grid/InlineFilterHeaderRenderer',
                 filterDP.refresh();
             }
         };
-
-        return InlineFilterHeaderRenderer;
     }
 );

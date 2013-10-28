@@ -1,136 +1,131 @@
-define('v3grid/TreeMapper',
-    ['v3grid/Adapter', 'v3grid/Observable', 'v3grid/TreeRenderer'],
-    function (Adapter, Observable, TreeRenderer) {
+ClassDefReq('v3grid.TreeMapper', {
+    extends: 'v3grid.Observable',
+    requires:['v3grid.Adapter',  'v3grid.TreeRenderer'],
 
-        var TreeMapper = function (config) {
-            Adapter.merge(this, config);
+    treeColumnIdx: 0,
+    indentation: 16,
 
-            this.renderer = this.renderer || TreeRenderer;
+    ctor: function TreeMapper(config) {
+        v3grid.Adapter.merge(this, config);
 
-            this.openNodes = {};    // TODO: when to flush??
-            this.refresh();
+        this.renderer = this.renderer || v3grid.TreeRenderer;
 
-            if (this.dataProvider.addListener) {
-                this.dataProvider.addListener('dataChanged', this.refresh, this);
-            }
+        this.openNodes = {};    // TODO: when to flush??
+        this.refresh();
+
+        if (this.dataProvider.addListener) {
+            this.dataProvider.addListener('dataChanged', this.refresh, this);
+        }
+    },
+
+    init: function (grid, config) {
+        var column = config.columns[this.treeColumnIdx];
+
+        this.treeColumnDataIdx = column.dataIndex;
+        var rendererConfig = {
+            renderer:  grid.getRenderer(column.renderer || grid.itemRenderer),
+            rendererConfig: column.rendererConfig,
+            treeMapper: this
         };
 
-        TreeMapper.prototype = new Observable({
-            treeColumnIdx: 0,
-            indentation: 16,
+        column.renderer = this.renderer;
+        column.rendererConfig = rendererConfig;
+    },
 
-            init: function (grid, config) {
-                var column = config.columns[this.treeColumnIdx];
+    // DataProvider API - start
+    getRowCount: function () {
+        return this.nodes.length;
+    },
 
-                this.treeColumnDataIdx = column.dataIndex;
-                var rendererConfig = {
-                    renderer:  grid.getRenderer(column.renderer || grid.itemRenderer),
-                    rendererConfig: column.rendererConfig,
-                    treeMapper: this
-                };
+    getRowId: function (row) {
+        return this.nodes[row].id;
+    },
 
-                column.renderer = this.renderer;
-                column.rendererConfig = rendererConfig;
-            },
+    getCellData: function (row, colDataIdx) {
+        if (colDataIdx == '__treemapper_row') return row;
+        return this.dataProvider.getCellData(this.nodes[row].id, colDataIdx);
+    },
 
-            // DataProvider API - start
-            getRowCount: function () {
-                return this.nodes.length;
-            },
+    refresh: function () {
+        var nodes = this.nodes = [],
+            openNodes = this.openNodes;
 
-            getRowId: function (row) {
-                return this.nodes[row].id;
-            },
+        this.nodeCache = {};
+        this.expandNode(-1, true);
 
-            getCellData: function (row, colDataIdx) {
-                if (colDataIdx == '__treemapper_row') return row;
-                return this.dataProvider.getCellData(this.nodes[row].id, colDataIdx);
-            },
+        for (var i = 0; i < nodes.length; ++i) {
+            if (openNodes[nodes[i].id]) this.expandNode(i, true);
+        }
+        this.fireEvent('dataChanged');
+    },
+    // DataProvider API - end
 
-            refresh: function () {
-                var nodes = this.nodes = [],
-                    openNodes = this.openNodes;
+    expandNode: function(linearIdx, suppressEvent) {
+        var node = this.nodes[linearIdx],
+            nodeId = node ? node.id : this.dataProvider.getRootId(),
+            childrenInfo = this.nodeCache[nodeId] || this.dataProvider.getChildrenInfo(nodeId);
 
-                this.nodeCache = {};
-                this.expandNode(-1, true);
+        if (childrenInfo && childrenInfo.length) {
+            Array.prototype.splice.apply(this.nodes, [linearIdx+1, 0].concat(childrenInfo));
+            this.openNodes[nodeId] = true;
+            if (!suppressEvent) this.fireEvent('dataChanged');
+            return true;
+        }
 
-                for (var i = 0; i < nodes.length; ++i) {
-                    if (openNodes[nodes[i].id]) this.expandNode(i, true);
-                }
-                this.fireEvent('dataChanged');
-            },
-            // DataProvider API - end
+        return false;
+    },
 
-            expandNode: function(linearIdx, suppressEvent) {
-                var node = this.nodes[linearIdx],
-                    nodeId = node ? node.id : this.dataProvider.getRootId(),
-                    childrenInfo = this.nodeCache[nodeId] || this.dataProvider.getChildrenInfo(nodeId);
+    collapseNode: function (linearIdx, suppressEvent) {
+        var nodes = this.nodes,
+            node = nodes[linearIdx],
+            nodeId = node ? node.id : '',
+            endIdx = ++linearIdx,
+            depth = node.depth,
+            len = nodes.length;
 
-                if (childrenInfo && childrenInfo.length) {
-                    Array.prototype.splice.apply(this.nodes, [linearIdx+1, 0].concat(childrenInfo));
-                    this.openNodes[nodeId] = true;
-                    if (!suppressEvent) this.fireEvent('dataChanged');
-                    return true;
-                }
+        while (endIdx < len && nodes[endIdx].depth > depth) ++endIdx;
 
-                return false;
-            },
+        if (linearIdx < endIdx) {
+            this.nodeCache[nodeId] = nodes.splice(linearIdx, endIdx-linearIdx);
+            delete this.openNodes[nodeId];
+            if (!suppressEvent) this.fireEvent('dataChanged');
+            return true;
+        }
 
-            collapseNode: function (linearIdx, suppressEvent) {
-                var nodes = this.nodes,
-                    node = nodes[linearIdx],
-                    nodeId = node ? node.id : '',
-                    endIdx = ++linearIdx,
-                    depth = node.depth,
-                    len = nodes.length;
+        return false;
+    },
 
-                while (endIdx < len && nodes[endIdx].depth > depth) ++endIdx;
+    /*
+     * level:
+     * 0 -> close
+     * n -> expand to level n
+     * Infinity -> expand all
+     */
+    expandToLevel: function (level) {
+        var nodes = this.nodes,
+            openNodes = this.openNodes;
 
-                if (linearIdx < endIdx) {
-                    this.nodeCache[nodeId] = nodes.splice(linearIdx, endIdx-linearIdx);
-                    delete this.openNodes[nodeId];
-                    if (!suppressEvent) this.fireEvent('dataChanged');
-                    return true;
-                }
+        for (var i = 0; i < nodes.length; ++i) {
+            var node = nodes[i],
+                shouldBeOpen = node.depth <= level,
+                nodeId = node ? node.id : '';
 
-                return false;
-            },
-
-            /*
-             * level:
-             * 0 -> close
-             * n -> expand to level n
-             * Infinity -> expand all
-             */
-            expandToLevel: function (level) {
-                var nodes = this.nodes,
-                    openNodes = this.openNodes;
-
-                for (var i = 0; i < nodes.length; ++i) {
-                    var node = nodes[i],
-                        shouldBeOpen = node.depth <= level,
-                        nodeId = node ? node.id : '';
-
-                    if (openNodes[nodeId]) {
-                        if (!shouldBeOpen) this.collapseNode(i, true);
-                    } else {
-                        if (shouldBeOpen) this.expandNode(i, true);
-                    }
-                }
-
-                this.fireEvent('dataChanged');
-            },
-
-            toggleNode: function (row, evt) {
-                var node = this.nodes[row];
-                if (this.openNodes[node.id]) {
-                    this.collapseNode(row);
-                } else {
-                    this.expandNode(row);
-                }
+            if (openNodes[nodeId]) {
+                if (!shouldBeOpen) this.collapseNode(i, true);
+            } else {
+                if (shouldBeOpen) this.expandNode(i, true);
             }
-        });
+        }
 
-        return TreeMapper;
+        this.fireEvent('dataChanged');
+    },
+
+    toggleNode: function (row, evt) {
+        var node = this.nodes[row];
+        if (this.openNodes[node.id]) {
+            this.collapseNode(row);
+        } else {
+            this.expandNode(row);
+        }
     }
-);
+});

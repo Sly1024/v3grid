@@ -1,33 +1,32 @@
-define('v3grid/ColumnManager',
-    ['v3grid/Adapter', 'v3grid/Utils', 'v3grid/ColumnRange'],
-    function (Adapter, Utils, Range) {
+ClassDefReq('v3grid.ColumnManager',
+    ['v3grid.Adapter', 'v3grid.Utils'],
+    function (Adapter, Utils) {
+        return {
+            extends: 'v3grid.ColumnRange',
 
-        var ColumnManager = function (grid, columns, useTopColumns) {
-            this.grid = grid;
-            this.sheet = grid.styleSheet;
-            this.lastColId = 0;
-            this.ranges = [];
-            this.rangeStart = [0];
+            ctor: function ColumnManager (grid, columns, useTopColumns) {
+                this.grid = grid;
+                this.sheet = grid.styleSheet;
+                this.lastColId = 0;
+                this.ranges = [];
+                this.rangeStart = [0];
 
-            if (!useTopColumns) Utils.walkTree(columns, function (col, idx, arr) {
-                arr[idx] = grid.fixColumnConfig(col);
-            });
+                if (!useTopColumns) Utils.walkTree(columns, function (col, idx, arr) {
+                    arr[idx] = grid.fixColumnConfig(col);
+                });
 
-            // call super ctor
-            Range.call(this, columns, useTopColumns);
+                // call super ctor
+                this.super.ctor.call(this, columns, useTopColumns);
 
-            var me = this;
-            if (!useTopColumns) Utils.walkTree(columns, function (col, idx, arr) {
-                arr[idx] = me.processConfig(col);
-            });
+                var me = this;
+                if (!useTopColumns) Utils.walkTree(columns, function (col, idx, arr) {
+                    arr[idx] = me.processConfig(col);
+                });
 
-            // this forces calcColumnWidths to update the first time
-            this.flexColumnCount = -1;
-        };
+                // this forces calcColumnWidths to update the first time
+                this.flexColumnCount = -1;
+            },
 
-        var base = Range.prototype;
-
-        ColumnManager.prototype = Adapter.merge(Adapter.merge({}, base), {
             processConfig: function (col) {
                 var idx = this.lastColId++,
                     num = this.grid.instanceNum,
@@ -196,7 +195,7 @@ define('v3grid/ColumnManager',
                         ranges[toRng][funcName](0, to != undefined ? to - rangeStart[toRng] : undefined);
                     }
                 } else {
-                    base[funcName].call(this, from, to);
+                    this.super[funcName].call(this, from, to);
                 }
             },
 
@@ -220,7 +219,7 @@ define('v3grid/ColumnManager',
                 for (i = 0; i < len; ++i) {
                     rangeStart[i] = idx;
                     end = idx + counts[i];
-                    ranges[i] = new Range(columns.slice(idx, end));
+                    ranges[i] = new v3grid.ColumnRange(columns.slice(idx, end));
 //                    ranges[i].addListener('beforeColumnMove', this.createBeforeColumnMoveHandler(i), this);
                     ranges[i].addListener('columnMoved', this.createColumnMovedHandler(i), this);
                     ranges[i].addListener('columnResized', this.createColumnResizedHandler(i), this);
@@ -292,7 +291,7 @@ define('v3grid/ColumnManager',
                     col = this.processConfig(config);
 
                 // call super
-                base.addColumn.call(this, idx, col, true);
+                this.super.addColumn.call(this, idx, col, true);
 
                 for (var i = ranges.length-1; i >= 0; --i) {
                     ++rangeStart[i+1];
@@ -324,7 +323,7 @@ define('v3grid/ColumnManager',
                 }
 
                 // call super
-                base.removeColumn.call(this, idx, true);
+                this.super.removeColumn.call(this, idx, true);
 
                 for (i = ranges.length-1; i >= 0; --i) {
                     --rangeStart[i+1];
@@ -343,7 +342,7 @@ define('v3grid/ColumnManager',
             moveColumn: function (fromIdx, toIdx, suppressEvent, calledFromRange) {
                 if (!suppressEvent) this.fireEvent('beforeColumnMove', fromIdx, toIdx);
 
-                base.moveColumn.call(this, fromIdx, toIdx, true);
+                this.super.moveColumn.call(this, fromIdx, toIdx, true);
 
                 var doApplyColStyles = true;
 
@@ -397,7 +396,7 @@ define('v3grid/ColumnManager',
 
                 if (!calledFromRange) {
                     if ((rng = this.getRangeIdx(idx)) == -1) {
-                        base.resizeColumn.call(this, idx, newWidth, true);
+                        this.super.resizeColumn.call(this, idx, newWidth, true);
                     } else {
                         this.ignoreResizeColumnFromRange = true;
                         this.ranges[rng].resizeColumn(idx - this.rangeStart[rng], newWidth);
@@ -417,8 +416,6 @@ define('v3grid/ColumnManager',
                     this.ranges[rng].fireEvent('updateColumn', idx - this.rangeStart[rng]);
                 }
             }
-        });
-
-        return ColumnManager;
+        };
     }
 );

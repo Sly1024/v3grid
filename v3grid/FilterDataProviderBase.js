@@ -1,49 +1,46 @@
-define('v3grid/FilterDataProviderBase',
-    ['v3grid/Adapter', 'v3grid/Observable'],
-    function (Adapter, Observable) {
+ClassDefReq('v3grid.FilterDataProviderBase', {
+        extends: 'v3grid/Observable',
+        requires: ['v3grid/Adapter'],
 
-        var FilterDataProviderBase = function (config) {
+        ctor: function FilterDataProviderBase(config) {
             config = config || {};
             this.filters = [];
-            Adapter.merge(this, config);
+            v3grid.Adapter.merge(this, config);
 
-            if (this.dataProvider && this.dataProvider.addListener) {
-                this.dataProvider.addListener('dataChanged', this.refresh, this);
-                this.dataProvider.addListener('cellChanged', this.invalidateCell, this);
+            var dataProvider = this.dataProvider;
+            if (dataProvider && dataProvider.addListener) {
+                dataProvider.addListener('dataChanged', this.refresh, this);
+                dataProvider.addListener('cellChanged', this.invalidateCell, this);
             }
-        };
+        },
 
-        FilterDataProviderBase.prototype = new Observable({
 
-            refresh: function () {
-                this.update();
-                this.fireEvent('dataChanged');
-            },
+        refresh: function () {
+            this.update();
+            this.fireEvent('dataChanged');
+        },
 
-            addFilter: function (filter) {
-                var filters = this.filters;
-                var len = filters.length;
+        addFilter: function (filter) {
+            var filters = this.filters;
+            var len = filters.length;
 
-                for (var f = 0; f < len; ++f) {
-                    if (filters[f] === filter) return;
-                }
-                filters[len] = filter;
-            },
+            for (var f = 0; f < len; ++f) {
+                if (filters[f] === filter) return;
+            }
+            filters[len] = filter;
+        },
 
-            removeFilter: function (filter) {
-                var filters = this.filters;
-                var len = filters.length;
+        removeFilter: function (filter) {
+            var filters = this.filters;
+            var len = filters.length;
 
-                for (var f = 0; f < len; ++f) {
-                    if (filters[f] === filter) {
-                        filters.splice(f, 1);
-                        return;
-                    }
+            for (var f = 0; f < len; ++f) {
+                if (filters[f] === filter) {
+                    filters.splice(f, 1);
+                    return;
                 }
             }
+        }
 
-        });
-
-        return FilterDataProviderBase;
     }
 );
