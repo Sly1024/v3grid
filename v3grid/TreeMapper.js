@@ -1,6 +1,6 @@
 ClassDefReq('v3grid.TreeMapper', {
     extends: 'v3grid.Observable',
-    requires:['v3grid.Adapter',  'v3grid.TreeRenderer'],
+    requires:['v3grid.TreeRenderer'],
 
     treeColumnIdx: 0,
     indentation: 16,

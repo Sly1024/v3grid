@@ -1,6 +1,5 @@
 ClassDefReq('v3grid.RangeDataProvider', {
     extends: 'v3grid.DataProvider',
-    requires: ['v3grid.Adapter'],
 
     ctor: function RangeDataProvider(config) {
         v3grid.Adapter.merge(this, config);

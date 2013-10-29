@@ -1,6 +1,5 @@
 ClassDefReq('v3grid.FilterDataProviderBase', {
         extends: 'v3grid/Observable',
-        requires: ['v3grid/Adapter'],
 
         ctor: function FilterDataProviderBase(config) {
             config = config || {};

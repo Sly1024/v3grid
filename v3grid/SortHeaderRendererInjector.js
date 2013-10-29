@@ -1,5 +1,5 @@
 ClassDefReq('v3grid.SortHeaderRendererInjector', {
-    requires: ['v3grid.Adapter', 'v3grid.SortHeaderRenderer'],
+    requires: ['v3grid.SortHeaderRenderer'],
 
     ctor: function SortHeaderRendererInjector(sortDataProvider, renderer) {
         this.sortDataProvider = sortDataProvider;

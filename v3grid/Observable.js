@@ -1,5 +1,4 @@
 ClassDefReq('v3grid.Observable', {
-    requires: ['v3grid.Adapter'],
 
     addListener: function (event, handler, scope) {
         var listeners = this.listeners || (this.listeners = {});

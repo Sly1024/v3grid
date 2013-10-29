@@ -1,5 +1,5 @@
 ClassDefReq('v3grid.Scrollbar', {
-    requires: ['v3grid.Adapter'],
+
     ctor: function Scrollbar(parent, orientation) {
         var outer = document.createElement('div'),
             inner = document.createElement('div');

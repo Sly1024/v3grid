@@ -1,1 +1,1 @@
-copy req_concat.js /b + v3grid\*.js /b v3grid-all.js /b
+copy req_concat.js /b + ClassDef.js /b + v3grid\*.js /b v3grid-all.js /b

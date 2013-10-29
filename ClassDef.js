@@ -1,5 +1,5 @@
 (function () {
-    var proto = 'prototype', ctor = 'ctor', statics = 'statics', exts = 'extends';
+    var proto = 'prototype', ctor = 'ctor', statics = 'statics', exts = 'extends', requires = 'requires';
 
     function merge(from, to) {
         for (var key in from) if (from.hasOwnProperty(key)) to[key] = from[key];
@@ -57,6 +57,48 @@
 
         return clazz;
     };
+
+    function fixModulePath(name) {
+        return name.replace(/\./g, '/');
+    }
+
+    this.ClassDefReq = function (name, dep, def) {
+        if (Object.prototype.toString.call(dep) !== '[object Array]') {
+            def = dep; dep = [];
+        }
+
+        var i, len, reqLen = dep.length, req = [];
+        for (i = 0; i < reqLen; ++i) {
+            req[i] = fixModulePath(dep[i]);
+        }
+
+        if (typeof def[exts] == 'string') {
+            req.push(fixModulePath(def[exts]));
+            ++reqLen;
+        }
+
+        if (def[requires]) {
+            for (len = def[requires].length, i = 0; i < len; ++i)  {
+                var reqModule = def[requires][i];
+                if (typeof reqModule == 'string') {
+                    req.push(fixModulePath(reqModule));
+                }
+            }
+        }
+
+        require(req, function () {
+            var args = Array.prototype.slice.call(arguments, 0, reqLen);
+            if (typeof def[exts] == 'string') def[exts] = args.pop();
+            if (typeof def == 'function') {
+                ClassDefReq(name, def.apply(this, args));
+            } else {
+                define(fixModulePath(name), [], function () {
+                    return ClassDef(name, def);
+                });
+            }
+        });
+    };
+
 
 })();
 

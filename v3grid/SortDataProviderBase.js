@@ -1,6 +1,5 @@
 ClassDefReq('v3grid.SortDataProviderBase', {
     extends: 'v3grid.Observable',
-    requires:['v3grid.Adapter' ],
 
     ctor: function SortDataProviderBase(config) {
         config = config || {};

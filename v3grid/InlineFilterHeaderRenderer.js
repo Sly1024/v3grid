@@ -3,22 +3,21 @@ ClassDefReq('v3grid.InlineFilterHeaderRenderer',
     function (Adapter) {
         return {
             ctor: function InlineFilterHeaderRenderer(config) {
-                this.config = config;
+                var me = this;
+                me.config = config;
 
                 var temp = document.createElement('div');
                 temp.innerHTML = '<table width="100%" height="100%"><tr style="height:100%"><td></td></tr><tr><td valign="bottom"><input type="text" style="width: 100%"></td></tr></table>';
-                this.view = temp.firstChild;
-                this.textInput = this.view.getElementsByTagName('input')[0];
+                me.view = temp.firstChild;
+                me.textInput = me.view.getElementsByTagName('input')[0];
 
-                this.bufferedInputChanged = Adapter.createBuffered(this.textInputChanged, 200, this);
+                me.bufferedInputChanged = Adapter.createBuffered(me.textInputChanged, 200, me);
+                Adapter.arrayEach(['change', 'keydown', 'paste', 'input'], function (event) {
+                    Adapter.addListener(me.textInput, event, me.bufferedInputChanged, me);
+                });
 
-                Adapter.addListener(this.textInput, 'change', this.bufferedInputChanged, this);
-                Adapter.addListener(this.textInput, 'keydown', this.bufferedInputChanged, this);
-                Adapter.addListener(this.textInput, 'paste', this.bufferedInputChanged, this);
-                Adapter.addListener(this.textInput, 'input', this.bufferedInputChanged, this);
-
-                this.rendererContainer = this.view.getElementsByTagName('td')[0];
-                this.updateRenderer(config);
+                me.rendererContainer = me.view.getElementsByTagName('td')[0];
+                me.updateRenderer(config);
             },
 
             updateRenderer: function (config) {

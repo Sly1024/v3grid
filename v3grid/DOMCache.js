@@ -1,5 +1,4 @@
 ClassDefReq('v3grid.DOMCache', {
-    requires: ['v3grid.Adapter'],
     itemRemoved: v3grid.Adapter.emptyFn,
     itemReleased: v3grid.Adapter.emptyFn,
     initializeItem: v3grid.Adapter.emptyFn,

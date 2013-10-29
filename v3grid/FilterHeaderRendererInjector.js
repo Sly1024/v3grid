@@ -1,5 +1,5 @@
 ClassDefReq('v3grid.FilterHeaderRendererInjector', {
-    requires: ['v3grid.Adapter', 'v3grid.TextFilter', 'v3grid.InlineFilterHeaderRenderer'],
+    requires: ['v3grid.TextFilter', 'v3grid.InlineFilterHeaderRenderer'],
 
     ctor: function FilterHeaderRendererInjector(filterDataProvider, renderer) {
         this.filterDataProvider = filterDataProvider;
