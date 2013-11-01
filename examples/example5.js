@@ -71,6 +71,11 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3g
                     };
                 }
 
+                topColumns.splice(0, 2, {
+                    dataIndex: 'toptop',
+                    children: topColumns.slice(0, 2)
+                });
+
                 var arrayDataProvider = new ArrayDataProvider(cellData);
                 arrayDataProvider.getCellSpan = function (row, col) {
                     return [ col % 5 == 1 ? (row & 1) * 3 - 1 : 1,
@@ -78,22 +83,21 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3g
                 };
 
 
-//                var filterer = new FilterDataProvider({
-//                    dataProvider: arrayDataProvider
-//                });
+                var filterer = new FilterDataProvider({
+                    dataProvider: arrayDataProvider
+                });
 //
-//                var sorter = new SortDataProvider({
-//                    dataProvider: filterer
-//                });
+                var sorter = new SortDataProvider({
+                    dataProvider: filterer
+                });
 
                 var grid = Ext.create('virtualgrid.VirtualGrid', {
                     gridConfig: {
-//                        headerRenderer: GroupHeaderRenderer,
-                        dataProvider: arrayDataProvider,
+                        dataProvider: sorter, //arrayDataProvider,
                         columns: topColumns,
                         features: [
-//                            new FilterHeaderRendererInjector(filterer),
-//                            new SortHeaderRendererInjector(sorter),
+                            new FilterHeaderRendererInjector(filterer),
+                            new SortHeaderRendererInjector(sorter),
                             new ColumnDragger()
                         ]
                     },

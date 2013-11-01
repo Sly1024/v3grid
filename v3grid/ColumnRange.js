@@ -36,6 +36,8 @@ ClassDef('v3grid.ColumnRange',
                     col.depth = depth;
                     if (depth > maxDepth) maxDepth = depth;
                     if (!col.children) result.push(col);
+                }, function (col) {
+                    col.maxDepth = 1 + Math.max.apply(Math, Adapter.arrayMap(col.children, function (child) { return child.maxDepth || 0; }));
                 });
 
                 this.maxDepth = maxDepth;

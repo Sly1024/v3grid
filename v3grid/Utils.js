@@ -24,12 +24,13 @@ ClassDef('v3grid.Utils', ['v3grid.Adapter'], function (Adapter) {
 
         identity: function (x) { return x; },
 
-        walkTree: function walk(roots, fn, depth, parent) {
+        walkTree: function walk(roots, fn, childrenDoneFn, depth, parent) {
             depth = depth || 0;
             Adapter.arrayEach(roots, function (item, idx, arr) {
                 fn(item, idx, arr, parent, depth);
                 if (Adapter.isArray(item.children)) {
-                    walk(item.children, fn, depth + 1, item);
+                    walk(item.children, fn, childrenDoneFn, depth + 1, item);
+                    if (childrenDoneFn) childrenDoneFn(item);
                 }
             });
         },

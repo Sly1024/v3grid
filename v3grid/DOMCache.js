@@ -8,9 +8,9 @@ ClassDef('v3grid.DOMCache', {
      *     parentDom : DOMElement
      *     // template functions
      *     create: function(get_args...) -> item: { dom : DOM }
-     *     initializeItem: function(item, get_args...)
-     *     itemReleased: function (item)
-     *     itemRemoved: function (item)
+     *     [initializeItem]: function(item, get_args...)
+     *     [itemReleased]: function (item)
+     *     [itemRemoved]: function (item)
      * }
      */
     ctor: function DOMCache(config) {

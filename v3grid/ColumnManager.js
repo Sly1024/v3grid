@@ -88,7 +88,7 @@ ClassDef('v3grid.ColumnManager',
                 var sum = 0, changed = false;
                 Adapter.arrayEach(col.children, function (child) {
                     if (setWidthFromChildren(child)) changed = true;
-                    child.left = sum;
+                    child.left = sum + col.left;
                     sum += child.actWidth;
                 });
 
@@ -113,6 +113,7 @@ ClassDef('v3grid.ColumnManager',
                     var col = columns[i];
 
                     if (col.children) {
+                        col.left = 0;
                         if (this.setWidthFromChildren(col)) changed = true;
                         continue;
                     }

@@ -34,10 +34,10 @@ ClassDef('v3grid.GridView',
             },
 
             cache_getCell: function () {
-                var cell = { dom: document.createElement('div') };
-                Adapter.addClass(cell.dom, this.CLS_CELL);
-                this.makeUnSelectable(cell.dom);
-                return cell;
+                var dom = document.createElement('div');
+                Adapter.addClass(dom, this.CLS_CELL);
+                this.makeUnSelectable(dom);
+                return { dom: dom };
             },
 
             cache_initCell: function (cell, row, column) {
@@ -632,9 +632,12 @@ ClassDef('v3grid.GridView',
             },
 
             updateCell: function (row, col, cell, rendererType, rendererConfig) {
+                var hasChildren = !!(this.isHeader && col.children);
+                if (hasChildren) rendererConfig = null;    // GroupHeaderRenderer doesn't need a config
+
                 // cell has a renderer, but it's the wrong type (or became invisible) => recycle & get new renderer
                 cell.renderer = this.rendererCache.swap(cell.dom, cell.renderer,
-                    col.visible && (this.isHeader && col.children ? v3grid.GroupHeaderRenderer : rendererType), rendererConfig);
+                    col.visible && (hasChildren ? v3grid.GroupHeaderRenderer : rendererType), rendererConfig);
 
                 if (col.visible) {
                     // apply user cell style
