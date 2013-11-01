@@ -1,6 +1,6 @@
-ClassDefReq('v3grid.TreeMapper', {
+ClassDef('v3grid.TreeMapper', {
     extends: 'v3grid.Observable',
-    requires:['v3grid.TreeRenderer'],
+    requires:['v3grid.Adapter', 'v3grid.TreeRenderer'],
 
     treeColumnIdx: 0,
     indentation: 16,
@@ -23,7 +23,8 @@ ClassDefReq('v3grid.TreeMapper', {
 
         this.treeColumnDataIdx = column.dataIndex;
         var rendererConfig = {
-            renderer:  grid.getRenderer(column.renderer || grid.itemRenderer),
+            grid: grid,
+            renderer: v3grid.Adapter.getClass(column.renderer || grid.itemRenderer),
             rendererConfig: column.rendererConfig,
             treeMapper: this
         };

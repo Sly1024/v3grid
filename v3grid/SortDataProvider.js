@@ -1,4 +1,4 @@
-ClassDefReq('v3grid.SortDataProvider', {
+ClassDef('v3grid.SortDataProvider', {
     extends:'v3grid.SortDataProviderBase',
     requires:['v3grid.Adapter'],
 

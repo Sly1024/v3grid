@@ -1,4 +1,4 @@
-ClassDefReq('v3grid.GroupHeaderRenderer', {
+ClassDef('v3grid.GroupHeaderRenderer', {
     requires: ['v3grid.Utils'],
 
     ctor: function GroupHeaderRenderer() {
@@ -13,20 +13,25 @@ ClassDefReq('v3grid.GroupHeaderRenderer', {
     },
 
     rebuild: function (column) {
-        var view = this.view, grid = this.grid;
+        var view = this.view, grid = this.grid, thisClass = this.ctor;
 
         while (view.firstChild) view.removeChild(view.firstChild);
 
-        v3grid.Utils.walkTree([column], function (item, idx, arr, parent, depth) {
+        v3grid.Utils.walkTree([column], function (col, idx, arr, parent, depth) {
             var div = document.createElement('div');
-            div.innerHTML = item.header;
+
             div.style.position = 'absolute';
             div.style.top = (depth * grid.grid.headerRowHeight) + 'px';
-            div.style.left = item.left + 'px';
-            div.style.width = item.actWidth + 'px';
+            div.style.left = col.left + 'px';
+            div.style.width = col.actWidth + 'px';
             div.style.height = grid.grid.headerRowHeight + 'px';
             div.className = 'v3grid-header-cell';
             view.appendChild(div);
+
+//            var rendererType = col.headerRenderer === thisClass ? v3grid.DefaultHeaderRenderer : col.headerRenderer;
+
+            var rend = col.actRenderer = grid.rendererCache.swap(div, col.actRenderer, col.headerRenderer, col.headerRendererConfig);
+            rend.setData(col.header);
         });
 
         this.renderedColumn = column;

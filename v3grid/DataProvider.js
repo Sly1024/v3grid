@@ -1,4 +1,4 @@
-ClassDefReq('v3grid.DataProvider', {
+ClassDef('v3grid.DataProvider', {
     extends: 'v3grid.Observable',
 
     ctor: function DataProvider(config) {

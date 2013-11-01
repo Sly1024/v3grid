@@ -1,4 +1,4 @@
-ClassDefReq('v3grid.FilterDataProviderBase', {
+ClassDef('v3grid.FilterDataProviderBase', {
         extends: 'v3grid/Observable',
 
         ctor: function FilterDataProviderBase(config) {

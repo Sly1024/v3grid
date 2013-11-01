@@ -1,4 +1,4 @@
-ClassDefReq('v3grid.Observable', {
+ClassDef('v3grid.Observable', {
 
     addListener: function (event, handler, scope) {
         var listeners = this.listeners || (this.listeners = {});

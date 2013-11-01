@@ -1,4 +1,4 @@
-ClassDefReq('v3grid.Utils', ['v3grid.Adapter'], function (Adapter) {
+ClassDef('v3grid.Utils', ['v3grid.Adapter'], function (Adapter) {
     return {
         singleton: true,
         minMax: function (num, min, max) {
@@ -52,7 +52,7 @@ ClassDefReq('v3grid.Utils', ['v3grid.Adapter'], function (Adapter) {
                 || clearTimeout
         })(),
 
-        TapHandler: ClassDef('v3grid.Utils.TapHandler', {
+        TapHandler: Class('v3grid.Utils.TapHandler', {
             ctor: function (element, handler, scope, tolerance) {
                 this.t = tolerance || 10;
                 this.element = element;

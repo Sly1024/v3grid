@@ -1,4 +1,4 @@
-ClassDefReq('v3grid.TreeDataProvider', ['v3grid.Adapter'],
+ClassDef('v3grid.TreeDataProvider', ['v3grid.Adapter'],
     function (Adapter) {
         function getTreeIdx(nodeId) {
             return (nodeId == '') ? [] : nodeId.split(',');

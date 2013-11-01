@@ -1,4 +1,4 @@
-ClassDefReq('v3grid.SortDataProviderBase', {
+ClassDef('v3grid.SortDataProviderBase', {
     extends: 'v3grid.Observable',
 
     ctor: function SortDataProviderBase(config) {

@@ -1,4 +1,4 @@
-ClassDefReq('v3grid.RangeDataProvider', {
+ClassDef('v3grid.RangeDataProvider', {
     extends: 'v3grid.DataProvider',
 
     ctor: function RangeDataProvider(config) {

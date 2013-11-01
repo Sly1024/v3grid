@@ -1,4 +1,4 @@
-ClassDefReq('v3grid.FormatterItemRenderer', {
+ClassDef('v3grid.FormatterItemRenderer', {
     extends: 'v3grid.DefaultItemRenderer',
 
     updateData: function (grid, row, col) {

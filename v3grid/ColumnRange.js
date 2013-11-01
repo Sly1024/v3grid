@@ -1,4 +1,4 @@
-ClassDefReq('v3grid.ColumnRange',
+ClassDef('v3grid.ColumnRange',
     ['v3grid.Adapter', 'v3grid.Utils'],
     function (Adapter, Utils) {
         return {
@@ -123,7 +123,7 @@ ClassDefReq('v3grid.ColumnRange',
                 if (newWidth < col.minWidth) newWidth = col.minWidth;
                 var oldWidth = col.actWidth;
 
-                col.actWidth = newWidth;
+                col.width = col.actWidth = newWidth;
                 this.calcPosX(idx+1);
 
                 if (!suppressEvent) this.fireEvent('columnResized', idx, oldWidth, newWidth);

@@ -1,4 +1,4 @@
-ClassDefReq('v3grid.FilterHeaderRendererInjector', {
+ClassDef('v3grid.FilterHeaderRendererInjector', {
     requires: ['v3grid.TextFilter', 'v3grid.InlineFilterHeaderRenderer'],
 
     ctor: function FilterHeaderRendererInjector(filterDataProvider, renderer) {
@@ -14,7 +14,8 @@ ClassDefReq('v3grid.FilterHeaderRendererInjector', {
 
     processColumnRenderer: function (column) {
         var rendererConfig = {
-            renderer: this.grid.getRenderer(column.headerRenderer || this.grid.headerRenderer),
+            grid: this.grid,
+            renderer: v3grid.Adapter.getClass(column.headerRenderer || this.grid.headerRenderer),
             rendererConfig: column.headerRendererConfig,
             filterDataProvider: this.filterDataProvider,
             filter: new v3grid.TextFilter(column.dataIndex)

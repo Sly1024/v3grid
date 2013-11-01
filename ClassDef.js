@@ -7,7 +7,7 @@
 
     function TempClass(){}
 
-    this.ClassDef = function (name, def) {
+    this.Class = function (name, def) {
         var superClazz = Object;
 
         // handle 'extends'
@@ -62,7 +62,7 @@
         return name.replace(/\./g, '/');
     }
 
-    this.ClassDefReq = function (name, dep, def) {
+    this.ClassDef = function (name, dep, def) {
         if (Object.prototype.toString.call(dep) !== '[object Array]') {
             def = dep; dep = [];
         }
@@ -90,10 +90,10 @@
             var args = Array.prototype.slice.call(arguments, 0, reqLen);
             if (typeof def[exts] == 'string') def[exts] = args.pop();
             if (typeof def == 'function') {
-                ClassDefReq(name, def.apply(this, args));
+                ClassDef(name, def.apply(this, args));
             } else {
                 define(fixModulePath(name), [], function () {
-                    return ClassDef(name, def);
+                    return Class(name, def);
                 });
             }
         });

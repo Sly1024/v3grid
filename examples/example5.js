@@ -88,7 +88,7 @@ require(['v3grid/Grid', 'v3grid/SortDataProvider', 'v3grid/ColumnSelector', 'v3g
 
                 var grid = Ext.create('virtualgrid.VirtualGrid', {
                     gridConfig: {
-                        headerRenderer: GroupHeaderRenderer,
+//                        headerRenderer: GroupHeaderRenderer,
                         dataProvider: arrayDataProvider,
                         columns: topColumns,
                         features: [

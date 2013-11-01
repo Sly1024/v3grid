@@ -1,5 +1,5 @@
-ClassDefReq('v3grid.GridView',
-    ['v3grid.Adapter', 'v3grid.Utils', 'v3grid.DOMCache'],
+ClassDef('v3grid.GridView',
+    ['v3grid.Adapter', 'v3grid.Utils', 'v3grid.DOMCache', 'v3grid.GroupHeaderRenderer'],
     function (Adapter, Utils, DOMCache) {
         return {
             rowHeight: 22,
@@ -106,6 +106,7 @@ ClassDefReq('v3grid.GridView',
             },
 
             initProperties: function () {
+                this.rendererCache = this.grid.rendererCache;
                 // viewPort
                 this.firstVisibleRow = 0;
                 this.firstVisibleColumn = 0;
@@ -547,7 +548,6 @@ ClassDefReq('v3grid.GridView',
 
             updateVisibleColumn: function (vc) {
                 var cells = this.visibleCells,
-                    updateCell = this.updateCell,
                     dc = this.firstVisibleColumn + vc,
                     colProps = this.columnProperties,
                     col = this.columns[dc],
@@ -555,7 +555,7 @@ ClassDefReq('v3grid.GridView',
                     vr, dr;
 
                 for (vr = 0, dr = this.firstVisibleRow; vr < count; ++vr, ++dr) {
-                    updateCell.call(this, dr, col, cells[vr][vc],
+                    this.updateCell(dr, col, cells[vr][vc],
                         col[colProps.renderer], col[colProps.rendererConfig]);
                 }
             },
@@ -570,14 +570,13 @@ ClassDefReq('v3grid.GridView',
             addRow: function (vr, dr) {
                 var columns = this.columns,
                     cells = this.visibleCells,
-                    colProps = this.columnProperties,
-                    updateCell = this.updateCell;
+                    colProps = this.columnProperties;
 
                 cells[vr] = cells.cache[dr & 1].get(dr);
                 Adapter.setY(cells[vr].dom, (vr + this.firstVisibleRow) * this.rowHeight);
 
                 for (var count = this.visibleColumnCount, vc = 0, dc = this.firstVisibleColumn; vc < count; ++vc, ++dc) {
-                    updateCell.call(this, dr, columns[dc], cells[vr][vc],
+                    this.updateCell(dr, columns[dc], cells[vr][vc],
                         columns[dc][colProps.renderer], columns[dc][colProps.rendererConfig]);
                 }
             },
@@ -633,42 +632,17 @@ ClassDefReq('v3grid.GridView',
             },
 
             updateCell: function (row, col, cell, rendererType, rendererConfig) {
-                var renderer = cell.renderer;
-
-                // cell has a renderer, but it's the wrong type (or became invisible) => recycle renderer
-                if (renderer && (!(renderer instanceof rendererType) || !col.visible)) {
-                    this.availableRenderers[renderer['-v3grid-type-id']].push(renderer);
-                    renderer = null;
-                }
-
-                if (!renderer && col.visible) {
-                    var availArr = this.availableRenderers[rendererType['-v3grid-type-id']];
-                    if (availArr.length == 0) {
-                        rendererType = this.grid.getRenderer(rendererType);
-                        renderer = new rendererType(rendererConfig);
-                        renderer['-v3grid-type-id'] = rendererType['-v3grid-type-id'];
-                    } else {
-                        renderer = availArr.pop();
-                    }
-                }
-
-                if (cell.renderer !== renderer) {
-                    if (renderer && renderer.view.parentNode) renderer.view.parentNode.removeChild(renderer.view);
-                    if (cell.dom.firstChild) cell.dom.removeChild(cell.dom.firstChild);
-                }
+                // cell has a renderer, but it's the wrong type (or became invisible) => recycle & get new renderer
+                cell.renderer = this.rendererCache.swap(cell.dom, cell.renderer,
+                    col.visible && (this.isHeader && col.children ? v3grid.GroupHeaderRenderer : rendererType), rendererConfig);
 
                 if (col.visible) {
                     // apply user cell style
                     if (this.getCellStyle) {
                         this.updateStyle(cell, this.getCellStyle(this.dataProvider.getRowId(row), col));
                     }
-                    if (rendererConfig) renderer.setConfig(rendererConfig);
-                    renderer.updateData(this, row, col);
-                }
-
-                if (cell.renderer !== renderer) {
-                    cell.renderer = renderer;
-                    if (renderer) cell.dom.appendChild(renderer.view);
+                    if (rendererConfig) cell.renderer.setConfig(rendererConfig);
+                    cell.renderer.updateData(this, row, col);
                 }
             },
 

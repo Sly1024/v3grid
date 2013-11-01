@@ -1,4 +1,4 @@
-ClassDefReq('v3grid.Scrollbar', {
+ClassDef('v3grid.Scrollbar', {
 
     ctor: function Scrollbar(parent, orientation) {
         var outer = document.createElement('div'),

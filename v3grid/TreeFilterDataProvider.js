@@ -1,4 +1,4 @@
-ClassDefReq('v3grid.TreeFilterDataProvider', {
+ClassDef('v3grid.TreeFilterDataProvider', {
     extends: 'v3grid.FilterDataProviderBase',
 
     ctor: function TreeFilterDataProvider(config) {

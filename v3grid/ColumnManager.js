@@ -1,4 +1,4 @@
-ClassDefReq('v3grid.ColumnManager',
+ClassDef('v3grid.ColumnManager',
     ['v3grid.Adapter', 'v3grid.Utils'],
     function (Adapter, Utils) {
         return {
@@ -161,7 +161,7 @@ ClassDefReq('v3grid.ColumnManager',
                     }
                 }
 
-                if (changed) {
+                if (true || changed) {
                     this.calcPosX();
                     this.applyColumnStyles();
                     this.fireEvent('columnPositionsChanged', avail, this);

@@ -1,4 +1,4 @@
-ClassDefReq('v3grid.SortHeaderRendererInjector', {
+ClassDef('v3grid.SortHeaderRendererInjector', {
     requires: ['v3grid.SortHeaderRenderer'],
 
     ctor: function SortHeaderRendererInjector(sortDataProvider, renderer) {
@@ -17,7 +17,8 @@ ClassDefReq('v3grid.SortHeaderRendererInjector', {
 
     processColumnRenderer: function (column) {
         var rendererConfig = {
-            renderer: this.grid.getRenderer(column.headerRenderer || this.grid.headerRenderer),
+            grid: this.grid,
+            renderer: v3grid.Adapter.getClass(column.headerRenderer || this.grid.headerRenderer),
             rendererConfig: column.headerRendererConfig,
             sortHeaderRendererInjector: this
         };

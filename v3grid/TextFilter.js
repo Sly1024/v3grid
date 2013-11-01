@@ -1,4 +1,4 @@
-ClassDefReq('v3grid.TextFilter', {
+ClassDef('v3grid.TextFilter', {
     filterString: '',
 
     ctor: function TextFilter(columnName) {

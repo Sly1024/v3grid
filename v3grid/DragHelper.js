@@ -1,4 +1,4 @@
-ClassDefReq('v3grid.DragHelper', ['v3grid.Adapter'], function (Adapter) {
+ClassDef('v3grid.DragHelper', ['v3grid.Adapter'], function (Adapter) {
     var emptyFn = Adapter.emptyFn;
     return {
         // public properties

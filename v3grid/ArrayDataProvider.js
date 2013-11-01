@@ -1,4 +1,4 @@
-ClassDefReq('v3grid.ArrayDataProvider', {
+ClassDef('v3grid.ArrayDataProvider', {
     extends: 'v3grid.DataProvider',
 
     ctor: function ArrayDataProvider(data) {

@@ -1,4 +1,4 @@
-ClassDefReq('v3grid.SortHeaderRenderer',
+ClassDef('v3grid.SortHeaderRenderer',
     ['v3grid.Adapter', 'v3grid.Utils'],
     function (Adapter, Utils) {
 
@@ -6,41 +6,30 @@ ClassDefReq('v3grid.SortHeaderRenderer',
         var desc_class = 'v3grid-sortheader-desc';
 
         return {
+            extends: 'v3grid.WrapperRenderer',
 
             ctor: function SortHeaderRenderer(config) {
-                this.config = config;
+                var me = this;
+                me.config = config;
 
                 var temp = document.createElement('div');
                 temp.innerHTML = '<table width="100%" height="100%"><tr><td></td><td valign="middle">' +
                     '<img style="display: none;" width="10" height="10" src="resources/images/s.gif"></td><td style="font-size: 10px">x</td></tr></table>';
-                this.view = temp.firstChild;
-                this.rendererContainer = this.view.getElementsByTagName('td')[0];
-                this.updateRenderer(config);
-                this.img = this.view.getElementsByTagName('img')[0];
-                this.sortIndexText = this.view.getElementsByTagName('td')[2].firstChild;
-                this.sortIndexText.nodeValue = '';
+                me.view = temp.firstChild;
+                me.rendererContainer = me.view.getElementsByTagName('td')[0];
+                me.updateRenderer(config);
+                me.img = me.view.getElementsByTagName('img')[0];
+                me.sortIndexText = me.view.getElementsByTagName('td')[2].firstChild;
+                me.sortIndexText.nodeValue = '';
                 if (Adapter.hasTouch) {
-                    this.tapHandler = new Utils.TapHandler(this.view, this.clickHandler, this);
+                    me.tapHandler = new Utils.TapHandler(me.view, me.clickHandler, me);
                 } else {
-                    Adapter.addListener(this.view, 'click', this.clickHandler, this);
+                    Adapter.addListener(me.view, 'click', me.clickHandler, me);
                 }
-            },
-
-            updateRenderer: function (config) {
-                while (this.rendererContainer.firstChild) this.rendererContainer.removeChild(this.rendererContainer.firstChild);
-                this.renderer = new config.renderer(config.rendererConfig);
-                this.rendererContainer.appendChild(this.renderer.view);
-            },
-
-            setConfig: function (config) {
-                if (config.renderer != this.config.renderer || config.rendererConfig != this.config.rendererConfig) {
-                    this.updateRenderer(config);
-                }
-                this.config = config;
             },
 
             updateData: function (grid, row, column) {
-                this.renderer.updateData(grid, row, column);
+                this.super.updateData.call(this, grid, row, column);
                 this.renderedColumn = column;
 
                 var order = column.sortOrder;

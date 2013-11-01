@@ -1,7 +1,9 @@
-ClassDefReq('v3grid.InlineFilterHeaderRenderer',
+ClassDef('v3grid.InlineFilterHeaderRenderer',
     ['v3grid/Adapter'],
     function (Adapter) {
         return {
+            extends: 'v3grid.WrapperRenderer',
+
             ctor: function InlineFilterHeaderRenderer(config) {
                 var me = this;
                 me.config = config;
@@ -20,33 +22,19 @@ ClassDefReq('v3grid.InlineFilterHeaderRenderer',
                 me.updateRenderer(config);
             },
 
-            updateRenderer: function (config) {
-                while (this.rendererContainer.firstChild) this.rendererContainer.removeChild(this.rendererContainer.firstChild);
-                this.renderer = new config.renderer(config.rendererConfig);
-                this.rendererContainer.appendChild(this.renderer.view);
-            },
-
             setConfig: function (config) {
-                if (config.renderer != this.config.renderer || config.rendererConfig != this.config.rendererConfig) {
-                    this.updateRenderer(config);
-                }
-                this.config = config;
+                this.super.setConfig.call(this, config);
                 this.textInput.value = config.filter.filterString;
-            },
-
-            updateData: function (grid, row, col) {
-                this.renderer.updateData(grid, row, col);
             },
 
             textInputChanged: function () {
                 var str = this.textInput.value;
                 var filterDP = this.config.filterDataProvider;
                 var filter = this.config.filter;
+                filter.filterString = str || '';
                 if (str) {
-                    filter.filterString = str;
                     filterDP.addFilter(filter);
                 } else {
-                    filter.filterString = '';
                     filterDP.removeFilter(filter);
                 }
                 filterDP.refresh();

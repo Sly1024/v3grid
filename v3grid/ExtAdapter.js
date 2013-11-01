@@ -9,7 +9,7 @@ Ext.require([
     'Ext.dom.Element'
 ], function () {
 
-    ClassDefReq('v3grid.Adapter', {
+    ClassDef('v3grid.Adapter', {
         singleton: true,
 
         // properties

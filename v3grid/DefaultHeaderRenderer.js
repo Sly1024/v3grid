@@ -1,4 +1,4 @@
-ClassDefReq('v3grid.DefaultHeaderRenderer', {
+ClassDef('v3grid.DefaultHeaderRenderer', {
     extends: 'v3grid.DefaultItemRenderer',
 
     updateData: function (grid, row, column) {

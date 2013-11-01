@@ -1,4 +1,4 @@
-ClassDefReq('v3grid.DefaultItemRenderer', {
+ClassDef('v3grid.DefaultItemRenderer', {
     ctor: function DefaultItemRenderer() {
         this.view = document.createTextNode('');
     },

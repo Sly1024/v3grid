@@ -1,4 +1,4 @@
-ClassDefReq('v3grid.ColumnDragger',
+ClassDef('v3grid.ColumnDragger',
     ['v3grid.Adapter', 'v3grid.Utils', 'v3grid.DragHelper'],
     function (Adapter, Utils) {
         return {

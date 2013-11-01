@@ -1,4 +1,4 @@
-ClassDefReq('v3grid.Grid',
+ClassDef('v3grid.Grid',
     ['v3grid.Adapter', 'v3grid.Utils', 'v3grid.ColumnManager', 'v3grid.Scrollbar'],
     function (Adapter, Utils, ColumnManager, Scrollbar) {
 
@@ -8,7 +8,7 @@ ClassDefReq('v3grid.Grid',
             requires: [
                 'v3grid.DataProvider', 'v3grid.RangeDataProvider',
                 'v3grid.DefaultItemRenderer', 'v3grid.DefaultHeaderRenderer',
-                'v3grid.GridView'
+                'v3grid.GridView', 'v3grid.RendererCache'
             ],
 
             // static instance counter:
@@ -144,11 +144,6 @@ ClassDefReq('v3grid.Grid',
                 Adapter.removeStyleSheet('v3grid-' + this.instanceNum + '-style');
             },
 
-            registerRendererType: function (obj) {
-                var type = obj['-v3grid-type-id'] || (obj['-v3grid-type-id'] = Adapter.generateUID());
-                this.availableRenderers[type] = this.availableRenderers[type] || [];
-            },
-
             addColumn: function (config, idx) {
                 if (idx === undefined) idx = this.colMgr.columns.length;
                 var col = this.colMgr.addColumn(idx, config);
@@ -215,9 +210,6 @@ ClassDefReq('v3grid.Grid',
 
                 col = this.applyColumnConfigPreprocessors(col);
 
-                this.registerRendererType(col.renderer);
-                this.registerRendererType(col.headerRenderer);
-
                 return col;
             },
 
@@ -234,15 +226,19 @@ ClassDefReq('v3grid.Grid',
             createColumnManager: function () {
                 var columns = this.columns;   // clone the array?
 
-                this.availableRenderers = {};
+                this.rendererCache = new v3grid.RendererCache(this.fixRenderer);
 
                 // this is only temporary, until we create the column manager
                 this.columnUniqIds = {};
 
-                var colMgr = this.colMgr = new ColumnManager(this, columns);
+                var me = this,
+                    colMgr = this.colMgr = new ColumnManager(this, columns);
+
                 this.columns = colMgr.columns;
                 this.headerColMgr = new ColumnManager(this, columns, true);
                 colMgr.addListener('columnPositionsChanged', this.headerColMgr.calcColumnWidths, this.headerColMgr);
+
+//                this.headerColMgr.addListener('columnResizeEnd', function () { debugger; me.setSize(); });
 
                 this.headerHeight = (this.headerRowHeight = this.headerHeight) * (colMgr.maxDepth + 1);
                 this.headerCSSRule.style.height = this.headerHeight + 'px';
@@ -251,12 +247,12 @@ ClassDefReq('v3grid.Grid',
             },
 
 
-            getRenderer: function (renderer) {
-                renderer = Adapter.getClass(renderer);
+            fixRenderer: function (renderer) {
+//                renderer = Adapter.getClass(renderer);
                 if (!renderer.prototype.updateData) {
                     renderer.prototype.updateData = function (grid, row, column) { this.setData(grid.dataProvider.getCellData(row, column.dataIndex)); };
                 }
-                return renderer;
+//                return renderer;
             },
 
             createComponents: function () {
@@ -347,7 +343,6 @@ ClassDefReq('v3grid.Grid',
                                 colMgr: hRanges[x],
                                 leafColMgr: ranges[x],
                                 dataProvider: viewDPs[0],
-                                availableRenderers: this.availableRenderers,
                                 rowBatchSize: 1,
                                 columnBatchSize: 1,
                                 CLS_CELL       : this.CLS_CELL + ' v3grid-header-cell',
@@ -369,7 +364,6 @@ ClassDefReq('v3grid.Grid',
                                 cellClicked: this.cellClicked,
                                 getRowStyle: this.getRowStyle,
                                 getCellStyle: this.getCellStyle,
-                                availableRenderers: this.availableRenderers,
                                 rowBatchSize: this.rowBatchSize,
                                 columnBatchSize: this.columnBatchSize,
                                 CLS_ROW        : this.CLS_ROW + ' ' + this.CLS_ROW_SIZE,
@@ -571,9 +565,6 @@ ClassDefReq('v3grid.Grid',
 
                 var colMgr = this.colMgr;
                 colMgr.calcColumnWidths(availWidth);
-//                this.headerColMgr.calcColumnWidths(availWidth);
-//                this.headerColMgr.calcPosX();
-//                this.headerColMgr.applyColumnStyles();
 
                 var totalWidth = colMgr.getTotalWidth(),
                     isHscroll = totalWidth > availWidth;

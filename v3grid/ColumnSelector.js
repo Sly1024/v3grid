@@ -1,4 +1,4 @@
-ClassDefReq('v3grid.ColumnSelector', {
+ClassDef('v3grid.ColumnSelector', {
     CLS: 'v3grid-column-selector',
     CLS_ITEM: 'v3grid-column-selector-item',
 
