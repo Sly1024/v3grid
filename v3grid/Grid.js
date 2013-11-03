@@ -232,15 +232,19 @@ ClassDef('v3grid.Grid',
                 this.columnUniqIds = {};
 
                 var me = this,
-                    colMgr = this.colMgr = new ColumnManager(this, columns);
+                    colMgr = this.colMgr = new ColumnManager(this, columns),
+                    hColMgr = colMgr;
 
                 this.columns = colMgr.columns;
-                this.headerColMgr = new ColumnManager(this, columns, true);
-                colMgr.addListener('columnPositionsChanged', this.headerColMgr.calcColumnWidths, this.headerColMgr);
+                if (colMgr.maxDepth) {
+                    hColMgr = new ColumnManager(this, columns, true);
+                    colMgr.addListener('columnPositionsChanged', hColMgr.calcColumnWidths, hColMgr);
+                }
+                this.headerColMgr = hColMgr;
 
 //                this.headerColMgr.addListener('columnResizeEnd', function () { debugger; me.setSize(); });
 
-                this.headerHeight = (this.headerRowHeight = this.headerHeight) * (colMgr.maxDepth + 1);
+                this.headerHeight = (this.origHeaderHeight = this.headerHeight) * (colMgr.maxDepth + 1);
                 this.headerCSSRule.style.height = this.headerHeight + 'px';
 
                 delete this.columnUniqIds;
@@ -248,11 +252,9 @@ ClassDef('v3grid.Grid',
 
 
             fixRenderer: function (renderer) {
-//                renderer = Adapter.getClass(renderer);
                 if (!renderer.prototype.updateData) {
                     renderer.prototype.updateData = function (grid, row, column) { this.setData(grid.dataProvider.getCellData(row, column.dataIndex)); };
                 }
-//                return renderer;
             },
 
             createComponents: function () {
@@ -283,7 +285,7 @@ ClassDef('v3grid.Grid',
                     if (rightLCC) { colCounts[0] -= rightLCC; colCounts.push(rightLCC); }
                     if (leftLCC) { colCounts[0] -= leftLCC; colCounts.unshift(leftLCC); }
                     ranges = colMgr.getRanges(colCounts);
-                    hRanges = hColMgr.getRanges(colCounts);
+                    hRanges = (colMgr === hColMgr ? ranges : hColMgr.getRanges(colCounts));
                 }
 
                 var headerContainer = this.headerContainer = document.createElement('div');

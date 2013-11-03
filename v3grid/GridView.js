@@ -644,7 +644,7 @@ ClassDef('v3grid.GridView',
                     if (this.getCellStyle) {
                         this.updateStyle(cell, this.getCellStyle(this.dataProvider.getRowId(row), col));
                     }
-                    if (rendererConfig) cell.renderer.setConfig(rendererConfig);
+                    if (cell.renderer.setConfig) cell.renderer.setConfig(rendererConfig);
                     cell.renderer.updateData(this, row, col);
                 }
             },
