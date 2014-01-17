@@ -27,4 +27,4 @@ These are the goals (properties) I had in mind when I started working on v3grid:
 
 Examples
 ---
-See [here](http://htmlpreview.github.com/?https://github.com/Sly1024/v3grid/blob/master/examples/index.html)
+See [here](https://rawgithub.com/Sly1024/v3grid/master/examples/index.html)
